@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NŌVA — Firebase Data Seeder</title>
+  <style>
+    :root {
+      --gold:    #e8a020;
+      --green:   #10b981;
+      --red:     #ef4444;
+      --blue:    #0ea5e9;
+      --bg:      #08080a;
+      --surface: #111114;
+      --card:    #18181c;
+      --border:  rgba(255,255,255,0.07);
+      --text:    #f0ede8;
+      --muted:   #6b6560;
+      --font:    'Inter', system-ui, sans-serif;
+    }
+    [data-theme="light"] {
+      --bg: #f5f2ed; --surface: #fff; --card: #fff;
+      --border: rgba(0,0,0,0.08); --text: #1a1714; --muted: #9a9490;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text);
+           min-height: 100vh; padding: 32px 16px; -webkit-font-smoothing: antialiased; }
+
+    .page-header { text-align: center; margin-bottom: 40px; }
+    .logo { font-size: 2rem; font-weight: 800; letter-spacing: 0.05em;
+            background: linear-gradient(135deg, var(--gold), #f5be52);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .subtitle { color: var(--muted); margin-top: 6px; font-size: 0.9rem; }
+
+    .container { max-width: 860px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+
+    .card { background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; overflow: hidden; }
+    .card-header { display: flex; align-items: center; justify-content: space-between;
+                   padding: 16px 20px; border-bottom: 1px solid var(--border); }
+    .card-title { font-weight: 700; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; }
+    .card-icon { width: 32px; height: 32px; border-radius: 8px;
+                 display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .icon-gold   { background: rgba(232,160,32,0.15); }
+    .icon-green  { background: rgba(16,185,129,0.15); }
+    .icon-blue   { background: rgba(14,165,233,0.15); }
+    .icon-purple { background: rgba(139,92,246,0.15); }
+    .card-count { font-size: 0.75rem; color: var(--muted);
+                  background: var(--surface); border: 1px solid var(--border);
+                  padding: 3px 10px; border-radius: 99px; }
+    .card-body { padding: 16px 20px; }
+
+    /* Item list */
+    .item-list { display: flex; flex-direction: column; gap: 8px; }
+    .item-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+                background: var(--surface); border: 1px solid var(--border);
+                border-radius: 10px; font-size: 0.83rem; }
+    .item-row .item-num { width: 22px; height: 22px; border-radius: 6px;
+                          background: var(--card); font-size: 0.7rem; font-weight: 700;
+                          display: flex; align-items: center; justify-content: center;
+                          color: var(--muted); flex-shrink: 0; }
+    .item-row .item-name { flex: 1; font-weight: 600; }
+    .item-row .item-meta { color: var(--muted); font-size: 0.75rem; }
+    .item-row .item-badge { font-size: 0.68rem; font-weight: 700; padding: 2px 7px;
+                             border-radius: 99px; }
+    .badge-gold   { background: rgba(232,160,32,0.15); color: var(--gold); }
+    .badge-green  { background: rgba(16,185,129,0.15); color: var(--green); }
+    .badge-blue   { background: rgba(14,165,233,0.15); color: var(--blue); }
+    .badge-red    { background: rgba(239,68,68,0.15);  color: var(--red); }
+    .badge-purple { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+
+    /* Action bar */
+    .action-bar { display: flex; gap: 12px; flex-wrap: wrap;
+                  padding: 20px; border-top: 1px solid var(--border); }
+    .btn { display: inline-flex; align-items: center; gap: 8px;
+           padding: 11px 22px; border-radius: 10px; font-size: 0.85rem;
+           font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; font-family: var(--font); }
+    .btn-primary { background: var(--gold); color: #000; }
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn-primary:active { transform: none; }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-ghost { background: transparent; color: var(--muted);
+                 border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--gold); color: var(--text); }
+    .btn-danger { background: rgba(239,68,68,0.12); color: var(--red);
+                  border: 1px solid rgba(239,68,68,0.2); }
+    .btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+    /* Master seed button */
+    .seed-all-wrap { text-align: center; margin-bottom: 8px; }
+    .btn-seed-all { font-size: 1rem; padding: 14px 36px; border-radius: 12px;
+                    background: linear-gradient(135deg, var(--gold), #f5be52);
+                    color: #000; font-weight: 800; border: none; cursor: pointer;
+                    transition: all 0.2s; font-family: var(--font);
+                    box-shadow: 0 8px 24px rgba(232,160,32,0.3); }
+    .btn-seed-all:hover { transform: translateY(-2px); box-shadow: 0 12px 32px rgba(232,160,32,0.4); }
+    .btn-seed-all:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* Log panel */
+    #logPanel { background: #05050a; border: 1px solid var(--border);
+                border-radius: 14px; padding: 16px 20px; font-family: 'Courier New', monospace;
+                font-size: 0.78rem; line-height: 1.8; max-height: 260px;
+                overflow-y: auto; display: none; }
+    #logPanel.visible { display: block; }
+    .log-ok   { color: var(--green); }
+    .log-err  { color: var(--red); }
+    .log-info { color: var(--blue); }
+    .log-head { color: var(--gold); font-weight: 700; }
+
+    /* Status badges per collection */
+    .status-dot { width: 8px; height: 8px; border-radius: 50%;
+                  background: var(--border); display: inline-block; margin-right: 6px; }
+    .status-dot.seeded { background: var(--green); }
+    .status-dot.error  { background: var(--red); }
+    .status-dot.seeding { background: var(--gold); animation: pulse 0.8s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    .progress-bar { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-top: 14px; }
+    .progress-fill { height: 100%; width: 0; background: linear-gradient(90deg, var(--gold), #f5be52);
+                     border-radius: 2px; transition: width 0.4s ease; }
+
+    .theme-toggle { position: fixed; top: 16px; right: 16px;
+                    background: var(--card); border: 1px solid var(--border);
+                    border-radius: 8px; padding: 8px 12px; cursor: pointer;
+                    font-size: 0.8rem; color: var(--muted); font-family: var(--font); }
+  </style>
+</head>
+<body>
+
+<button class="theme-toggle" onclick="toggleTheme()">☀ / ☾ Theme</button>
+
+<div class="page-header">
+  <div class="logo">NŌVA</div>
+  <div class="subtitle">Firebase Firestore — Data Seeder &nbsp;·&nbsp; Run once to populate your database</div>
+</div>
+
+<div class="container">
+
+  <!-- MASTER BUTTON -->
+  <div class="seed-all-wrap">
+    <button class="btn-seed-all" id="btnSeedAll" onclick="seedAll()">
+      🚀 &nbsp; Seed All Collections to Firebase
+    </button>
+    <div class="progress-bar" style="max-width:400px;margin:12px auto 0;">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div id="logPanel"></div>
+
+  <!-- FOODS -->
+  <div class="card" id="card-foods">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-icon icon-gold">🍽️</div>
+        Menu Items
+        <span class="status-dot" id="dot-foods"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="card-count" id="count-foods">12 items</span>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:0.76rem;" onclick="seedCollection('foods')">Seed</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="item-list" id="list-foods"></div>
+    </div>
+  </div>
+
+  <!-- TABLES -->
+  <div class="card" id="card-tables">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-icon icon-green">🪑</div>
+        Tables
+        <span class="status-dot" id="dot-tables"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="card-count" id="count-tables">8 tables</span>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:0.76rem;" onclick="seedCollection('tables')">Seed</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="item-list" id="list-tables"></div>
+    </div>
+  </div>
+
+  <!-- STAFF -->
+  <div class="card" id="card-staff">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-icon icon-blue">👤</div>
+        Staff
+        <span class="status-dot" id="dot-staff"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="card-count" id="count-staff">6 members</span>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:0.76rem;" onclick="seedCollection('staff')">Seed</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="item-list" id="list-staff"></div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS -->
+  <div class="card" id="card-notifications">
+    <div class="card-header">
+      <div class="card-title">
+        <div class="card-icon icon-purple">🔔</div>
+        Notifications
+        <span class="status-dot" id="dot-notifications"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="card-count" id="count-notifications">6 items</span>
+        <button class="btn btn-ghost" style="padding:6px 12px;font-size:0.76rem;" onclick="seedCollection('notifications')">Seed</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="item-list" id="list-notifications"></div>
+    </div>
+  </div>
+
+  <!-- DANGER ZONE -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title" style="color:#ef4444;">⚠️ Danger Zone</div>
+    </div>
+    <div class="action-bar">
+      <button class="btn btn-danger" onclick="clearCollection('foods')">🗑 Clear Foods</button>
+      <button class="btn btn-danger" onclick="clearCollection('tables')">🗑 Clear Tables</button>
+      <button class="btn btn-danger" onclick="clearCollection('staff')">🗑 Clear Staff</button>
+      <button class="btn btn-danger" onclick="clearCollection('notifications')">🗑 Clear Notifications</button>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================================
+     FIREBASE SDK
+     ============================================================ -->
+<script type="module">
+import { initializeApp }                          from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc }
+                                                  from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
+
+/* ── Config ───────────────────────────────────────────────── */
+const firebaseConfig = {
+  apiKey:            'AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk',
+  authDomain:        'protech-6c388.firebaseapp.com',
+  projectId:         'protech-6c388',
+  storageBucket:     'protech-6c388.firebasestorage.app',
+  messagingSenderId: '987892798162',
+  appId:             '1:987892798162:web:2307b1e8773430df1d930b',
+  measurementId:     'G-ZY0H0WFRWT',
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+/* ── Seed Data ────────────────────────────────────────────── */
+const SEED = {
+
+  foods: [
+    { id: 'food_01', name: 'Wagyu Smash Burger',   category: 'Burgers',  price: 2400,  rating: 4.9, description: 'Double wagyu patty, aged cheddar, truffle mayo, brioche.',       image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80',  available: true,  featured: true,  bestseller: true,  orders: 342 },
+    { id: 'food_02', name: 'Tuna Tataki Bowl',      category: 'Sushi',    price: 2250,  rating: 4.8, description: 'Seared bluefin tuna, ponzu, tobiko, sushi rice.',               image: 'https://images.unsplash.com/photo-1617196034183-421b4040ed20?w=400&q=80', available: true,  featured: false, bestseller: true,  orders: 287 },
+    { id: 'food_03', name: 'Truffle Fries',         category: 'Sides',    price: 1100,  rating: 4.7, description: 'Hand-cut fries, truffle oil, parmesan, rosemary.',              image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=400&q=80', available: true,  featured: false, bestseller: true,  orders: 510 },
+    { id: 'food_04', name: 'Burrata Caprese',       category: 'Starters', price: 1600,  rating: 4.6, description: 'Fresh burrata, heirloom tomatoes, basil oil, balsamic.',       image: 'https://images.unsplash.com/photo-1607532941433-304659e8198a?w=400&q=80', available: true,  featured: false, bestseller: false, orders: 180 },
+    { id: 'food_05', name: 'Margherita Classica',   category: 'Pizza',    price: 1800,  rating: 4.5, description: 'San Marzano tomatoes, buffalo mozzarella, fresh basil.',        image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&q=80', available: true,  featured: false, bestseller: false, orders: 220 },
+    { id: 'food_06', name: 'Crème Brûlée',          category: 'Desserts', price: 1000,  rating: 4.8, description: 'Classic French vanilla custard, caramelised sugar crust.',     image: 'https://images.unsplash.com/photo-1470124182917-cc6e71b22ecc?w=400&q=80', available: true,  featured: false, bestseller: false, orders: 155 },
+    { id: 'food_07', name: 'Signature Lemonade',    category: 'Drinks',   price: 750,   rating: 4.4, description: 'Fresh-pressed, thyme syrup, sparkling water.',                 image: 'https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?w=400&q=80', available: true,  featured: false, bestseller: false, orders: 400 },
+    { id: 'food_08', name: 'Pan-Seared Salmon',     category: 'Mains',    price: 2800,  rating: 4.7, description: 'Atlantic salmon, lemon beurre blanc, asparagus, capers.',      image: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&q=80', available: true,  featured: false, bestseller: true,  orders: 198 },
+    { id: 'food_09', name: 'Crispy Chicken Sando',  category: 'Burgers',  price: 1950,  rating: 4.6, description: 'Fried chicken thigh, pickled slaw, sriracha mayo, potato bun.',image: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?w=400&q=80', available: true,  featured: true,  bestseller: false, orders: 165 },
+    { id: 'food_10', name: 'Spicy Ramen Bowl',      category: 'Mains',    price: 1700,  rating: 4.8, description: 'Tonkotsu broth, soft egg, chashu, nori, spring onion.',        image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400&q=80', available: true,  featured: false, bestseller: true,  orders: 312 },
+    { id: 'food_11', name: 'Matcha Latte',          category: 'Drinks',   price: 650,   rating: 4.5, description: 'Ceremonial grade matcha, oat milk, light honey.',              image: 'https://images.unsplash.com/photo-1582126892906-5ba118eaf46f?w=400&q=80', available: true,  featured: false, bestseller: false, orders: 190 },
+    { id: 'food_12', name: 'Beef Short Rib',        category: 'Mains',    price: 3600,  rating: 4.9, description: '48-hour braised short rib, chimichurri, roasted root veg.',    image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=400&q=80', available: false, featured: false, bestseller: false, orders: 97  },
+  ],
+
+  // Note: prices are in DA (Algerian Dinar), stored as integers
+
+  tables: [
+    { id: 'table_01', number: 1, capacity: 2, status: 'free',     zone: 'Indoor'  },
+    { id: 'table_02', number: 2, capacity: 4, status: 'free',     zone: 'Indoor'  },
+    { id: 'table_03', number: 3, capacity: 4, status: 'free',     zone: 'Indoor'  },
+    { id: 'table_04', number: 4, capacity: 6, status: 'free',     zone: 'Terrace' },
+    { id: 'table_05', number: 5, capacity: 2, status: 'free',     zone: 'Bar'     },
+    { id: 'table_06', number: 6, capacity: 4, status: 'free',     zone: 'Terrace' },
+    { id: 'table_07', number: 7, capacity: 8, status: 'free',     zone: 'VIP'     },
+    { id: 'table_08', number: 8, capacity: 4, status: 'free',     zone: 'Indoor'  },
+  ],
+
+  staff: [
+    { id: 'staff_01', name: 'Marcus Chen',  role: 'Chef',           pin: '121212', email: 'marcus@nova.com',  phone: '+213 555 001', status: 'online',  color: '#e8a020' },
+    { id: 'staff_02', name: 'Sophia Laine', role: 'Manager',        pin: '121212', email: 'sophia@nova.com',  phone: '+213 555 002', status: 'online',  color: '#0ea5e9' },
+    { id: 'staff_03', name: 'James Okafor', role: 'Waiter',         pin: '121212', email: 'james@nova.com',   phone: '+213 555 003', status: 'online',  color: '#10b981' },
+    { id: 'staff_04', name: 'Alyssa Park',  role: 'Waiter',         pin: '121212', email: 'alyssa@nova.com',  phone: '+213 555 004', status: 'offline', color: '#8b5cf6' },
+    { id: 'staff_05', name: 'Ravi Singh',   role: 'Delivery Driver',pin: '121212', email: 'ravi@nova.com',    phone: '+213 555 005', status: 'online',  color: '#ef4444' },
+    { id: 'staff_06', name: 'Clara Morse',  role: 'Cashier',        pin: '121212', email: 'clara@nova.com',   phone: '+213 555 006', status: 'online',  color: '#f59e0b' },
+  ],
+
+  notifications: [
+    { id: 'notif_01', title: 'Welcome to NŌVA',      desc: 'Firebase connected — system ready.',               icon: 'check-circle',  color: 'var(--color-accent)',    time: 'now',    unread: true  },
+    { id: 'notif_02', title: 'Menu Loaded',           desc: '12 menu items seeded successfully.',               icon: 'utensils',      color: 'var(--color-primary)',   time: 'now',    unread: true  },
+    { id: 'notif_03', title: 'Tables Ready',          desc: '8 tables configured across 4 zones.',              icon: 'table-2',       color: 'var(--color-secondary)', time: 'now',    unread: false },
+    { id: 'notif_04', title: 'Staff Registered',      desc: '6 staff members added with PIN 121212.',           icon: 'users',         color: 'var(--color-purple)',    time: 'now',    unread: false },
+    { id: 'notif_05', title: 'Currency Set',          desc: 'All prices are in Algerian Dinar (DA).',           icon: 'banknote',      color: 'var(--color-accent)',    time: 'now',    unread: false },
+    { id: 'notif_06', title: 'System Ready',          desc: 'Admin, Waiter, Kitchen panels are operational.',   icon: 'zap',           color: 'var(--color-warning)',   time: 'now',    unread: false },
+  ],
+};
+
+/* ── Helpers ──────────────────────────────────────────────── */
+function log(msg, type = 'info') {
+  const panel = document.getElementById('logPanel');
+  panel.classList.add('visible');
+  const cls = { ok: 'log-ok', err: 'log-err', info: 'log-info', head: 'log-head' }[type] || 'log-info';
+  panel.innerHTML += `<div class="${cls}">${msg}</div>`;
+  panel.scrollTop = panel.scrollHeight;
+}
+
+function setDot(name, state) {
+  const el = document.getElementById(`dot-${name}`);
+  if (el) { el.className = `status-dot ${state}`; }
+}
+
+function setProgress(pct) {
+  document.getElementById('progressFill').style.width = pct + '%';
+}
+
+/* ── Render Preview Lists ─────────────────────────────────── */
+function renderPreviews() {
+  // Foods
+  const fl = document.getElementById('list-foods');
+  fl.innerHTML = SEED.foods.map((f, i) => `
+    <div class="item-row">
+      <div class="item-num">${i+1}</div>
+      <div class="item-name">${f.name}</div>
+      <div class="item-meta">${f.category}</div>
+      <div class="item-badge badge-gold">${f.price.toLocaleString()} DA</div>
+      ${f.bestseller ? '<div class="item-badge badge-green">⭐ Best</div>' : ''}
+      ${!f.available ? '<div class="item-badge badge-red">Unavailable</div>' : ''}
+    </div>`).join('');
+
+  // Tables
+  const tl = document.getElementById('list-tables');
+  tl.innerHTML = SEED.tables.map((t, i) => `
+    <div class="item-row">
+      <div class="item-num">${i+1}</div>
+      <div class="item-name">Table ${t.number}</div>
+      <div class="item-meta">${t.zone}</div>
+      <div class="item-badge badge-blue">${t.capacity} seats</div>
+      <div class="item-badge badge-green">${t.status}</div>
+    </div>`).join('');
+
+  // Staff
+  const sl = document.getElementById('list-staff');
+  sl.innerHTML = SEED.staff.map((s, i) => `
+    <div class="item-row">
+      <div class="item-num" style="background:${s.color};color:#000;">${s.name.split(' ').map(n=>n[0]).join('').slice(0,2)}</div>
+      <div class="item-name">${s.name}</div>
+      <div class="item-meta">${s.email}</div>
+      <div class="item-badge badge-blue">${s.role}</div>
+      <div class="item-badge ${s.status==='online'?'badge-green':'badge-red'}">${s.status}</div>
+    </div>`).join('');
+
+  // Notifications
+  const nl = document.getElementById('list-notifications');
+  nl.innerHTML = SEED.notifications.map((n, i) => `
+    <div class="item-row">
+      <div class="item-num">${i+1}</div>
+      <div class="item-name">${n.title}</div>
+      <div class="item-meta" style="flex:1;">${n.desc}</div>
+    </div>`).join('');
+}
+
+/* ── Seed one collection ──────────────────────────────────── */
+async function seedCollection(name) {
+  const items = SEED[name];
+  if (!items) { log(`Unknown collection: ${name}`, 'err'); return; }
+
+  setDot(name, 'seeding');
+  log(`\n▶ Seeding "${name}" (${items.length} docs)...`, 'head');
+
+  // ── 1. Write to localStorage immediately (instant, always works) ──
+  try {
+    localStorage.setItem(`nova_${name}`, JSON.stringify(items));
+    log(`  ✓ Saved to localStorage (nova_${name})`, 'ok');
+  } catch (e) {
+    log(`  ✗ localStorage failed: ${e.message}`, 'err');
+  }
+
+  // ── 2. Also push to Firebase Firestore ────────────────────────────
+  let ok = 0, fail = 0;
+  for (const item of items) {
+    try {
+      const { id, ...data } = item;
+      await setDoc(doc(db, name, id), data);
+      log(`  ✓ Firebase: ${id} — ${item.name || item.title || `Table ${item.number}` || item.id}`, 'ok');
+      ok++;
+    } catch (e) {
+      log(`  ✗ Firebase: ${item.id}: ${e.message}`, 'err');
+      fail++;
+    }
+  }
+
+  setDot(name, fail > 0 && ok === 0 ? 'error' : 'seeded');
+  log(`  Firebase: ${ok} written, ${fail} failed.`, fail > 0 ? 'err' : 'ok');
+}
+
+/* ── Seed all ─────────────────────────────────────────────── */
+window.seedAll = async function() {
+  const btn = document.getElementById('btnSeedAll');
+  btn.disabled = true;
+  btn.textContent = '⏳  Seeding…';
+  document.getElementById('logPanel').innerHTML = '';
+
+  const collections = ['foods', 'tables', 'staff', 'notifications'];
+  for (let i = 0; i < collections.length; i++) {
+    await seedCollection(collections[i]);
+    setProgress(((i + 1) / collections.length) * 100);
+  }
+
+  btn.textContent = '✅  All collections seeded!';
+  log('\n🎉 All done! Your Firebase is ready.', 'head');
+};
+
+/* ── Seed individual (exposed to onclick) ─────────────────── */
+window.seedCollection = seedCollection;
+
+/* ── Clear a collection ───────────────────────────────────── */
+window.clearCollection = async function(name) {
+  if (!confirm(`Delete ALL documents in "${name}"? This cannot be undone.`)) return;
+  log(`\n🗑 Clearing "${name}"...`, 'head');
+  try {
+    const snap = await getDocs(collection(db, name));
+    for (const d of snap.docs) {
+      await deleteDoc(d.ref);
+      log(`  ✓ Deleted ${d.id}`, 'ok');
+    }
+    setDot(name, '');
+    log(`  "${name}" cleared.`, 'ok');
+  } catch (e) {
+    log(`  Error: ${e.message}`, 'err');
+  }
+};
+
+/* ── Boot ─────────────────────────────────────────────────── */
+renderPreviews();
+log('Firebase initialized. Click "Seed All" to populate your database.', 'info');
+
+</script>
+
+<script>
+function toggleTheme() {
+  const h = document.documentElement;
+  h.dataset.theme = h.dataset.theme === 'light' ? 'dark' : 'light';
+}
+</script>
+
+</body>
+</html>

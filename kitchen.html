@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NŌVA Kitchen Display System</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <style>
+    /* =============================================
+       CSS CUSTOM PROPERTIES
+       ============================================= */
+    :root {
+      --color-primary:   #e8a020;
+      --color-secondary: #0ea5e9;
+      --color-accent:    #10b981;
+      --color-danger:    #ef4444;
+      --color-warning:   #f59e0b;
+      --color-purple:    #8b5cf6;
+
+      /* Kitchen‑specific dark palette — high contrast for screens */
+      --bg-base:    #05050a;
+      --bg-surface: #0a0a10;
+      --bg-card:    #10101a;
+      --bg-card-hover: #15151f;
+      --bg-glass:   rgba(16,16,26,0.9);
+
+      --text-primary:   #f4f1ec;
+      --text-secondary: #9e99a0;
+      --text-muted:     #4a4855;
+
+      --border-color:  rgba(244,241,236,0.07);
+      --border-active: rgba(232,160,32,0.45);
+
+      --shadow-sm:  0 1px 4px rgba(0,0,0,0.6);
+      --shadow-md:  0 4px 20px rgba(0,0,0,0.7);
+      --shadow-lg:  0 12px 48px rgba(0,0,0,0.8);
+      --glow-gold:  0 0 24px rgba(232,160,32,0.25);
+      --glow-green: 0 0 24px rgba(16,185,129,0.25);
+      --glow-red:   0 0 24px rgba(239,68,68,0.25);
+
+      --radius-sm:   6px;
+      --radius-md:   12px;
+      --radius-lg:   18px;
+      --radius-xl:   24px;
+      --radius-full: 9999px;
+
+      --font-mono:    'JetBrains Mono', monospace;
+      --font-heading: 'Syne', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+
+      --topbar-h: 60px;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Light mode overrides (rarely used in kitchens) */
+    [data-theme="light"] {
+      --bg-base:    #f0ede8;
+      --bg-surface: #ffffff;
+      --bg-card:    #ffffff;
+      --bg-card-hover: #f8f5f0;
+      --text-primary:   #18151a;
+      --text-secondary: #6b6570;
+      --text-muted:     #a09a90;
+      --border-color:   rgba(24,21,26,0.08);
+    }
+
+    /* =============================================
+       RESET & BASE
+       ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { display: block; max-width: 100%; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+    /* =============================================
+       PIN LOGIN OVERLAY
+       ============================================= */
+    #kitchenPinLogin {
+      position: fixed; inset: 0; z-index: 10000;
+      background: var(--bg-base);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 32px;
+      animation: pinFadeIn 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    #kitchenPinLogin.hidden { display: none; }
+    @keyframes pinFadeIn { from { opacity:0; transform:translateY(10px); } }
+    .kitchen-pin-card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 26px; padding: 40px 44px;
+      width: 100%; max-width: 400px; text-align: center;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+    }
+    .kitchen-pin-logo {
+      font-family: var(--font-heading, 'Syne', sans-serif);
+      font-size: 1.8rem; font-weight: 800;
+      color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 4px;
+    }
+    .kitchen-pin-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 28px; }
+    .kitchen-pin-display {
+      background: var(--bg-base); border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 12px;
+      font-family: 'Courier New', monospace; font-size: 1.4rem;
+      letter-spacing: 0.3em; color: var(--color-primary);
+      text-align: center; margin-bottom: 14px; min-height: 52px;
+    }
+    .kitchen-pin-keypad { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .kitchen-pin-key {
+      padding: 14px; text-align: center;
+      background: var(--bg-card-hover); border: 1px solid var(--border-color);
+      border-radius: 12px; font-size: 1.1rem; font-weight: 600;
+      color: var(--text-primary, #f0ede8); cursor: pointer; transition: all 0.15s;
+    }
+    .kitchen-pin-key:hover { border-color: var(--color-primary); transform: scale(1.03); }
+    .kitchen-pin-key:active { transform: scale(0.97); }
+    .kitchen-pin-key.clear { color: #ef4444; }
+    .kitchen-pin-key.enter { background: var(--color-primary); color: #000; border-color: var(--color-primary); }
+    .kitchen-pin-error { color: #ef4444; font-size: 0.8rem; margin-top: 10px; min-height: 20px; }
+    @keyframes kitchenShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+    /* =============================================
+       PAGE LOADER
+       ============================================= */
+    #pageLoader {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg-base);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 20px;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    #pageLoader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .loader-ring {
+      width: 56px; height: 56px; border-radius: 50%;
+      border: 3px solid var(--border-color);
+      border-top-color: var(--color-primary);
+      animation: spin 0.9s linear infinite;
+    }
+    .loader-text {
+      font-family: var(--font-heading); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    .loader-logo {
+      font-family: var(--font-heading); font-size: 28px; font-weight: 800;
+      color: var(--color-primary); letter-spacing: 0.08em;
+      margin-bottom: 4px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =============================================
+       TOPBAR
+       ============================================= */
+    .topbar {
+      height: var(--topbar-h);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 24px;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(16px);
+    }
+    .topbar-logo {
+      font-family: var(--font-heading); font-size: 18px; font-weight: 800;
+      color: var(--color-primary); letter-spacing: 0.06em;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .topbar-logo-badge {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; padding: 3px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(232,160,32,0.12); color: var(--color-primary);
+      border: 1px solid rgba(232,160,32,0.25);
+    }
+    .topbar-divider {
+      width: 1px; height: 28px; background: var(--border-color);
+    }
+
+    /* KPI chips in topbar */
+    .topbar-kpis { display: flex; align-items: center; gap: 6px; flex: 1; }
+    .kpi-chip {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: var(--radius-md);
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      font-family: var(--font-heading); font-size: 12px; font-weight: 700;
+      transition: border-color 0.2s ease;
+    }
+    .kpi-chip .kpi-num {
+      font-size: 18px; line-height: 1; letter-spacing: -0.02em;
+    }
+    .kpi-chip .kpi-lbl { font-size: 10px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-chip.pending  { border-color: rgba(245,158,11,0.3);  }
+    .kpi-chip.cooking  { border-color: rgba(14,165,233,0.3);  }
+    .kpi-chip.ready    { border-color: rgba(16,185,129,0.3);  }
+    .kpi-chip.done     { border-color: rgba(139,92,246,0.3);  }
+
+    /* Topbar right actions */
+    .topbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+    .topbar-clock {
+      font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+      color: var(--text-secondary); letter-spacing: 0.05em;
+    }
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: var(--radius-md);
+      font-family: var(--font-heading); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase;
+      transition: all 0.2s ease; white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--color-primary); color: #0a0a10;
+    }
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: var(--glow-gold); }
+    .btn-ghost {
+      background: transparent; color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-ghost:hover { background: var(--bg-card); color: var(--text-primary); border-color: rgba(244,241,236,0.15); }
+    .btn-danger {
+      background: rgba(239,68,68,0.12); color: var(--color-danger);
+      border: 1px solid rgba(239,68,68,0.25);
+    }
+    .btn-danger:hover { background: rgba(239,68,68,0.2); }
+    .btn-sm { padding: 5px 10px; font-size: 11px; }
+    .btn-icon { padding: 7px; min-width: 32px; justify-content: center; }
+
+    /* =============================================
+       FILTER TABS
+       ============================================= */
+    .filter-bar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 14px 24px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      overflow-x: auto; flex-shrink: 0;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+    .filter-tab {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 16px; border-radius: var(--radius-full);
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      cursor: pointer; border: 1px solid transparent;
+      transition: all 0.2s ease; white-space: nowrap; user-select: none;
+      color: var(--text-secondary); background: var(--bg-card);
+      border-color: var(--border-color);
+    }
+    .filter-tab.active {
+      color: var(--color-primary);
+      background: rgba(232,160,32,0.10);
+      border-color: rgba(232,160,32,0.35);
+    }
+    .filter-tab .tab-count {
+      background: var(--bg-surface); color: var(--text-muted);
+      padding: 1px 6px; border-radius: var(--radius-full); font-size: 10px;
+    }
+    .filter-tab.active .tab-count {
+      background: rgba(232,160,32,0.2); color: var(--color-primary);
+    }
+
+    /* Sort & search controls */
+    .filter-right {
+      margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+    .sort-select {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); color: var(--text-secondary);
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.04em; padding: 6px 10px; outline: none; cursor: pointer;
+    }
+    .sort-select option { background: var(--bg-card); }
+
+    /* =============================================
+       MAIN BOARD
+       ============================================= */
+    .board {
+      flex: 1; padding: 20px 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      align-content: start;
+      min-height: calc(100vh - var(--topbar-h) - 53px - 53px);
+    }
+
+    /* =============================================
+       ORDER CARD
+       ============================================= */
+    .order-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex; flex-direction: column;
+      transition: transform 0.25s var(--ease-out), box-shadow 0.25s ease, border-color 0.25s ease;
+      animation: cardIn 0.4s var(--ease-out) both;
+      position: relative;
+    }
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0)    scale(1); }
+    }
+    .order-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+
+    /* Status-based accent border on left */
+    .order-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0;
+      width: 4px; height: 100%;
+      border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+    }
+    .order-card[data-status="pending"]   { --accent: var(--color-warning); }
+    .order-card[data-status="preparing"] { --accent: var(--color-secondary); }
+    .order-card[data-status="ready"]     { --accent: var(--color-accent); }
+    .order-card[data-status="delivered"] { --accent: var(--color-purple); }
+    .order-card[data-status="cancelled"] { --accent: var(--color-danger); }
+    .order-card::before { background: var(--accent, var(--border-color)); }
+
+    /* Glow on urgent cards */
+    .order-card.urgent {
+      border-color: rgba(239,68,68,0.4);
+      box-shadow: var(--glow-red);
+      animation: cardIn 0.4s var(--ease-out) both, urgentPulse 2s ease-in-out infinite;
+    }
+    @keyframes urgentPulse {
+      0%, 100% { box-shadow: var(--glow-red); }
+      50% { box-shadow: 0 0 40px rgba(239,68,68,0.4); }
+    }
+    .order-card[data-status="ready"] { border-color: rgba(16,185,129,0.3); box-shadow: var(--glow-green); }
+
+    /* Card Header */
+    .card-head {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 16px 10px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .card-order-id {
+      font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+      color: var(--color-primary); letter-spacing: 0.04em;
+      flex: 1;
+    }
+    .card-table-badge {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm); padding: 3px 8px;
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      color: var(--text-secondary); flex-shrink: 0;
+    }
+    .card-type-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: var(--radius-full);
+      font-family: var(--font-heading); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; flex-shrink: 0;
+    }
+    .type-dine   { background: rgba(232,160,32,0.15); color: var(--color-primary);   border:1px solid rgba(232,160,32,0.25); }
+    .type-takeaway { background: rgba(139,92,246,0.15); color: var(--color-purple);  border:1px solid rgba(139,92,246,0.25); }
+    .type-delivery { background: rgba(14,165,233,0.15); color: var(--color-secondary); border:1px solid rgba(14,165,233,0.25); }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 9px; border-radius: var(--radius-full);
+      font-family: var(--font-heading); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .status-pending   { background: rgba(245,158,11,0.15); color: var(--color-warning);   border:1px solid rgba(245,158,11,0.3); }
+    .status-preparing { background: rgba(14,165,233,0.15); color: var(--color-secondary); border:1px solid rgba(14,165,233,0.3); }
+    .status-ready     { background: rgba(16,185,129,0.15); color: var(--color-accent);    border:1px solid rgba(16,185,129,0.3); }
+    .status-delivered { background: rgba(139,92,246,0.15); color: var(--color-purple);    border:1px solid rgba(139,92,246,0.3); }
+    .status-cancelled { background: rgba(239,68,68,0.15);  color: var(--color-danger);    border:1px solid rgba(239,68,68,0.3); }
+
+    /* Priority badge */
+    .priority-tag {
+      padding: 2px 8px; border-radius: var(--radius-full);
+      font-family: var(--font-heading); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; flex-shrink: 0;
+    }
+    .priority-high   { background: rgba(239,68,68,0.15);  color: var(--color-danger);  border:1px solid rgba(239,68,68,0.25); }
+    .priority-medium { background: rgba(245,158,11,0.15); color: var(--color-warning); border:1px solid rgba(245,158,11,0.25); }
+    .priority-low    { background: rgba(16,185,129,0.12); color: var(--color-accent);  border:1px solid rgba(16,185,129,0.2); }
+
+    /* Items list */
+    .card-items { padding: 12px 16px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+    .order-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--border-color);
+    }
+    .order-item:last-child { border-bottom: none; }
+    .order-item-qty {
+      font-family: var(--font-mono); font-size: 14px; font-weight: 700;
+      color: var(--color-primary); min-width: 24px; text-align: right;
+      padding-top: 1px;
+    }
+    .order-item-name {
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+      flex: 1; line-height: 1.3;
+    }
+    .order-item-mods {
+      font-size: 11px; color: var(--text-muted); margin-top: 2px; font-style: italic;
+    }
+    .order-item-done {
+      width: 22px; height: 22px; border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border-color);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; flex-shrink: 0; transition: all 0.2s ease;
+      background: transparent;
+    }
+    .order-item-done.checked {
+      background: var(--color-accent); border-color: var(--color-accent);
+    }
+    .order-item-done.checked svg { color: #0a0a10; }
+    .order-item-done:hover { border-color: var(--color-accent); }
+
+    /* Notes */
+    .card-notes {
+      margin: 0 16px 12px;
+      padding: 10px 12px;
+      background: rgba(245,158,11,0.06);
+      border: 1px solid rgba(245,158,11,0.2);
+      border-radius: var(--radius-md);
+      font-size: 12px; color: var(--color-warning);
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .card-notes-icon { flex-shrink: 0; margin-top: 1px; }
+
+    /* Timer section */
+    .card-timer {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-surface);
+    }
+    .timer-elapsed {
+      font-family: var(--font-mono); font-size: 22px; font-weight: 700;
+      letter-spacing: 0.04em;
+      transition: color 0.5s ease;
+    }
+    .timer-elapsed.ok      { color: var(--color-accent); }
+    .timer-elapsed.warning { color: var(--color-warning); }
+    .timer-elapsed.urgent  { color: var(--color-danger); animation: blink 1s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.4;} }
+    .timer-label { font-size: 10px; color: var(--text-muted); font-family: var(--font-heading); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+
+    /* Action buttons in card */
+    .card-actions {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-color);
+    }
+    .btn-complete {
+      flex: 1; padding: 10px 16px;
+      background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);
+      color: var(--color-accent); border-radius: var(--radius-md);
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.2s ease; cursor: pointer;
+    }
+    .btn-complete:hover { background: rgba(16,185,129,0.2); box-shadow: var(--glow-green); }
+    .btn-next-status {
+      flex: 1; padding: 10px 16px;
+      background: rgba(14,165,233,0.10); border: 1px solid rgba(14,165,233,0.25);
+      color: var(--color-secondary); border-radius: var(--radius-md);
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      transition: all 0.2s ease; cursor: pointer;
+    }
+    .btn-next-status:hover { background: rgba(14,165,233,0.18); }
+    .btn-cancel-card {
+      width: 36px; height: 36px; border-radius: var(--radius-md);
+      background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+      color: var(--color-danger); display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease; cursor: pointer; flex-shrink: 0;
+    }
+    .btn-cancel-card:hover { background: rgba(239,68,68,0.15); }
+
+    /* =============================================
+       EMPTY STATE
+       ============================================= */
+    .empty-board {
+      grid-column: 1 / -1;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 80px 20px; text-align: center;
+    }
+    .empty-icon {
+      font-size: 64px; margin-bottom: 20px; opacity: 0.5;
+      filter: grayscale(0.3);
+    }
+    .empty-title {
+      font-family: var(--font-heading); font-size: 20px; font-weight: 700;
+      color: var(--text-secondary); margin-bottom: 8px;
+    }
+    .empty-desc { font-size: 14px; color: var(--text-muted); max-width: 320px; }
+
+    /* =============================================
+       SOUND NOTIFICATION BANNER
+       ============================================= */
+    #newOrderBanner {
+      position: fixed; top: 70px; right: 24px; z-index: 500;
+      display: none;
+      background: var(--bg-card); border: 1px solid rgba(232,160,32,0.4);
+      border-radius: var(--radius-lg); padding: 14px 18px;
+      box-shadow: var(--shadow-lg), var(--glow-gold);
+      animation: bannerIn 0.4s var(--ease-out) both;
+      max-width: 320px;
+    }
+    #newOrderBanner.visible { display: flex; align-items: center; gap: 12px; }
+    @keyframes bannerIn { from{opacity:0;transform:translateX(20px);} to{opacity:1;transform:translateX(0);} }
+    .banner-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-md);
+      background: rgba(232,160,32,0.15); display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; font-size: 20px;
+    }
+    .banner-text { flex: 1; }
+    .banner-title { font-family: var(--font-heading); font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .banner-desc  { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* =============================================
+       TOAST SYSTEM
+       ============================================= */
+    #toastContainer {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 12px 16px;
+      box-shadow: var(--shadow-lg); pointer-events: all;
+      animation: toastIn 0.3s var(--ease-out) both; max-width: 300px;
+    }
+    .toast.removing { animation: toastOut 0.25s ease forwards; }
+    @keyframes toastIn  { from{opacity:0;transform:translateX(16px);} to{opacity:1;transform:translateX(0);} }
+    @keyframes toastOut { from{opacity:1;transform:translateX(0);} to{opacity:0;transform:translateX(16px);} }
+    .toast-icon { flex-shrink: 0; margin-top: 1px; }
+    .toast.success .toast-icon { color: var(--color-accent); }
+    .toast.error   .toast-icon { color: var(--color-danger); }
+    .toast.info    .toast-icon { color: var(--color-secondary); }
+    .toast.warning .toast-icon { color: var(--color-warning); }
+    .toast-msg { font-size: 13px; color: var(--text-primary); flex: 1; }
+    .toast-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+
+    /* =============================================
+       MODAL
+       ============================================= */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 800;
+      background: rgba(0,0,0,0.75); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl); width: 100%; max-width: 480px;
+      max-height: 90vh; overflow-y: auto;
+      transform: scale(0.95) translateY(12px);
+      transition: transform 0.3s var(--ease-out);
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 22px; border-bottom: 1px solid var(--border-color);
+    }
+    .modal-title {
+      font-family: var(--font-heading); font-size: 15px; font-weight: 700;
+    }
+    .modal-close {
+      width: 30px; height: 30px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); transition: all 0.2s ease;
+    }
+    .modal-close:hover { background: var(--bg-surface); color: var(--text-primary); }
+    .modal-body { padding: 22px; }
+
+    /* =============================================
+       FULLSCREEN MODE
+       ============================================= */
+    body.fullscreen .topbar { display: none; }
+    body.fullscreen .filter-bar { display: none; }
+    body.fullscreen .board { padding: 12px; gap: 12px; }
+    body.fullscreen .order-card { font-size: 1.05em; }
+
+    /* =============================================
+       SIDEBAR STATS (collapsed right panel)
+       ============================================= */
+    .layout { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* =============================================
+       LIVE DOT
+       ============================================= */
+    .live-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 10px; border-radius: var(--radius-full);
+      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.25);
+      font-family: var(--font-heading); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent);
+    }
+    .live-badge::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--color-accent);
+      animation: livePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%,100%{opacity:1;transform:scale(1);}
+      50%{opacity:0.4;transform:scale(0.7);}
+    }
+
+    /* =============================================
+       PROGRESS BAR (per-item completion)
+       ============================================= */
+    .items-progress {
+      height: 3px; background: var(--border-color);
+      border-radius: var(--radius-full); overflow: hidden; margin: 0 16px 0;
+    }
+    .items-progress-bar {
+      height: 100%; border-radius: var(--radius-full);
+      background: linear-gradient(90deg, var(--color-accent), var(--color-primary));
+      transition: width 0.4s var(--ease-out);
+    }
+
+    /* =============================================
+       RESPONSIVE
+       ============================================= */
+    @media (max-width: 768px) {
+      .topbar { padding: 0 16px; gap: 10px; }
+      .topbar-kpis { gap: 4px; }
+      .kpi-chip { padding: 4px 8px; }
+      .kpi-chip .kpi-num { font-size: 15px; }
+      .topbar-clock { display: none; }
+      .board { padding: 14px 12px; gap: 12px; grid-template-columns: 1fr; }
+      .filter-bar { padding: 10px 14px; gap: 6px; }
+    }
+
+    @media (max-width: 480px) {
+      .topbar-logo-badge { display: none; }
+      .board { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     KITCHEN PIN LOGIN OVERLAY
+     ============================================================ -->
+<div id="kitchenPinLogin">
+  <div class="kitchen-pin-card">
+    <div class="kitchen-pin-logo">NŌVA KDS</div>
+    <div class="kitchen-pin-subtitle">Kitchen Display System — Enter PIN to access</div>
+    <div class="kitchen-pin-display" id="kitchenPinDisplay">——————</div>
+    <div class="kitchen-pin-keypad">
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(1)">1</button>
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(2)">2</button>
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(3)">3</button>
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(4)">4</button>
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(5)">5</button>
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(6)">6</button>
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(7)">7</button>
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(8)">8</button>
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(9)">9</button>
+      <button class="kitchen-pin-key clear" onclick="kitchenPinClear()">✕</button>
+      <button class="kitchen-pin-key" onclick="kitchenPinPress(0)">0</button>
+      <button class="kitchen-pin-key enter" onclick="kitchenPinEnter()">→</button>
+    </div>
+    <div class="kitchen-pin-error" id="kitchenPinError"></div>
+    <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;cursor:pointer;font-size:0.78rem;color:var(--text-muted);">
+      <input type="checkbox" id="kitchenRememberMe" style="accent-color:var(--color-primary);width:14px;height:14px;cursor:pointer;" />
+      Remember me on this device
+    </label>
+  </div>
+</div>
+
+<!-- =============================================
+     PAGE LOADER
+     ============================================= -->
+<div id="pageLoader">
+  <div class="loader-logo">NŌVA</div>
+  <div class="loader-ring"></div>
+  <div class="loader-text">Kitchen Display System</div>
+</div>
+
+<!-- =============================================
+     NEW ORDER NOTIFICATION BANNER
+     ============================================= -->
+<div id="newOrderBanner">
+  <div class="banner-icon">🔔</div>
+  <div class="banner-text">
+    <div class="banner-title" id="bannerTitle">New Order Received</div>
+    <div class="banner-desc"  id="bannerDesc">Table 4 — 3 items</div>
+  </div>
+  <button class="btn btn-sm btn-ghost" onclick="dismissBanner()" style="flex-shrink:0;">Dismiss</button>
+</div>
+
+<!-- =============================================
+     TOAST CONTAINER
+     ============================================= -->
+<div id="toastContainer"></div>
+
+<!-- =============================================
+     LAYOUT
+     ============================================= -->
+<div class="layout">
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-logo">
+      NŌVA
+      <span class="topbar-logo-badge">KDS</span>
+    </div>
+    <div class="topbar-divider"></div>
+    <span class="live-badge" id="liveBadge">Live</span>
+
+    <!-- KPI chips -->
+    <div class="topbar-kpis" id="topbarKpis">
+      <!-- Rendered by JS -->
+    </div>
+
+    <!-- Actions -->
+    <div class="topbar-actions">
+      <div class="topbar-clock" id="topbarClock">--:--:--</div>
+      <div class="topbar-divider"></div>
+      <button class="btn btn-ghost btn-sm" onclick="KitchenApp.addMockOrder()" title="Simulate new order">
+        <i data-lucide="plus" style="width:13px;height:13px;"></i>
+        New Order
+      </button>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="KitchenApp.toggleFullscreen()" title="Toggle fullscreen">
+        <i data-lucide="maximize-2" style="width:14px;height:14px;" id="fsIcon"></i>
+      </button>
+      <button class="btn btn-ghost btn-sm btn-icon" onclick="KitchenApp.toggleTheme()" title="Toggle theme">
+        <i data-lucide="sun"  style="width:14px;height:14px;" id="themeIconSun"  ></i>
+        <i data-lucide="moon" style="width:14px;height:14px;" id="themeIconMoon" ></i>
+      </button>
+      <button class="btn btn-danger btn-sm" onclick="KitchenApp.clearCompleted()">
+        <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+        Clear Done
+      </button>
+    </div>
+  </header>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar" id="filterBar">
+    <button class="filter-tab active" data-filter="all" onclick="KitchenApp.setFilter('all',this)">
+      All Orders <span class="tab-count" id="count-all">0</span>
+    </button>
+    <button class="filter-tab" data-filter="pending" onclick="KitchenApp.setFilter('pending',this)">
+      ⏳ Pending <span class="tab-count" id="count-pending">0</span>
+    </button>
+    <button class="filter-tab" data-filter="preparing" onclick="KitchenApp.setFilter('preparing',this)">
+      🔥 Cooking <span class="tab-count" id="count-preparing">0</span>
+    </button>
+    <button class="filter-tab" data-filter="ready" onclick="KitchenApp.setFilter('ready',this)">
+      ✅ Ready <span class="tab-count" id="count-ready">0</span>
+    </button>
+    <button class="filter-tab" data-filter="delivered" onclick="KitchenApp.setFilter('delivered',this)">
+      🚚 Done <span class="tab-count" id="count-delivered">0</span>
+    </button>
+    <button class="filter-tab" data-filter="cancelled" onclick="KitchenApp.setFilter('cancelled',this)">
+      ✖ Cancelled <span class="tab-count" id="count-cancelled">0</span>
+    </button>
+
+    <div class="filter-right">
+      <select class="sort-select" id="sortSelect" onchange="KitchenApp.render()">
+        <option value="time-asc">Oldest First</option>
+        <option value="time-desc">Newest First</option>
+        <option value="priority">Priority</option>
+        <option value="table">Table #</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- BOARD -->
+  <main class="board" id="orderBoard">
+    <!-- Rendered by JS -->
+  </main>
+
+</div>
+
+<!-- =============================================
+     MODAL: ORDER DETAIL
+     ============================================= -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="detailModalTitle">Order Detail</div>
+      <button class="modal-close" onclick="closeModal('detailModal')">
+        <i data-lucide="x" style="width:15px;height:15px;"></i>
+      </button>
+    </div>
+    <div class="modal-body" id="detailModalBody"></div>
+  </div>
+</div>
+
+<!-- =============================================
+     JAVASCRIPT — KITCHEN APP
+     ============================================= -->
+<script>
+/* =============================================
+   STORAGE MANAGER
+   Future: replace with Firestore real-time listeners
+   ============================================= */
+const Storage = {
+  get:    k => { try { return JSON.parse(localStorage.getItem('nova_' + k)); } catch { return null; } },
+  set:    (k,v) => { try { localStorage.setItem('nova_' + k, JSON.stringify(v)); } catch {} },
+  remove: k => localStorage.removeItem('nova_' + k),
+};
+
+/* =============================================
+   THEME MANAGER
+   ============================================= */
+const ThemeManager = {
+  init() {
+    const mode = Storage.get('themeMode') || 'dark';
+    document.documentElement.setAttribute('data-theme', mode);
+    this.syncIcon(mode);
+
+    // Apply saved custom colors from admin panel
+    const theme = Storage.get('admin_theme') || Storage.get('theme');
+    if (theme) Object.entries(theme).forEach(([k,v]) => document.documentElement.style.setProperty(k,v));
+  },
+  toggle() {
+    const cur  = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    Storage.set('themeMode', next);
+    this.syncIcon(next);
+  },
+  syncIcon(mode) {
+    const sun  = document.getElementById('themeIconSun');
+    const moon = document.getElementById('themeIconMoon');
+    if (sun)  sun.style.display  = mode === 'dark'  ? '' : 'none';
+    if (moon) moon.style.display = mode === 'light' ? '' : 'none';
+  },
+};
+
+/* =============================================
+   TOAST SYSTEM
+   ============================================= */
+function toast(msg, type = 'info', sub = '') {
+  const icons = { success:'check-circle', error:'alert-circle', info:'info', warning:'alert-triangle' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `
+    <div class="toast-icon"><i data-lucide="${icons[type]||'info'}" style="width:15px;height:15px;"></i></div>
+    <div style="flex:1;">
+      <div class="toast-msg">${msg}</div>
+      ${sub ? `<div class="toast-sub">${sub}</div>` : ''}
+    </div>
+    <button onclick="this.closest('.toast').remove()" style="color:var(--text-muted);">
+      <i data-lucide="x" style="width:13px;height:13px;"></i>
+    </button>
+  `;
+  document.getElementById('toastContainer').appendChild(el);
+  if (window.lucide) lucide.createIcons();
+  const DUR = 4000;
+  setTimeout(() => {
+    el.classList.add('removing');
+    setTimeout(() => el.remove(), 300);
+  }, DUR);
+}
+
+/* =============================================
+   MODAL
+   ============================================= */
+function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+/* =============================================
+   MOCK DATA — ORDERS
+   ============================================= */
+const MOCK_ORDERS_SEED = [];
+
+/* =============================================
+   NAMES FOR GENERATED ORDERS
+   ============================================= */
+const MOCK_FOODS = [
+  'Wagyu Smash Burger','Tuna Tataki Bowl','Truffle Fries','Burrata Caprese',
+  'Margherita Classica','Crème Brûlée','Signature Lemonade','Pan-Seared Salmon',
+  'Crispy Chicken Sandwich','Spicy Ramen Bowl','Avocado Toast','Beef Short Rib',
+];
+
+/* =============================================
+   KITCHEN APP CONTROLLER
+   ============================================= */
+const KitchenApp = {
+  filter: 'all',
+  isFS:   false,
+
+  /* ── Data helpers ─────────────────────────── */
+  getOrders() {
+    // Merge: admin-placed orders + locally-stored KDS orders
+    const admin   = Storage.get('kitchen_orders') || [];
+    const local   = Storage.get('kds_local')      || [];
+    // De-dupe by id
+    const merged = [...admin];
+    local.forEach(l => { if (!merged.find(a => a.id === l.id)) merged.push(l); });
+    return merged;
+  },
+
+  saveOrder(order) {
+    // Write back to both stores
+    const admin = Storage.get('kitchen_orders') || [];
+    const aIdx  = admin.findIndex(o => o.id === order.id);
+    if (aIdx >= 0) { admin[aIdx] = order; Storage.set('kitchen_orders', admin); }
+
+    const local = Storage.get('kds_local') || [];
+    const lIdx  = local.findIndex(o => o.id === order.id);
+    if (lIdx >= 0) { local[lIdx] = order; } else { local.push(order); }
+    Storage.set('kds_local', local);
+  },
+
+  deleteOrder(id) {
+    const admin = (Storage.get('kitchen_orders') || []).filter(o => o.id !== id);
+    Storage.set('kitchen_orders', admin);
+    const local = (Storage.get('kds_local') || []).filter(o => o.id !== id);
+    Storage.set('kds_local', local);
+  },
+
+  /* ── Filtering & sorting ──────────────────── */
+  setFilter(filter, el) {
+    this.filter = filter;
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    this.render();
+  },
+
+  getFiltered() {
+    let orders = this.getOrders();
+    if (this.filter !== 'all') orders = orders.filter(o => (o.status || o.kitchenStatus) === this.filter);
+    const sort = document.getElementById('sortSelect')?.value || 'time-asc';
+    const pr = { high:0, medium:1, low:2 };
+    return orders.sort((a,b) => {
+      switch(sort) {
+        case 'time-asc':  return (a.timestamp||0) - (b.timestamp||0);
+        case 'time-desc': return (b.timestamp||0) - (a.timestamp||0);
+        case 'priority':  return (pr[a.priority||'medium']||1) - (pr[b.priority||'medium']||1);
+        case 'table':     return (a.table||0) - (b.table||0);
+        default: return 0;
+      }
+    });
+  },
+
+  /* ── Status advancement ───────────────────── */
+  nextStatus(current) {
+    const flow = { pending:'preparing', preparing:'ready', ready:'delivered' };
+    return flow[current] || current;
+  },
+
+  advanceStatus(id) {
+    const orders = this.getOrders();
+    const order  = orders.find(o => o.id === id);
+    if (!order) return;
+    const cur  = order.status || order.kitchenStatus || 'pending';
+    const next = this.nextStatus(cur);
+    if (next === cur) return;
+    order.status = next;
+    order.kitchenStatus = next;
+    this.saveOrder(order);
+
+    const labels = { preparing:'🔥 Cooking started', ready:'✅ Order ready', delivered:'🚚 Served / delivered' };
+    toast(labels[next] || `Status → ${next}`, next === 'ready' ? 'success' : 'info', id);
+    this.render();
+    this.playBell(next === 'ready');
+  },
+
+  markDelivered(id) {
+    const orders = this.getOrders();
+    const order  = orders.find(o => o.id === id);
+    if (!order) return;
+    order.status = 'delivered';
+    order.kitchenStatus = 'delivered';
+    this.saveOrder(order);
+    toast('Order marked as delivered', 'success', id);
+    this.render();
+  },
+
+  cancelOrder(id) {
+    if (!confirm(`Cancel order ${id}?`)) return;
+    const orders = this.getOrders();
+    const order  = orders.find(o => o.id === id);
+    if (!order) return;
+    order.status = 'cancelled';
+    order.kitchenStatus = 'cancelled';
+    this.saveOrder(order);
+    toast('Order cancelled', 'warning', id);
+    this.render();
+  },
+
+  toggleItem(orderId, itemId) {
+    const orders = this.getOrders();
+    const order  = orders.find(o => o.id === orderId);
+    if (!order) return;
+    const item = (order.items || []).find(i => i.id === itemId);
+    if (item) { item.done = !item.done; this.saveOrder(order); this.render(); }
+  },
+
+  clearCompleted() {
+    const orders   = this.getOrders();
+    const toRemove = orders.filter(o => ['delivered','cancelled'].includes(o.status || o.kitchenStatus));
+    if (!toRemove.length) { toast('No completed orders to clear', 'info'); return; }
+    toRemove.forEach(o => this.deleteOrder(o.id));
+    toast(`Cleared ${toRemove.length} completed orders`, 'success');
+    this.render();
+  },
+
+  /* ── Render ───────────────────────────────── */
+  render() {
+    const board   = document.getElementById('orderBoard');
+    const orders  = this.getOrders();
+    const visible = this.getFiltered();
+
+    // Update counts
+    const statuses = ['all','pending','preparing','ready','delivered','cancelled'];
+    statuses.forEach(s => {
+      const el = document.getElementById(`count-${s}`);
+      if (!el) return;
+      el.textContent = s === 'all'
+        ? orders.length
+        : orders.filter(o => (o.status || o.kitchenStatus) === s).length;
+    });
+
+    // Update KPI chips
+    this.renderKpis(orders);
+
+    // Render board
+    if (!visible.length) {
+      board.innerHTML = `
+        <div class="empty-board">
+          <div class="empty-icon">🍽️</div>
+          <div class="empty-title">No orders here</div>
+          <div class="empty-desc">${
+            this.filter === 'all'
+              ? 'Orders placed from the landing page or waiter panel will appear here in real time.'
+              : `No orders with status "${this.filter}" right now.`
+          }</div>
+        </div>
+      `;
+    } else {
+      board.innerHTML = visible.map(o => this.renderCard(o)).join('');
+    }
+
+    if (window.lucide) lucide.createIcons();
+  },
+
+  renderKpis(orders) {
+    const pending   = orders.filter(o => (o.status||o.kitchenStatus) === 'pending').length;
+    const preparing = orders.filter(o => (o.status||o.kitchenStatus) === 'preparing').length;
+    const ready     = orders.filter(o => (o.status||o.kitchenStatus) === 'ready').length;
+    const done      = orders.filter(o => ['delivered','cancelled'].includes(o.status||o.kitchenStatus)).length;
+    document.getElementById('topbarKpis').innerHTML = `
+      <div class="kpi-chip pending">
+        <span class="kpi-num" style="color:var(--color-warning);">${pending}</span>
+        <span class="kpi-lbl">Pending</span>
+      </div>
+      <div class="kpi-chip cooking">
+        <span class="kpi-num" style="color:var(--color-secondary);">${preparing}</span>
+        <span class="kpi-lbl">Cooking</span>
+      </div>
+      <div class="kpi-chip ready">
+        <span class="kpi-num" style="color:var(--color-accent);">${ready}</span>
+        <span class="kpi-lbl">Ready</span>
+      </div>
+      <div class="kpi-chip done">
+        <span class="kpi-num" style="color:var(--color-purple);">${done}</span>
+        <span class="kpi-lbl">Done</span>
+      </div>
+    `;
+  },
+
+  renderCard(order) {
+    const status    = order.status || order.kitchenStatus || 'pending';
+    const priority  = order.priority || 'medium';
+    const items     = order.items || [];
+    const doneCount = items.filter(i => i.done).length;
+    const progress  = items.length ? Math.round((doneCount / items.length) * 100) : 0;
+    const elapsed   = this.elapsedStr(order.timestamp);
+    const mins      = order.timestamp ? Math.floor((Date.now() - order.timestamp) / 60000) : 0;
+    const timerClass = mins < 10 ? 'ok' : mins < 20 ? 'warning' : 'urgent';
+    const isUrgent   = mins >= 20 && ['pending','preparing'].includes(status);
+
+    const typeMap = {
+      'dine-in':  { cls:'type-dine',     label:'Dine-in' },
+      'delivery': { cls:'type-delivery', label:'Delivery' },
+      'takeaway': { cls:'type-takeaway', label:'Takeaway' },
+      'pickup':   { cls:'type-takeaway', label:'Pickup' },
+    };
+    const typeInfo = typeMap[order.type] || { cls:'type-dine', label:'Dine-in' };
+
+    const nextBtn = this.nextStatus(status);
+    const nextLabels = { preparing:'🔥 Start Cooking', ready:'✅ Mark Ready', delivered:'🚚 Delivered' };
+
+    return `
+      <div class="order-card ${isUrgent ? 'urgent' : ''}" data-status="${status}" data-id="${order.id}" id="card-${order.id}">
+
+        <!-- Header -->
+        <div class="card-head">
+          <div class="card-order-id">${order.id}</div>
+          ${order.table
+            ? `<div class="card-table-badge"><i data-lucide="table-2" style="width:12px;height:12px;"></i> T${order.table}</div>`
+            : ``
+          }
+          <span class="card-type-badge ${typeInfo.cls}">${typeInfo.label}</span>
+          <span class="priority-tag priority-${priority}">${priority}</span>
+        </div>
+
+        <!-- Status row -->
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 16px 6px;">
+          <span class="status-badge status-${status}">${status}</span>
+          <span style="font-size:11px;color:var(--text-muted);font-family:var(--font-mono);">${new Date(order.timestamp||Date.now()).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</span>
+        </div>
+
+        <!-- Items progress bar -->
+        <div class="items-progress">
+          <div class="items-progress-bar" style="width:${progress}%;"></div>
+        </div>
+
+        <!-- Items list -->
+        <div class="card-items">
+          ${items.map(item => `
+            <div class="order-item" id="item-${order.id}-${item.id}">
+              <span class="order-item-qty">${item.qty}×</span>
+              <div style="flex:1;">
+                <div class="order-item-name" style="${item.done ? 'opacity:0.45;text-decoration:line-through;' : ''}">${item.name}</div>
+                ${item.mods ? `<div class="order-item-mods">— ${item.mods}</div>` : ''}
+              </div>
+              <button
+                class="order-item-done ${item.done ? 'checked' : ''}"
+                onclick="KitchenApp.toggleItem('${order.id}','${item.id}')"
+                title="${item.done ? 'Mark undone' : 'Mark done'}"
+              >
+                ${item.done ? `<i data-lucide="check" style="width:12px;height:12px;"></i>` : ''}
+              </button>
+            </div>
+          `).join('')}
+          <div style="font-size:11px;color:var(--text-muted);text-align:right;padding-top:4px;">
+            ${doneCount}/${items.length} items done
+          </div>
+        </div>
+
+        <!-- Notes -->
+        ${order.notes ? `
+        <div class="card-notes">
+          <span class="card-notes-icon">⚠️</span>
+          <span>${order.notes}</span>
+        </div>
+        ` : ''}
+
+        <!-- Timer -->
+        <div class="card-timer">
+          <div>
+            <div class="timer-elapsed ${timerClass}">${elapsed}</div>
+            <div class="timer-label">Time Elapsed</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-family:var(--font-heading);font-size:12px;font-weight:700;color:var(--text-secondary);">${doneCount}/${items.length}</div>
+            <div class="timer-label">Items Done</div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        ${status !== 'delivered' && status !== 'cancelled' ? `
+        <div class="card-actions">
+          ${nextBtn !== status ? `
+            <button class="btn-next-status" onclick="KitchenApp.advanceStatus('${order.id}')">
+              <i data-lucide="arrow-right" style="width:13px;height:13px;"></i>
+              ${nextLabels[nextBtn] || 'Advance'}
+            </button>
+          ` : ''}
+          ${status === 'ready' ? `
+            <button class="btn-complete" onclick="KitchenApp.markDelivered('${order.id}')">
+              <i data-lucide="check-check" style="width:13px;height:13px;"></i>
+              Served
+            </button>
+          ` : ''}
+          <button class="btn-cancel-card" onclick="KitchenApp.cancelOrder('${order.id}')" title="Cancel order">
+            <i data-lucide="x" style="width:13px;height:13px;"></i>
+          </button>
+        </div>
+        ` : `
+        <div class="card-actions" style="justify-content:center;">
+          <span style="font-size:12px;color:var(--text-muted);">
+            ${status === 'delivered' ? '✅ Completed & served' : '✖ Cancelled'}
+          </span>
+        </div>
+        `}
+
+      </div>
+    `;
+  },
+
+  /* ── Clock & elapsed time ─────────────────── */
+  elapsedStr(ts) {
+    if (!ts) return '0:00';
+    const diff = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+    const m = Math.floor(diff / 60);
+    const s = diff % 60;
+    return `${m}:${String(s).padStart(2,'0')}`;
+  },
+
+  startClock() {
+    const update = () => {
+      const now  = new Date();
+      const hh   = String(now.getHours()).padStart(2,'0');
+      const mm   = String(now.getMinutes()).padStart(2,'0');
+      const ss   = String(now.getSeconds()).padStart(2,'0');
+      const el   = document.getElementById('topbarClock');
+      if (el) el.textContent = `${hh}:${mm}:${ss}`;
+    };
+    update();
+    setInterval(update, 1000);
+  },
+
+  /* Refresh timers every 10s */
+  startTimerRefresh() {
+    setInterval(() => this.render(), 10000);
+  },
+
+  /* ── New order simulation ─────────────────── */
+  addMockOrder() {
+    const local = Storage.get('kds_local') || [];
+    const id    = 'NVA-' + String(local.length + Date.now()).slice(-4).padStart(3,'0');
+    const tables = [1,2,3,4,5,6,7,8,null];
+    const types  = ['dine-in','delivery','takeaway'];
+    const prios  = ['high','medium','low'];
+    const numItems = Math.floor(Math.random() * 3) + 1;
+    const items = Array.from({length:numItems}, (_,i) => ({
+      id: `i${Date.now()}_${i}`,
+      name: MOCK_FOODS[Math.floor(Math.random() * MOCK_FOODS.length)],
+      qty:  Math.floor(Math.random() * 2) + 1,
+      mods: '',
+      done: false,
+    }));
+
+    const order = {
+      id,
+      table:     tables[Math.floor(Math.random() * tables.length)],
+      type:      types[Math.floor(Math.random() * types.length)],
+      status:    'pending',
+      kitchenStatus: 'pending',
+      priority:  prios[Math.floor(Math.random() * prios.length)],
+      timestamp: Date.now(),
+      items,
+      notes: Math.random() > 0.75 ? 'No onions please' : '',
+    };
+
+    local.push(order);
+    Storage.set('kds_local', local);
+
+    // Show banner
+    this.showNewOrderBanner(order);
+    this.playBell(false);
+    this.render();
+    toast(`New order ${id}`, 'warning', `${items.length} item${items.length>1?'s':''} • ${order.type}`);
+  },
+
+  showNewOrderBanner(order) {
+    const banner  = document.getElementById('newOrderBanner');
+    const title   = document.getElementById('bannerTitle');
+    const desc    = document.getElementById('bannerDesc');
+    if (!banner) return;
+    title.textContent = `New Order — ${order.id}`;
+    desc.textContent  = `${order.table ? 'Table ' + order.table : order.type} · ${order.items.length} item${order.items.length>1?'s':''}`;
+    banner.classList.add('visible');
+    setTimeout(() => banner.classList.remove('visible'), 6000);
+  },
+
+  /* ── Audio bell simulation ────────────────── */
+  playBell(isReady = false) {
+    try {
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type      = 'sine';
+      osc.frequency.setValueAtTime(isReady ? 880 : 660, ctx.currentTime);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+      if (isReady) {
+        setTimeout(() => {
+          const osc2 = ctx.createOscillator();
+          const g2   = ctx.createGain();
+          osc2.connect(g2); g2.connect(ctx.destination);
+          osc2.frequency.value = 1100;
+          g2.gain.setValueAtTime(0.12, ctx.currentTime);
+          g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+          osc2.start(); osc2.stop(ctx.currentTime + 0.5);
+        }, 300);
+      }
+    } catch(e) { /* Audio not supported */ }
+  },
+
+  /* ── Fullscreen ───────────────────────────── */
+  toggleFullscreen() {
+    this.isFS = !this.isFS;
+    document.body.classList.toggle('fullscreen', this.isFS);
+    const icon = document.getElementById('fsIcon');
+    if (icon) icon.setAttribute('data-lucide', this.isFS ? 'minimize-2' : 'maximize-2');
+    if (window.lucide) lucide.createIcons();
+
+    if (this.isFS && document.documentElement.requestFullscreen) {
+      document.documentElement.requestFullscreen().catch(()=>{});
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen().catch(()=>{});
+    }
+  },
+
+  /* ── Theme ────────────────────────────────── */
+  toggleTheme() { ThemeManager.toggle(); },
+
+  /* ── Polling for new admin orders ─────────── */
+  startPolling() {
+    let lastCount = this.getOrders().length;
+    setInterval(() => {
+      const cur = this.getOrders().length;
+      if (cur > lastCount) {
+        const newest = this.getOrders().slice(-1)[0];
+        if (newest) { this.showNewOrderBanner(newest); this.playBell(false); }
+        this.render();
+      }
+      lastCount = cur;
+    }, 3000);
+  },
+
+  /* ── Init ─────────────────────────────────── */
+  init() {
+    // Always hide loader
+    const hide = () => document.getElementById('pageLoader')?.classList.add('hidden');
+    setTimeout(hide, 900);
+    window.addEventListener('load', hide);
+
+    try { ThemeManager.init(); } catch(e) {}
+
+    // Seed mock data if nothing in storage
+    const existing = this.getOrders();
+    if (!existing.length) {
+      Storage.set('kds_local', MOCK_ORDERS_SEED);
+    }
+
+    try { this.render(); } catch(e) { console.warn('KDS render error:', e); }
+    try { this.startClock(); } catch(e) {}
+    try { this.startTimerRefresh(); } catch(e) {}
+    try { this.startPolling(); } catch(e) {}
+
+    if (window.lucide) lucide.createIcons();
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); this.toggleFullscreen(); }
+      if (e.key === 'n' && !e.target.matches('input,textarea')) this.addMockOrder();
+    });
+  },
+};
+
+/* =============================================
+   BANNER DISMISS
+   ============================================= */
+function dismissBanner() {
+  document.getElementById('newOrderBanner').classList.remove('visible');
+}
+
+/* =============================================
+   KITCHEN PIN LOGIN SYSTEM
+   ============================================= */
+let _kitchenPinBuf = '';
+
+function _getStaff() {
+  // Read from nova_staff (set by seed.html)
+  try {
+    const v = localStorage.getItem('nova_staff');
+    if (v) return JSON.parse(v);
+  } catch {}
+  return null;
+}
+
+function kitchenPinPress(n) {
+  if (_kitchenPinBuf.length >= 6) return;
+  _kitchenPinBuf += String(n);
+  _kitchenUpdateDisplay();
+  if (_kitchenPinBuf.length === 6) setTimeout(kitchenPinEnter, 120);
+}
+
+function kitchenPinClear() {
+  _kitchenPinBuf = _kitchenPinBuf.slice(0, -1);
+  _kitchenUpdateDisplay();
+  document.getElementById('kitchenPinError').textContent = '';
+}
+
+function kitchenPinEnter() {
+  const errEl = document.getElementById('kitchenPinError');
+  const staff  = _getStaff();
+
+  if (!staff || staff.length === 0) {
+    errEl.textContent = 'No staff found. Please run the seeder first.';
+    _kitchenPinBuf = '';
+    _kitchenUpdateDisplay();
+    return;
+  }
+
+  const matched = staff.find(s => (s.pin || '121212') === _kitchenPinBuf);
+  if (matched) {
+    const remember = document.getElementById('kitchenRememberMe')?.checked;
+    if (remember) localStorage.setItem('nova_kitchen_session', '1');
+    document.getElementById('kitchenPinLogin').classList.add('hidden');
+    KitchenApp.init();
+  } else {
+    errEl.textContent = 'Incorrect PIN. Try again.';
+    const disp = document.getElementById('kitchenPinDisplay');
+    disp.style.animation = 'kitchenShake 0.3s ease';
+    setTimeout(() => disp.style.animation = '', 400);
+    _kitchenPinBuf = '';
+    _kitchenUpdateDisplay();
+  }
+}
+
+function _kitchenUpdateDisplay() {
+  const d = document.getElementById('kitchenPinDisplay');
+  d.textContent = _kitchenPinBuf.length > 0
+    ? '●'.repeat(_kitchenPinBuf.length) + '—'.repeat(6 - _kitchenPinBuf.length)
+    : '——————';
+}
+
+/* =============================================
+   BOOT
+   ============================================= */
+document.addEventListener('DOMContentLoaded', () => {
+  const staff = _getStaff();
+  if (staff && staff.length > 0 && localStorage.getItem('nova_kitchen_session') === '1') {
+    document.getElementById('kitchenPinLogin').classList.add('hidden');
+    KitchenApp.init();
+  } else {
+    // Clear stale session if staff were wiped
+    if (!staff || staff.length === 0) localStorage.removeItem('nova_kitchen_session');
+    // PIN overlay stays visible
+  }
+});
+</script>
+</body>
+</html>

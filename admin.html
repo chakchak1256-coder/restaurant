@@ -1,0 +1,3893 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NŌVA Admin — Control Center</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <!-- Icons & Charts -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* =============================================
+       CSS CUSTOM PROPERTIES — THEME SYSTEM
+       ============================================= */
+    :root {
+      --color-primary:       #e8a020;
+      --color-primary-light: #f5be52;
+      --color-primary-dark:  #b8780e;
+      --color-secondary:     #0ea5e9;
+      --color-accent:        #10b981;
+      --color-danger:        #ef4444;
+      --color-warning:       #f59e0b;
+      --color-purple:        #8b5cf6;
+
+      --bg-base:    #080809;
+      --bg-surface: #0f0f12;
+      --bg-card:    #161619;
+      --bg-card-hover: #1e1e23;
+      --bg-glass:   rgba(22,22,25,0.85);
+
+      --text-primary:   #f0ede8;
+      --text-secondary: #a09a90;
+      --text-muted:     #5a5650;
+
+      --border-color:  rgba(240,237,232,0.07);
+      --border-active: rgba(232,160,32,0.4);
+
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.5);
+      --shadow-md:   0 4px 20px rgba(0,0,0,0.6);
+      --shadow-lg:   0 12px 48px rgba(0,0,0,0.7);
+      --shadow-gold: 0 8px 32px rgba(232,160,32,0.2);
+
+      --radius-sm:  6px;
+      --radius-md:  12px;
+      --radius-lg:  20px;
+      --radius-xl:  28px;
+      --radius-full: 9999px;
+
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-heading: 'Syne', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+
+      --sidebar-w: 260px;
+      --topbar-h:  64px;
+
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    [data-theme="light"] {
+      --bg-base:    #f5f2ed;
+      --bg-surface: #ffffff;
+      --bg-card:    #ffffff;
+      --bg-card-hover: #f8f5f0;
+      --bg-glass:   rgba(255,255,255,0.92);
+      --text-primary:   #1a1714;
+      --text-secondary: #6b6560;
+      --text-muted:     #a09a90;
+      --border-color:   rgba(26,23,20,0.08);
+      --shadow-md:   0 4px 20px rgba(0,0,0,0.10);
+      --shadow-lg:   0 12px 48px rgba(0,0,0,0.12);
+    }
+
+    /* =============================================
+       RESET & BASE
+       ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    input, textarea, select { font-family: inherit; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+    /* =============================================
+       PIN LOGIN OVERLAY
+       ============================================= */
+    #adminPinLogin {
+      position: fixed; inset: 0; z-index: 10000;
+      background: var(--bg-base);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 32px;
+      animation: pinFadeIn 0.4s cubic-bezier(0.16,1,0.3,1);
+    }
+    #adminPinLogin.hidden { display: none; }
+    @keyframes pinFadeIn { from { opacity:0; transform:translateY(10px); } }
+    .admin-pin-card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: 26px; padding: 40px 44px;
+      width: 100%; max-width: 400px; text-align: center;
+      box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+    }
+    .admin-pin-logo {
+      font-family: var(--font-display); font-size: 2rem; font-weight: 600;
+      color: var(--color-primary); letter-spacing: 0.08em; margin-bottom: 4px;
+    }
+    .admin-pin-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 28px; }
+    .admin-pin-display {
+      background: var(--bg-base); border: 1px solid var(--border-color);
+      border-radius: 12px; padding: 12px;
+      font-family: 'Courier New', monospace; font-size: 1.4rem;
+      letter-spacing: 0.3em; color: var(--color-primary);
+      text-align: center; margin-bottom: 14px; min-height: 52px;
+    }
+    .admin-pin-keypad { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+    .admin-pin-key {
+      padding: 14px; text-align: center;
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: 12px; font-size: 1.1rem; font-weight: 600;
+      color: var(--text-primary); cursor: pointer; transition: all 0.15s;
+      font-family: var(--font-body);
+    }
+    .admin-pin-key:hover { background: var(--bg-card-hover); border-color: var(--color-primary); transform: scale(1.03); }
+    .admin-pin-key:active { transform: scale(0.97); }
+    .admin-pin-key.clear { color: var(--color-danger, #ef4444); }
+    .admin-pin-key.enter { background: var(--color-primary); color: #000; border-color: var(--color-primary); }
+    .admin-pin-key.enter:hover { background: var(--color-primary-light, #f5be52); }
+    .admin-pin-error { color: var(--color-danger, #ef4444); font-size: 0.8rem; margin-top: 10px; min-height: 20px; }
+    @keyframes adminShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+
+    /* =============================================
+       PAGE LOADER
+       ============================================= */
+    #pageLoader {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg-base);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    #pageLoader.hidden { opacity: 0; visibility: hidden; }
+    .loader-logo {
+      font-family: var(--font-display); font-size: 36px; font-weight: 600;
+      letter-spacing: 0.05em; color: var(--color-primary);
+    }
+    .loader-bar {
+      width: 120px; height: 2px; background: var(--border-color); border-radius: 2px; overflow: hidden;
+    }
+    .loader-bar-fill {
+      height: 100%; width: 0; background: var(--color-primary);
+      border-radius: 2px; animation: loadFill 1s var(--ease-out) forwards;
+    }
+    @keyframes loadFill { to { width: 100%; } }
+
+    /* =============================================
+       LAYOUT: SIDEBAR + MAIN
+       ============================================= */
+    .admin-layout {
+      display: flex; min-height: 100vh;
+    }
+
+    /* =============================================
+       SIDEBAR
+       ============================================= */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-color);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
+      transition: transform 0.3s var(--ease-out);
+      overflow-y: auto; overflow-x: hidden;
+    }
+    .sidebar.collapsed { transform: translateX(calc(-1 * var(--sidebar-w))); }
+
+    .sidebar-header {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .sidebar-logo {
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      color: var(--color-primary); letter-spacing: 0.05em;
+    }
+    .sidebar-badge {
+      font-family: var(--font-heading); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      background: rgba(232,160,32,0.15); color: var(--color-primary);
+      border: 1px solid rgba(232,160,32,0.3);
+      padding: 2px 8px; border-radius: var(--radius-full);
+      margin-left: auto;
+    }
+
+    .sidebar-section {
+      padding: 8px 12px 0;
+      flex: 1;
+    }
+    .sidebar-section-label {
+      font-family: var(--font-heading); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); padding: 16px 8px 6px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: var(--radius-md);
+      color: var(--text-secondary); font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s ease; margin-bottom: 2px;
+      position: relative; white-space: nowrap;
+    }
+    .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+    .nav-item.active {
+      background: rgba(232,160,32,0.12);
+      color: var(--color-primary);
+      border: 1px solid rgba(232,160,32,0.2);
+    }
+    .nav-item .nav-icon { width: 18px; height: 18px; flex-shrink: 0; }
+    .nav-item .nav-badge {
+      margin-left: auto; font-size: 10px; font-weight: 700;
+      background: var(--color-danger); color: #fff;
+      padding: 1px 6px; border-radius: var(--radius-full);
+      min-width: 18px; text-align: center;
+    }
+
+    .sidebar-footer {
+      padding: 16px 12px;
+      border-top: 1px solid var(--border-color);
+    }
+    .admin-profile {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; border-radius: var(--radius-md);
+      background: var(--bg-card); cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .admin-profile:hover { background: var(--bg-card-hover); }
+    .admin-avatar {
+      width: 34px; height: 34px; border-radius: var(--radius-full);
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-size: 13px; font-weight: 700;
+      color: #fff; flex-shrink: 0;
+    }
+    .admin-info { flex: 1; overflow: hidden; }
+    .admin-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .admin-role { font-size: 11px; color: var(--text-muted); }
+
+    /* =============================================
+       MAIN CONTENT
+       ============================================= */
+    .main-content {
+      flex: 1;
+      margin-left: var(--sidebar-w);
+      display: flex; flex-direction: column;
+      min-height: 100vh;
+      transition: margin-left 0.3s var(--ease-out);
+    }
+    .main-content.expanded { margin-left: 0; }
+
+    /* =============================================
+       TOPBAR
+       ============================================= */
+    .topbar {
+      height: var(--topbar-h);
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 24px;
+      position: sticky; top: 0; z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .topbar-toggle {
+      width: 36px; height: 36px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); transition: all 0.2s ease;
+    }
+    .topbar-toggle:hover { background: var(--bg-card); color: var(--text-primary); }
+
+    .topbar-title {
+      font-family: var(--font-heading); font-size: 16px; font-weight: 700;
+      color: var(--text-primary); flex: 1;
+    }
+    .topbar-search {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 0 14px;
+      height: 38px; min-width: 220px;
+      transition: border-color 0.2s ease;
+    }
+    .topbar-search:focus-within { border-color: var(--border-active); }
+    .topbar-search input {
+      background: none; border: none; outline: none;
+      color: var(--text-primary); font-size: 13px; width: 100%;
+    }
+    .topbar-search input::placeholder { color: var(--text-muted); }
+    .topbar-search svg { color: var(--text-muted); width: 14px; height: 14px; flex-shrink: 0; }
+
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    .topbar-btn {
+      width: 36px; height: 36px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary); transition: all 0.2s ease;
+      position: relative;
+    }
+    .topbar-btn:hover { background: var(--bg-card); color: var(--text-primary); }
+    .topbar-btn .notif-dot {
+      position: absolute; top: 7px; right: 7px;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--color-danger); border: 1.5px solid var(--bg-surface);
+    }
+
+    /* =============================================
+       PAGE CONTENT
+       ============================================= */
+    .page {
+      padding: 28px 28px;
+      flex: 1;
+      display: none;
+    }
+    .page.active { display: block; animation: fadeInUp 0.35s var(--ease-out); }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .page-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 16px;
+    }
+    .page-title {
+      font-family: var(--font-display); font-size: 32px; font-weight: 700;
+      color: var(--text-primary); line-height: 1.1;
+    }
+    .page-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+
+    /* =============================================
+       STAT CARDS
+       ============================================= */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px; margin-bottom: 28px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      transition: all 0.25s ease;
+      position: relative; overflow: hidden;
+      cursor: default;
+    }
+    .stat-card::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(232,160,32,0.04), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .stat-card:hover { border-color: rgba(232,160,32,0.2); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .stat-card:hover::before { opacity: 1; }
+
+    .stat-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .stat-icon {
+      width: 38px; height: 38px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .stat-icon.gold   { background: rgba(232,160,32,0.15); color: var(--color-primary); }
+    .stat-icon.green  { background: rgba(16,185,129,0.15); color: var(--color-accent); }
+    .stat-icon.blue   { background: rgba(14,165,233,0.15); color: var(--color-secondary); }
+    .stat-icon.purple { background: rgba(139,92,246,0.15); color: var(--color-purple); }
+    .stat-icon.red    { background: rgba(239,68,68,0.15);  color: var(--color-danger); }
+
+    .stat-delta {
+      font-size: 11px; font-weight: 600; display: flex; align-items: center; gap: 3px;
+      padding: 2px 8px; border-radius: var(--radius-full);
+    }
+    .stat-delta.up   { background: rgba(16,185,129,0.12); color: var(--color-accent); }
+    .stat-delta.down { background: rgba(239,68,68,0.12);  color: var(--color-danger); }
+
+    .stat-value {
+      font-family: var(--font-heading); font-size: 28px; font-weight: 800;
+      color: var(--text-primary); line-height: 1; margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+    .stat-label { font-size: 13px; color: var(--text-muted); }
+
+    /* =============================================
+       CARDS
+       ============================================= */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 20px; border-bottom: 1px solid var(--border-color);
+    }
+    .card-title {
+      font-family: var(--font-heading); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary);
+    }
+    .card-body { padding: 20px; }
+
+    /* Grid layouts */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .grid-auto { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+    /* =============================================
+       BUTTONS
+       ============================================= */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: var(--radius-md);
+      font-family: var(--font-heading); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      transition: all 0.2s var(--ease-out); cursor: pointer; border: none;
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: #fff; box-shadow: 0 4px 14px rgba(232,160,32,0.3);
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,160,32,0.4); }
+    .btn-ghost {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover { border-color: var(--border-active); color: var(--text-primary); background: var(--bg-card-hover); }
+    .btn-danger { background: rgba(239,68,68,0.15); color: var(--color-danger); border: 1px solid rgba(239,68,68,0.25); }
+    .btn-danger:hover { background: var(--color-danger); color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
+    .btn-icon { padding: 8px; width: 34px; height: 34px; justify-content: center; }
+
+    /* =============================================
+       TABLES
+       ============================================= */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table thead th {
+      padding: 10px 16px;
+      font-family: var(--font-heading); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color); text-align: left;
+    }
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border-color);
+      transition: background 0.15s ease;
+    }
+    .data-table tbody tr:hover { background: var(--bg-card-hover); }
+    .data-table tbody tr:last-child { border-bottom: none; }
+    .data-table td { padding: 12px 16px; font-size: 13px; color: var(--text-secondary); vertical-align: middle; }
+    .data-table td:first-child { color: var(--text-primary); font-weight: 500; }
+
+    /* Status badges */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: var(--radius-full);
+      font-family: var(--font-heading); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .badge-gold    { background: rgba(232,160,32,0.15);  color: var(--color-primary);   border: 1px solid rgba(232,160,32,0.25); }
+    .badge-green   { background: rgba(16,185,129,0.15);  color: var(--color-accent);    border: 1px solid rgba(16,185,129,0.25); }
+    .badge-blue    { background: rgba(14,165,233,0.15);  color: var(--color-secondary); border: 1px solid rgba(14,165,233,0.25); }
+    .badge-red     { background: rgba(239,68,68,0.15);   color: var(--color-danger);    border: 1px solid rgba(239,68,68,0.25); }
+    .badge-purple  { background: rgba(139,92,246,0.15);  color: var(--color-purple);    border: 1px solid rgba(139,92,246,0.25); }
+    .badge-gray    { background: var(--bg-surface);       color: var(--text-muted);      border: 1px solid var(--border-color); }
+
+    /* =============================================
+       FORM INPUTS
+       ============================================= */
+    .form-group { margin-bottom: 16px; }
+    .form-label {
+      display: block; margin-bottom: 6px;
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+    }
+    .form-control {
+      width: 100%; padding: 10px 14px;
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); color: var(--text-primary); font-size: 14px;
+      outline: none; transition: border-color 0.2s ease;
+    }
+    .form-control:focus { border-color: var(--border-active); }
+    .form-control::placeholder { color: var(--text-muted); }
+    select.form-control { cursor: pointer; }
+    textarea.form-control { resize: vertical; min-height: 80px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+    /* Toggle switch */
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+    .toggle {
+      position: relative; width: 42px; height: 24px;
+      background: var(--border-color); border-radius: var(--radius-full);
+      cursor: pointer; transition: background 0.25s ease; flex-shrink: 0;
+    }
+    .toggle.on { background: var(--color-primary); }
+    .toggle-thumb {
+      position: absolute; top: 3px; left: 3px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: #fff; transition: transform 0.25s var(--ease-spring);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    }
+    .toggle.on .toggle-thumb { transform: translateX(18px); }
+
+    /* =============================================
+       MODAL SYSTEM
+       ============================================= */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 800;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px; opacity: 0; visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl); width: 100%; max-width: 560px;
+      max-height: 90vh; overflow-y: auto;
+      transform: scale(0.95) translateY(10px);
+      transition: transform 0.3s var(--ease-out);
+      box-shadow: var(--shadow-lg);
+    }
+    .modal-overlay.open .modal { transform: scale(1) translateY(0); }
+    .modal-lg { max-width: 720px; }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; border-bottom: 1px solid var(--border-color);
+    }
+    .modal-title {
+      font-family: var(--font-heading); font-size: 15px; font-weight: 700;
+      color: var(--text-primary);
+    }
+    .modal-close {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); transition: all 0.2s ease;
+    }
+    .modal-close:hover { background: var(--bg-surface); color: var(--text-primary); }
+    .modal-body { padding: 24px; }
+    .modal-footer {
+      display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+      padding: 16px 24px; border-top: 1px solid var(--border-color);
+    }
+
+    /* =============================================
+       TOAST SYSTEM
+       ============================================= */
+    #toastContainer {
+      position: fixed; bottom: 24px; right: 24px;
+      z-index: 9999; display: flex; flex-direction: column; gap: 10px;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 12px 16px;
+      box-shadow: var(--shadow-lg); pointer-events: all;
+      animation: toastIn 0.35s var(--ease-out) both; max-width: 340px;
+      position: relative; overflow: hidden;
+    }
+    .toast.removing { animation: toastOut 0.3s ease forwards; }
+    @keyframes toastIn  { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { from { opacity:1; transform:translateX(0); }   to { opacity:0; transform:translateX(20px); } }
+    .toast-icon { flex-shrink: 0; margin-top: 1px; }
+    .toast.success .toast-icon { color: var(--color-accent); }
+    .toast.error   .toast-icon { color: var(--color-danger); }
+    .toast.info    .toast-icon { color: var(--color-secondary); }
+    .toast.warning .toast-icon { color: var(--color-warning); }
+    .toast-content { flex: 1; }
+    .toast-title   { font-size: 12px; font-weight: 700; color: var(--text-primary); margin-bottom: 2px; }
+    .toast-msg     { font-size: 12px; color: var(--text-secondary); }
+    .toast-progress {
+      position: absolute; bottom: 0; left: 0; height: 2px;
+      background: var(--color-primary); border-radius: 0 0 0 var(--radius-lg);
+      animation: toastProgress linear forwards;
+    }
+    @keyframes toastProgress { from { width:100%; } to { width:0; } }
+
+    /* =============================================
+       DASHBOARD — SPECIFIC STYLES
+       ============================================= */
+    .chart-container { position: relative; height: 240px; }
+    .chart-container.tall { height: 300px; }
+
+    /* Order flow cards */
+    .order-flow {
+      display: flex; gap: 0;
+      overflow-x: auto; padding-bottom: 4px;
+    }
+    .order-flow-item {
+      flex: 1; min-width: 120px;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px 12px; position: relative;
+      border-right: 1px solid var(--border-color);
+    }
+    .order-flow-item:last-child { border-right: none; }
+    .order-flow-num {
+      font-family: var(--font-heading); font-size: 28px; font-weight: 800;
+      line-height: 1; margin-bottom: 4px;
+    }
+    .order-flow-label { font-size: 12px; color: var(--text-muted); text-align: center; }
+
+    /* Top items list */
+    .top-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border-color);
+    }
+    .top-item:last-child { border-bottom: none; }
+    .top-item-rank {
+      width: 22px; height: 22px; border-radius: var(--radius-full);
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-size: 10px; font-weight: 700;
+      color: var(--text-muted); flex-shrink: 0;
+    }
+    .top-item-rank.gold { background: rgba(232,160,32,0.15); color: var(--color-primary); border-color: rgba(232,160,32,0.3); }
+    .top-item-img { width: 36px; height: 36px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; }
+    .top-item-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .top-item-cat  { font-size: 11px; color: var(--text-muted); }
+    .top-item-orders { margin-left: auto; font-family: var(--font-heading); font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+
+    /* Recent orders table row */
+    .order-items-preview {
+      display: flex; gap: 4px; flex-wrap: wrap;
+    }
+    .order-item-chip {
+      font-size: 11px; background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      padding: 1px 7px; border-radius: var(--radius-full);
+      color: var(--text-secondary);
+    }
+
+    /* =============================================
+       FOOD MANAGEMENT
+       ============================================= */
+    .food-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+    .food-admin-card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); overflow: hidden;
+      transition: all 0.25s ease;
+    }
+    .food-admin-card:hover { border-color: rgba(232,160,32,0.2); transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .food-admin-img {
+      height: 160px; overflow: hidden; position: relative;
+    }
+    .food-admin-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.4s ease; }
+    .food-admin-card:hover .food-admin-img img { transform: scale(1.05); }
+    .food-admin-img-overlay {
+      position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+      display: flex; align-items: flex-start; justify-content: space-between; padding: 10px;
+    }
+    .food-admin-body { padding: 14px; }
+    .food-admin-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .food-admin-cat  { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+    .food-admin-row  { display: flex; align-items: center; justify-content: space-between; }
+    .food-admin-price {
+      font-family: var(--font-heading); font-size: 16px; font-weight: 800;
+      color: var(--color-primary);
+    }
+    .food-admin-actions { display: flex; gap: 6px; margin-top: 12px; }
+
+    /* =============================================
+       THEME EDITOR
+       ============================================= */
+    .theme-section { margin-bottom: 28px; }
+    .theme-section-title {
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 14px;
+      padding-bottom: 8px; border-bottom: 1px solid var(--border-color);
+    }
+    .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .color-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; background: var(--bg-surface);
+      border: 1px solid var(--border-color); border-radius: var(--radius-md);
+    }
+    .color-preview {
+      width: 28px; height: 28px; border-radius: var(--radius-sm);
+      border: 2px solid rgba(255,255,255,0.1); cursor: pointer; position: relative;
+      overflow: hidden; flex-shrink: 0;
+    }
+    .color-preview input[type="color"] {
+      position: absolute; inset: -4px; opacity: 0; cursor: pointer; width: 200%; height: 200%;
+    }
+    .color-info { flex: 1; min-width: 0; }
+    .color-name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+    .color-val  { font-size: 10px; font-family: monospace; color: var(--text-muted); }
+
+    .slider-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0; border-bottom: 1px solid var(--border-color);
+    }
+    .slider-row:last-child { border-bottom: none; }
+    .slider-label { font-size: 13px; color: var(--text-secondary); min-width: 130px; }
+    .slider-val   { font-size: 12px; font-weight: 700; color: var(--text-primary); min-width: 40px; text-align: right; }
+    input[type="range"] {
+      flex: 1; accent-color: var(--color-primary); cursor: pointer; height: 4px;
+    }
+
+    .theme-preview-box {
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px;
+      transition: all 0.3s ease;
+    }
+    .preview-card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 14px;
+    }
+
+    /* Font selector */
+    .font-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .font-option {
+      padding: 12px; background: var(--bg-surface);
+      border: 1px solid var(--border-color); border-radius: var(--radius-md);
+      cursor: pointer; text-align: center; transition: all 0.2s ease;
+    }
+    .font-option.selected { border-color: var(--border-active); background: rgba(232,160,32,0.05); }
+    .font-option:hover { border-color: rgba(232,160,32,0.2); }
+    .font-option-name { font-size: 11px; color: var(--text-muted); }
+
+    /* =============================================
+       TABLE MANAGEMENT
+       ============================================= */
+    .tables-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 12px;
+    }
+    .table-tile {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 16px;
+      text-align: center; cursor: pointer; transition: all 0.2s ease;
+      position: relative;
+    }
+    .table-tile:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .table-tile.occupied { border-color: rgba(239,68,68,0.35); background: rgba(239,68,68,0.05); }
+    .table-tile.reserved { border-color: rgba(245,158,11,0.35); background: rgba(245,158,11,0.05); }
+    .table-tile.free     { border-color: rgba(16,185,129,0.25); }
+    .table-num {
+      font-family: var(--font-heading); font-size: 22px; font-weight: 800;
+      color: var(--text-primary); margin-bottom: 4px;
+    }
+    .table-cap  { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; }
+    .table-status-dot {
+      width: 8px; height: 8px; border-radius: 50%; margin: 0 auto;
+    }
+    .occupied .table-status-dot  { background: var(--color-danger); }
+    .reserved .table-status-dot  { background: var(--color-warning); }
+    .free     .table-status-dot  { background: var(--color-accent); }
+    .table-tile .table-actions {
+      position: absolute; top: 6px; right: 6px;
+      display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s ease;
+    }
+    .table-tile:hover .table-actions { opacity: 1; }
+
+    /* =============================================
+       STAFF MANAGEMENT
+       ============================================= */
+    .staff-card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 18px;
+      display: flex; align-items: center; gap: 14px;
+      transition: all 0.2s ease;
+    }
+    .staff-card:hover { border-color: rgba(232,160,32,0.2); }
+    .staff-avatar {
+      width: 44px; height: 44px; border-radius: var(--radius-full);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-size: 15px; font-weight: 800;
+      flex-shrink: 0; position: relative;
+    }
+    .staff-online-dot {
+      position: absolute; bottom: 2px; right: 2px;
+      width: 9px; height: 9px; border-radius: 50%; background: var(--color-accent);
+      border: 2px solid var(--bg-card);
+    }
+    .staff-info { flex: 1; }
+    .staff-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .staff-role { font-size: 12px; color: var(--text-muted); }
+
+    /* =============================================
+       AI ASSISTANT
+       ============================================= */
+    .ai-chat {
+      height: 360px; overflow-y: auto; padding: 16px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .ai-msg {
+      display: flex; gap: 10px;
+      animation: fadeInUp 0.3s var(--ease-out);
+    }
+    .ai-msg.user { flex-direction: row-reverse; }
+    .ai-avatar {
+      width: 30px; height: 30px; border-radius: var(--radius-full); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 12px;
+    }
+    .ai-avatar.bot { background: linear-gradient(135deg, var(--color-primary), var(--color-secondary)); }
+    .ai-avatar.user-av { background: var(--bg-surface); border: 1px solid var(--border-color); }
+    .ai-bubble {
+      max-width: 75%; padding: 10px 14px;
+      border-radius: var(--radius-lg); font-size: 13px; line-height: 1.6;
+    }
+    .ai-msg.bot  .ai-bubble { background: var(--bg-surface); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg); }
+    .ai-msg.user .ai-bubble { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: #fff; border-radius: var(--radius-lg) 4px var(--radius-lg) var(--radius-lg); }
+    .ai-typing {
+      display: flex; gap: 4px; align-items: center; padding: 12px 14px;
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: 4px var(--radius-lg) var(--radius-lg) var(--radius-lg);
+    }
+    .ai-typing span { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); animation: typingBounce 1.2s infinite; }
+    .ai-typing span:nth-child(2) { animation-delay: 0.2s; }
+    .ai-typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes typingBounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-5px)} }
+
+    .ai-prompt-chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 12px; }
+    .ai-chip {
+      padding: 5px 12px; border-radius: var(--radius-full);
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      font-size: 12px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;
+    }
+    .ai-chip:hover { border-color: var(--border-active); color: var(--text-primary); background: var(--bg-card); }
+
+    .ai-input-row {
+      display: flex; gap: 8px; padding: 12px 16px;
+      border-top: 1px solid var(--border-color);
+    }
+    .ai-input {
+      flex: 1; background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 9px 14px;
+      color: var(--text-primary); font-size: 13px; outline: none;
+      transition: border-color 0.2s ease;
+    }
+    .ai-input:focus { border-color: var(--border-active); }
+
+    /* =============================================
+       NOTIFICATIONS CENTER
+       ============================================= */
+    .notif-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 14px 0; border-bottom: 1px solid var(--border-color); cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item.unread { background: rgba(232,160,32,0.03); }
+    .notif-icon-wrap {
+      width: 36px; height: 36px; border-radius: var(--radius-md); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .notif-text { flex: 1; }
+    .notif-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .notif-desc  { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+    .notif-time  { font-size: 11px; color: var(--text-muted); flex-shrink: 0; margin-top: 2px; }
+    .notif-unread-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-primary); flex-shrink: 0; margin-top: 6px; }
+
+    /* =============================================
+       DELIVERY PAGE
+       ============================================= */
+    .delivery-map {
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); height: 240px;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .map-grid {
+      position: absolute; inset: 0;
+      background-image: linear-gradient(var(--border-color) 1px, transparent 1px),
+                        linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .map-pin {
+      position: absolute; cursor: pointer;
+      animation: mapPulse 2s ease-in-out infinite;
+    }
+    @keyframes mapPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.15)} }
+    .map-pin-dot {
+      width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff;
+      box-shadow: 0 0 0 4px rgba(232,160,32,0.3);
+    }
+
+    /* =============================================
+       ANALYTICS PAGE
+       ============================================= */
+    .analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .heatmap-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(24, 1fr); gap: 2px;
+      height: 260px;
+    }
+    .heatmap-cell {
+      border-radius: 2px; background: var(--bg-surface);
+      transition: background 0.2s ease; cursor: pointer;
+    }
+    .heatmap-cell:hover { opacity: 0.8; transform: scale(1.1); }
+
+    /* =============================================
+       SETTINGS / BRANDING
+       ============================================= */
+    .logo-upload-area {
+      border: 2px dashed var(--border-color); border-radius: var(--radius-lg);
+      padding: 32px; text-align: center; cursor: pointer;
+      transition: all 0.25s ease; background: var(--bg-surface);
+    }
+    .logo-upload-area:hover { border-color: var(--border-active); background: rgba(232,160,32,0.03); }
+    .logo-preview {
+      width: 80px; height: 80px; margin: 0 auto 12px;
+      border-radius: var(--radius-lg); overflow: hidden;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display); font-size: 28px; font-weight: 700;
+      color: var(--color-primary);
+    }
+    .logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+    /* =============================================
+       MOBILE OVERLAY
+       ============================================= */
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; z-index: 199;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
+    }
+
+    /* =============================================
+       SCROLLABLE TABLE WRAPPER
+       ============================================= */
+    .table-wrapper { overflow-x: auto; }
+
+    /* =============================================
+       EMPTY STATE
+       ============================================= */
+    .empty-state {
+      padding: 48px 24px; text-align: center;
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 12px; }
+    .empty-title { font-family: var(--font-heading); font-size: 14px; font-weight: 700; color: var(--text-secondary); margin-bottom: 6px; }
+    .empty-desc  { font-size: 13px; color: var(--text-muted); }
+
+    /* =============================================
+       RESPONSIVE
+       ============================================= */
+    @media (max-width: 1024px) {
+      .analytics-grid { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      :root { --sidebar-w: 240px; }
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.mobile-open { transform: translateX(0); }
+      .sidebar-overlay { display: block; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+      .sidebar-overlay.visible { opacity: 1; pointer-events: all; }
+      .main-content { margin-left: 0 !important; }
+      .page { padding: 16px; }
+      .grid-3, .form-row-3 { grid-template-columns: 1fr; }
+      .form-row { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .topbar-search { display: none; }
+      .page-title { font-size: 24px; }
+      .font-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 480px) {
+      .stats-grid { grid-template-columns: 1fr; }
+      .food-grid { grid-template-columns: 1fr; }
+    }
+
+    /* =============================================
+       MISC HELPERS
+       ============================================= */
+    .flex { display: flex; }
+    .flex-1 { flex: 1; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-2 { gap: 8px; }
+    .gap-3 { gap: 12px; }
+    .gap-4 { gap: 16px; }
+    .mb-4 { margin-bottom: 16px; }
+    .mb-6 { margin-bottom: 24px; }
+    .text-muted { color: var(--text-muted); }
+    .text-sm { font-size: 13px; }
+    .font-bold { font-weight: 700; }
+    .w-full { width: 100%; }
+
+    /* Confirmation dialog */
+    .confirm-dialog {
+      max-width: 380px;
+    }
+    .confirm-icon {
+      width: 52px; height: 52px; border-radius: var(--radius-full);
+      margin: 0 auto 16px;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Image placeholder */
+    .img-placeholder {
+      width: 100%; height: 100%; object-fit: cover;
+      background: linear-gradient(135deg, var(--bg-surface), var(--bg-card));
+    }
+
+    /* Tabs */
+    .tab-bar {
+      display: flex; gap: 2px;
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 3px;
+    }
+    .tab-btn {
+      flex: 1; padding: 7px 12px; border-radius: var(--radius-sm);
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--text-muted); transition: all 0.2s ease; text-align: center;
+    }
+    .tab-btn.active { background: var(--bg-card); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+
+    /* =============================================
+       PULSE DOT (live indicator)
+       ============================================= */
+    .live-dot {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--color-accent);
+    }
+    .live-dot::before {
+      content: ''; width: 7px; height: 7px; border-radius: 50%;
+      background: var(--color-accent);
+      animation: livePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+      50%      { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+    }
+
+    /* Activity feed */
+    .activity-item {
+      display: flex; gap: 10px; padding: 8px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-line {
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .activity-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px;
+    }
+    .activity-tail {
+      width: 1px; flex: 1; background: var(--border-color); margin: 4px 0;
+    }
+    .activity-text { font-size: 12px; color: var(--text-secondary); flex: 1; }
+    .activity-text strong { color: var(--text-primary); }
+    .activity-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+  </style>
+</head>
+
+<body>
+  <!-- Page Loader -->
+  <!-- ============================================================
+       ADMIN PIN LOGIN OVERLAY
+       ============================================================ -->
+  <div id="adminPinLogin">
+    <div class="admin-pin-card">
+      <div class="admin-pin-logo">NŌVA</div>
+      <div class="admin-pin-subtitle">Admin Panel — Enter your PIN to continue</div>
+      <div class="admin-pin-display" id="adminPinDisplay">——————</div>
+      <div class="admin-pin-keypad">
+        <button class="admin-pin-key" onclick="adminPinPress(1)">1</button>
+        <button class="admin-pin-key" onclick="adminPinPress(2)">2</button>
+        <button class="admin-pin-key" onclick="adminPinPress(3)">3</button>
+        <button class="admin-pin-key" onclick="adminPinPress(4)">4</button>
+        <button class="admin-pin-key" onclick="adminPinPress(5)">5</button>
+        <button class="admin-pin-key" onclick="adminPinPress(6)">6</button>
+        <button class="admin-pin-key" onclick="adminPinPress(7)">7</button>
+        <button class="admin-pin-key" onclick="adminPinPress(8)">8</button>
+        <button class="admin-pin-key" onclick="adminPinPress(9)">9</button>
+        <button class="admin-pin-key clear" onclick="adminPinClear()">✕</button>
+        <button class="admin-pin-key" onclick="adminPinPress(0)">0</button>
+        <button class="admin-pin-key enter" onclick="adminPinEnter()">→</button>
+      </div>
+      <div class="admin-pin-error" id="adminPinError"></div>
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;cursor:pointer;font-size:0.78rem;color:var(--text-muted);">
+        <input type="checkbox" id="adminRememberMe" style="accent-color:var(--color-primary);width:14px;height:14px;cursor:pointer;" />
+        Remember me on this device
+      </label>
+    </div>
+  </div>
+
+  <div id="pageLoader">
+    <div class="loader-logo">NŌVA</div>
+    <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+  </div>
+
+  <!-- Sidebar Overlay (mobile) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Admin Layout -->
+  <div class="admin-layout">
+
+    <!-- =============================================
+         SIDEBAR
+         ============================================= -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="sidebar-logo" id="sidebarLogo">NŌVA</div>
+        <div class="sidebar-badge">Admin</div>
+      </div>
+
+      <div class="sidebar-section">
+        <!-- Overview -->
+        <div class="sidebar-section-label">Overview</div>
+        <div class="nav-item active" onclick="navigateTo('dashboard', this)" data-page="dashboard">
+          <i data-lucide="layout-dashboard" class="nav-icon"></i> Dashboard
+        </div>
+        <div class="nav-item" onclick="navigateTo('analytics', this)" data-page="analytics">
+          <i data-lucide="bar-chart-2" class="nav-icon"></i> Analytics
+        </div>
+        <div class="nav-item" onclick="navigateTo('notifications', this)" data-page="notifications">
+          <i data-lucide="bell" class="nav-icon"></i> Notifications
+          <span class="nav-badge" id="notifBadge">3</span>
+        </div>
+
+        <!-- Management -->
+        <div class="sidebar-section-label">Management</div>
+        <div class="nav-item" onclick="navigateTo('orders', this)" data-page="orders">
+          <i data-lucide="receipt" class="nav-icon"></i> Orders
+          <span class="nav-badge" id="ordersBadge">0</span>
+        </div>
+        <div class="nav-item" onclick="navigateTo('foods', this)" data-page="foods">
+          <i data-lucide="utensils" class="nav-icon"></i> Menu & Foods
+        </div>
+        <div class="nav-item" onclick="navigateTo('tables', this)" data-page="tables">
+          <i data-lucide="table-2" class="nav-icon"></i> Tables
+        </div>
+        <div class="nav-item" onclick="navigateTo('staff', this)" data-page="staff">
+          <i data-lucide="users" class="nav-icon"></i> Staff
+        </div>
+        <div class="nav-item" onclick="navigateTo('delivery', this)" data-page="delivery">
+          <i data-lucide="truck" class="nav-icon"></i> Delivery
+        </div>
+
+        <!-- Settings -->
+        <div class="sidebar-section-label">Settings</div>
+        <div class="nav-item" onclick="navigateTo('branding', this)" data-page="branding">
+          <i data-lucide="brush" class="nav-icon"></i> Branding
+        </div>
+        <div class="nav-item" onclick="navigateTo('theme', this)" data-page="theme">
+          <i data-lucide="palette" class="nav-icon"></i> Theme Editor
+        </div>
+        <div class="nav-item" onclick="navigateTo('ai', this)" data-page="ai">
+          <i data-lucide="sparkles" class="nav-icon"></i> AI Assistant
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="admin-profile">
+          <div class="admin-avatar" id="adminAvatar">A</div>
+          <div class="admin-info">
+            <div class="admin-name" id="adminName">Admin User</div>
+            <div class="admin-role">Super Admin</div>
+          </div>
+          <button onclick="navigateTo('branding', document.querySelector('[data-page=branding]'))" style="color:var(--text-muted);">
+            <i data-lucide="settings" style="width:16px;height:16px;"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- =============================================
+         MAIN CONTENT
+         ============================================= -->
+    <main class="main-content" id="mainContent">
+
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <button class="topbar-toggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+          <i data-lucide="menu" style="width:18px;height:18px;"></i>
+        </button>
+        <div class="topbar-title" id="topbarTitle">Dashboard</div>
+
+        <div class="topbar-search">
+          <i data-lucide="search"></i>
+          <input type="text" placeholder="Search orders, foods, staff… (⌘K)" id="globalSearch" />
+        </div>
+
+        <div class="topbar-actions">
+          <button class="topbar-btn" onclick="navigateTo('notifications', document.querySelector('[data-page=notifications]'))" aria-label="Notifications">
+            <i data-lucide="bell" style="width:18px;height:18px;"></i>
+            <span class="notif-dot" id="notifDot"></span>
+          </button>
+          <button class="topbar-btn" onclick="AdminApp.toggleTheme()" aria-label="Toggle theme">
+            <i data-lucide="sun" id="themeIconSun" style="width:18px;height:18px;display:none;"></i>
+            <i data-lucide="moon" id="themeIconMoon" style="width:18px;height:18px;"></i>
+          </button>
+          <button class="topbar-btn" onclick="window.open('../index.html','_blank')" title="View Live Site">
+            <i data-lucide="external-link" style="width:18px;height:18px;"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- =============================================
+           PAGE: DASHBOARD
+           ============================================= -->
+      <section class="page active" id="page-dashboard">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Good morning, Admin ☀️</div>
+            <div class="page-subtitle">Here's what's happening at your restaurant today.</div>
+          </div>
+          <div class="flex gap-2">
+            <span class="live-dot">Live</span>
+            <button class="btn btn-primary btn-sm" onclick="refreshDashboard()">
+              <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i> Refresh
+            </button>
+          </div>
+        </div>
+
+        <!-- KPI Stats -->
+        <div class="stats-grid" id="kpiGrid">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Order Flow -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <div class="card-title">Order Pipeline</div>
+            <span class="live-dot">Live updates</span>
+          </div>
+          <div class="order-flow" id="orderFlow">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="grid-2 mb-6">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Revenue — Last 7 Days</div>
+            </div>
+            <div class="card-body">
+              <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Order Types</div>
+            </div>
+            <div class="card-body">
+              <div class="chart-container" style="height:220px;">
+                <canvas id="orderTypeChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Row -->
+        <div class="grid-2 mb-6">
+          <!-- Top Items -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Top Selling Items</div>
+              <button class="btn btn-ghost btn-sm" onclick="navigateTo('foods', document.querySelector('[data-page=foods]'))">
+                View All
+              </button>
+            </div>
+            <div class="card-body" id="topItemsList">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+
+          <!-- Activity Feed -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Activity Feed</div>
+              <span class="live-dot">Live</span>
+            </div>
+            <div class="card-body" id="activityFeed" style="max-height:300px;overflow-y:auto;">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Orders -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Orders</div>
+            <button class="btn btn-ghost btn-sm" onclick="navigateTo('orders', document.querySelector('[data-page=orders]'))">
+              View All <i data-lucide="arrow-right" style="width:13px;height:13px;"></i>
+            </button>
+          </div>
+          <div class="table-wrapper">
+            <table class="data-table" id="dashRecentOrders">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Type</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Time</th>
+                </tr>
+              </thead>
+              <tbody id="dashOrdersBody">
+                <!-- Rendered by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: ANALYTICS
+           ============================================= -->
+      <section class="page" id="page-analytics">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Analytics</div>
+            <div class="page-subtitle">Deep insights into your restaurant performance.</div>
+          </div>
+          <div class="flex gap-2">
+            <div class="tab-bar">
+              <div class="tab-btn active" onclick="switchAnalyticsTab('7d',this)">7 Days</div>
+              <div class="tab-btn" onclick="switchAnalyticsTab('30d',this)">30 Days</div>
+              <div class="tab-btn" onclick="switchAnalyticsTab('90d',this)">3 Months</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Analytics Stats -->
+        <div class="stats-grid mb-6" id="analyticsStats">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Revenue over time + Category breakdown -->
+        <div class="analytics-grid mb-6">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Revenue Over Time</div>
+            </div>
+            <div class="card-body">
+              <div class="chart-container tall">
+                <canvas id="analyticsRevenueChart"></canvas>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Revenue by Category</div>
+            </div>
+            <div class="card-body">
+              <div class="chart-container" style="height:260px;">
+                <canvas id="categoryChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Peak hours heatmap + Top items -->
+        <div class="grid-2 mb-6">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Peak Hours Heatmap</div>
+            </div>
+            <div class="card-body">
+              <div style="display:flex;gap:4px;margin-bottom:8px;">
+                <span style="font-size:11px;color:var(--text-muted);">12AM</span>
+                <div style="flex:1;"></div>
+                <span style="font-size:11px;color:var(--text-muted);">12PM</span>
+                <div style="flex:1;"></div>
+                <span style="font-size:11px;color:var(--text-muted);">11PM</span>
+              </div>
+              <canvas id="peakHoursChart" height="80"></canvas>
+              <div style="display:flex;justify-content:space-between;margin-top:8px;">
+                <span style="font-size:11px;color:var(--text-muted);">Mon</span>
+                <span style="font-size:11px;color:var(--text-muted);">Fri</span>
+                <span style="font-size:11px;color:var(--text-muted);">Sun</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Customer Satisfaction</div>
+            </div>
+            <div class="card-body">
+              <div class="chart-container" style="height:200px;">
+                <canvas id="satisfactionChart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Orders count chart -->
+        <div class="card mb-6">
+          <div class="card-header">
+            <div class="card-title">Orders Volume</div>
+          </div>
+          <div class="card-body">
+            <div class="chart-container">
+              <canvas id="ordersVolumeChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: ORDERS
+           ============================================= -->
+      <section class="page" id="page-orders">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Orders</div>
+            <div class="page-subtitle">Manage and track all orders.</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" onclick="clearAllOrders()">
+              <i data-lucide="trash-2" style="width:14px;height:14px;"></i> Clear All
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="openAddOrderModal()">
+              <i data-lucide="plus" style="width:14px;height:14px;"></i> New Order
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="flex gap-2 mb-4" style="flex-wrap:wrap;">
+          <div class="tab-bar" style="width:auto;">
+            <div class="tab-btn active" onclick="filterOrders('all',this)">All</div>
+            <div class="tab-btn" onclick="filterOrders('confirmed',this)">Confirmed</div>
+            <div class="tab-btn" onclick="filterOrders('preparing',this)">Preparing</div>
+            <div class="tab-btn" onclick="filterOrders('ready',this)">Ready</div>
+            <div class="tab-btn" onclick="filterOrders('delivered',this)">Delivered</div>
+            <div class="tab-btn" onclick="filterOrders('cancelled',this)">Cancelled</div>
+          </div>
+          <div class="topbar-search" style="min-width:180px;">
+            <i data-lucide="search"></i>
+            <input type="text" placeholder="Search orders…" id="ordersSearch" oninput="renderOrdersTable()" />
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Type</th>
+                  <th>Table</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Time</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ordersTableBody"></tbody>
+            </table>
+          </div>
+          <div id="ordersEmpty" class="empty-state" style="display:none;">
+            <div class="empty-icon">📭</div>
+            <div class="empty-title">No orders yet</div>
+            <div class="empty-desc">Orders placed from the landing page will appear here.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: FOOD MANAGEMENT
+           ============================================= -->
+      <section class="page" id="page-foods">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Menu & Foods</div>
+            <div class="page-subtitle">Add, edit and manage your entire menu.</div>
+          </div>
+          <div class="flex gap-2">
+            <div class="topbar-search" style="min-width:180px;">
+              <i data-lucide="search"></i>
+              <input type="text" placeholder="Search menu…" id="foodSearch" oninput="renderFoodGrid()" />
+            </div>
+            <select class="form-control" id="foodCatFilter" onchange="renderFoodGrid()" style="min-width:140px;height:38px;padding:0 12px;">
+              <option value="all">All Categories</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="openFoodModal()">
+              <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Food
+            </button>
+          </div>
+        </div>
+
+        <div class="food-grid" id="foodGrid">
+          <!-- Rendered by JS -->
+        </div>
+        <div id="foodEmpty" class="empty-state" style="display:none;">
+          <div class="empty-icon">🍽️</div>
+          <div class="empty-title">No items found</div>
+          <div class="empty-desc">Try adjusting your filters or add a new food item.</div>
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: TABLES
+           ============================================= -->
+      <section class="page" id="page-tables">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Tables</div>
+            <div class="page-subtitle">Manage seating and table availability.</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openTableModal()">
+            <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Table
+          </button>
+        </div>
+
+        <!-- Legend -->
+        <div class="flex gap-3 mb-4" style="flex-wrap:wrap;">
+          <div class="flex items-center gap-2 text-sm text-muted"><span style="width:10px;height:10px;border-radius:50%;background:var(--color-accent);display:inline-block;"></span> Free</div>
+          <div class="flex items-center gap-2 text-sm text-muted"><span style="width:10px;height:10px;border-radius:50%;background:var(--color-danger);display:inline-block;"></span> Occupied</div>
+          <div class="flex items-center gap-2 text-sm text-muted"><span style="width:10px;height:10px;border-radius:50%;background:var(--color-warning);display:inline-block;"></span> Reserved</div>
+        </div>
+
+        <div class="tables-grid" id="tablesGrid">
+          <!-- Rendered by JS -->
+        </div>
+
+        <!-- Table stats -->
+        <div class="stats-grid mt-6" id="tableStats">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: STAFF
+           ============================================= -->
+      <section class="page" id="page-staff">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Staff</div>
+            <div class="page-subtitle">Manage your team and their roles.</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openStaffModal()">
+            <i data-lucide="user-plus" style="width:14px;height:14px;"></i> Add Staff
+          </button>
+        </div>
+
+        <div class="grid-auto" id="staffGrid">
+          <!-- Rendered by JS -->
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: DELIVERY
+           ============================================= -->
+      <section class="page" id="page-delivery">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Delivery</div>
+            <div class="page-subtitle">Track active deliveries and manage settings.</div>
+          </div>
+          <span class="live-dot">Live Tracking</span>
+        </div>
+
+        <!-- Delivery Stats -->
+        <div class="stats-grid mb-6">
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon blue"><i data-lucide="truck" style="width:18px;height:18px;"></i></div></div>
+            <div class="stat-value" id="delivActive">0</div>
+            <div class="stat-label">Active Deliveries</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon green"><i data-lucide="check-circle" style="width:18px;height:18px;"></i></div></div>
+            <div class="stat-value" id="delivDone">0</div>
+            <div class="stat-label">Completed Today</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon gold"><i data-lucide="clock" style="width:18px;height:18px;"></i></div></div>
+            <div class="stat-value">28m</div>
+            <div class="stat-label">Avg Delivery Time</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon purple"><i data-lucide="users" style="width:18px;height:18px;"></i></div></div>
+            <div class="stat-value" id="delivDrivers">3</div>
+            <div class="stat-label">Active Drivers</div>
+          </div>
+        </div>
+
+        <!-- Map + Queue -->
+        <div class="grid-2 mb-6">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Delivery Map</div>
+              <span class="live-dot">Simulated</span>
+            </div>
+            <div class="card-body">
+              <div class="delivery-map">
+                <div class="map-grid"></div>
+                <!-- Simulated pins -->
+                <div class="map-pin" style="left:30%;top:40%;">
+                  <div class="map-pin-dot" style="background:var(--color-primary);"></div>
+                </div>
+                <div class="map-pin" style="left:55%;top:25%;" title="Restaurant">
+                  <div class="map-pin-dot" style="background:var(--color-accent);"></div>
+                </div>
+                <div class="map-pin" style="left:70%;top:60%;">
+                  <div class="map-pin-dot" style="background:var(--color-secondary);"></div>
+                </div>
+                <div style="position:absolute;bottom:12px;left:12px;font-size:10px;color:var(--text-muted);background:var(--bg-glass);padding:4px 8px;border-radius:var(--radius-sm);">
+                  🟢 Restaurant &nbsp; 🟡 Drivers &nbsp; 🔵 Customers
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Delivery Queue</div>
+            </div>
+            <div class="card-body" id="deliveryQueue">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Drivers -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Active Drivers</div>
+          </div>
+          <div class="card-body">
+            <div class="grid-auto" id="driversGrid">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: BRANDING
+           ============================================= -->
+      <section class="page" id="page-branding">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Branding</div>
+            <div class="page-subtitle">Customize your restaurant's identity across all pages.</div>
+          </div>
+          <button class="btn btn-primary" onclick="saveBranding()">
+            <i data-lucide="save" style="width:14px;height:14px;"></i> Save Changes
+          </button>
+        </div>
+
+        <div class="grid-2">
+          <!-- Left: Form -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <!-- Logo & Name -->
+            <div class="card">
+              <div class="card-header"><div class="card-title">Identity</div></div>
+              <div class="card-body">
+                <!-- Logo Upload -->
+                <div class="logo-upload-area" onclick="document.getElementById('logoFileInput').click()">
+                  <div class="logo-preview" id="logoPreview">NŌVA</div>
+                  <div style="font-size:13px;color:var(--text-muted);">Click to upload logo image</div>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">PNG, JPG up to 2MB</div>
+                  <input type="file" id="logoFileInput" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)" />
+                </div>
+
+                <div class="form-group mt-4" style="margin-top:16px;">
+                  <label class="form-label">Restaurant Name</label>
+                  <input type="text" class="form-control" id="brandName" value="NŌVA" oninput="updateBrandPreview()" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tagline</label>
+                  <input type="text" class="form-control" id="brandTagline" value="Premium Dining Experience" oninput="updateBrandPreview()" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Description</label>
+                  <textarea class="form-control" id="brandDesc" rows="3">A cinematic dining experience. Order online, dine in style.</textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Contact & Location -->
+            <div class="card">
+              <div class="card-header"><div class="card-title">Contact & Location</div></div>
+              <div class="card-body">
+                <div class="form-group">
+                  <label class="form-label">Address</label>
+                  <input type="text" class="form-control" id="brandAddress" value="123 Gourmet Avenue, New York, NY 10001" />
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="brandPhone" value="+1 (555) 234-5678" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="text" class="form-control" id="brandEmail" value="hello@nova-dining.com" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Opening Time</label>
+                    <input type="time" class="form-control" id="brandOpen" value="11:00" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Closing Time</label>
+                    <input type="time" class="form-control" id="brandClose" value="23:00" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Delivery Settings -->
+            <div class="card">
+              <div class="card-header"><div class="card-title">Delivery Settings</div></div>
+              <div class="card-body">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Delivery Fee (DA)</label>
+                    <input type="number" class="form-control" id="deliveryFee" value="4.99" step="0.01" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Free Delivery Over (DA)</label>
+                    <input type="number" class="form-control" id="freeDeliveryThreshold" value="35" />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Tax Rate (%)</label>
+                    <input type="number" class="form-control" id="taxRate" value="8" step="0.1" />
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Currency Symbol</label>
+                    <input type="text" class="form-control" id="currency" value="DA" />
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on" id="deliveryToggle" onclick="this.classList.toggle('on')">
+                    <div class="toggle-thumb"></div>
+                  </div>
+                  <span style="font-size:13px;color:var(--text-secondary);">Delivery available</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Preview -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <div class="card" style="position:sticky;top:80px;">
+              <div class="card-header"><div class="card-title">Live Preview</div></div>
+              <div class="card-body">
+                <div class="theme-preview-box">
+                  <!-- Mini site preview -->
+                  <div style="background:var(--bg-base);border-radius:var(--radius-md);padding:20px;text-align:center;">
+                    <div id="previewLogo" style="font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--color-primary);letter-spacing:0.05em;margin-bottom:6px;">NŌVA</div>
+                    <div id="previewTagline" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Premium Dining Experience</div>
+                    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
+                      <button class="btn btn-primary btn-sm">Order Now</button>
+                      <button class="btn btn-ghost btn-sm">View Menu</button>
+                    </div>
+                    <!-- Preview food card -->
+                    <div class="preview-card" style="text-align:left;">
+                      <div style="height:80px;background:linear-gradient(135deg,var(--bg-surface),var(--bg-card));border-radius:var(--radius-sm);margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-size:28px;">🍔</div>
+                      <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Signature Burger</div>
+                      <div style="font-size:12px;color:var(--text-muted);">Premium wagyu beef patty</div>
+                      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+                        <span style="font-family:var(--font-heading);font-weight:800;color:var(--color-primary);">24.00 DA</span>
+                        <button class="btn btn-primary btn-sm">Add +</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Brand info summary -->
+                <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+                  <div class="flex items-center gap-2 text-sm">
+                    <i data-lucide="map-pin" style="width:14px;height:14px;color:var(--text-muted);"></i>
+                    <span id="previewAddr" style="color:var(--text-secondary);font-size:13px;">123 Gourmet Avenue</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm">
+                    <i data-lucide="phone" style="width:14px;height:14px;color:var(--text-muted);"></i>
+                    <span id="previewPhone" style="color:var(--text-secondary);font-size:13px;">+1 (555) 234-5678</span>
+                  </div>
+                  <div class="flex items-center gap-2 text-sm">
+                    <i data-lucide="clock" style="width:14px;height:14px;color:var(--text-muted);"></i>
+                    <span id="previewHours" style="color:var(--text-secondary);font-size:13px;">11:00 – 23:00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: THEME EDITOR
+           ============================================= -->
+      <section class="page" id="page-theme">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Theme Editor</div>
+            <div class="page-subtitle">Live-edit colors, typography, and spacing.</div>
+          </div>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm" onclick="resetTheme()">
+              <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i> Reset
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="saveTheme()">
+              <i data-lucide="save" style="width:14px;height:14px;"></i> Save Theme
+            </button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <!-- Left: Controls -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+
+            <!-- Colors -->
+            <div class="card">
+              <div class="card-header"><div class="card-title">Colors</div></div>
+              <div class="card-body">
+                <div class="theme-section">
+                  <div class="theme-section-title">Brand Colors</div>
+                  <div class="color-grid" id="brandColorsGrid">
+                    <!-- Rendered by JS -->
+                  </div>
+                </div>
+                <div class="theme-section">
+                  <div class="theme-section-title">Background Colors</div>
+                  <div class="color-grid" id="bgColorsGrid">
+                    <!-- Rendered by JS -->
+                  </div>
+                </div>
+                <div class="theme-section">
+                  <div class="theme-section-title">Text Colors</div>
+                  <div class="color-grid" id="textColorsGrid">
+                    <!-- Rendered by JS -->
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Typography -->
+            <div class="card">
+              <div class="card-header"><div class="card-title">Typography</div></div>
+              <div class="card-body">
+                <div class="theme-section-title">Display Font</div>
+                <div class="font-grid" id="displayFontGrid">
+                  <!-- Rendered by JS -->
+                </div>
+                <div class="theme-section-title" style="margin-top:16px;">Body Font</div>
+                <div class="font-grid" id="bodyFontGrid">
+                  <!-- Rendered by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Spacing & Preview -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <!-- Spacing/Radius/Shadow -->
+            <div class="card">
+              <div class="card-header"><div class="card-title">Shape & Space</div></div>
+              <div class="card-body">
+                <div id="spacingSliders">
+                  <!-- Rendered by JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Preview -->
+            <div class="card" style="position:sticky;top:80px;">
+              <div class="card-header"><div class="card-title">Live Preview</div></div>
+              <div class="card-body">
+                <div class="theme-preview-box" id="themePreviewBox">
+                  <div style="font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--color-primary);margin-bottom:4px;">Sample Heading</div>
+                  <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">This is how your text looks across the site.</div>
+                  <div class="preview-card" style="margin-bottom:12px;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                      <div style="width:36px;height:36px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));"></div>
+                      <div>
+                        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Sample Card</div>
+                        <div style="font-size:11px;color:var(--text-muted);">Card subtitle</div>
+                      </div>
+                    </div>
+                    <div style="display:flex;gap:8px;">
+                      <button class="btn btn-primary btn-sm">Primary</button>
+                      <button class="btn btn-ghost btn-sm">Ghost</button>
+                    </div>
+                  </div>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <span class="badge badge-gold">Gold</span>
+                    <span class="badge badge-green">Active</span>
+                    <span class="badge badge-blue">Info</span>
+                    <span class="badge badge-red">Alert</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: NOTIFICATIONS
+           ============================================= -->
+      <section class="page" id="page-notifications">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Notifications</div>
+            <div class="page-subtitle">Stay on top of what matters.</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="markAllRead()">
+            <i data-lucide="check-check" style="width:14px;height:14px;"></i> Mark All Read
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-body" id="notifList">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: AI ASSISTANT
+           ============================================= -->
+      <section class="page" id="page-ai">
+        <div class="page-header">
+          <div>
+            <div class="page-title">AI Assistant</div>
+            <div class="page-subtitle">Your intelligent restaurant management co-pilot.</div>
+          </div>
+          <span class="badge badge-purple">Simulated</span>
+        </div>
+
+        <div class="grid-2">
+          <!-- Chat -->
+          <div class="card" style="display:flex;flex-direction:column;">
+            <div class="card-header">
+              <div class="flex items-center gap-2">
+                <div style="width:28px;height:28px;border-radius:var(--radius-full);background:linear-gradient(135deg,var(--color-primary),var(--color-secondary));display:flex;align-items:center;justify-content:center;">
+                  <i data-lucide="sparkles" style="width:14px;height:14px;color:#fff;"></i>
+                </div>
+                <div class="card-title">NŌVA AI</div>
+              </div>
+              <span class="live-dot">Online</span>
+            </div>
+
+            <div class="ai-chat" id="aiChat">
+              <!-- Seeded by JS -->
+            </div>
+
+            <div class="ai-prompt-chips" id="aiChips">
+              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">✨ Suggest a food description</div>
+              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">📈 What's trending?</div>
+              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">💰 Optimize pricing</div>
+              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">📢 Marketing copy</div>
+              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">🍕 Suggest new dishes</div>
+            </div>
+
+            <div class="ai-input-row">
+              <input class="ai-input" id="aiInput" placeholder="Ask anything about your restaurant…" onkeydown="if(event.key==='Enter')sendAIMsg()" />
+              <button class="btn btn-primary btn-sm" onclick="sendAIMsg()">
+                <i data-lucide="send" style="width:14px;height:14px;"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Suggestions -->
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div class="card">
+              <div class="card-header"><div class="card-title">Quick Suggestions</div></div>
+              <div class="card-body" id="aiSuggestionsPanel">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header"><div class="card-title">AI Insights</div></div>
+              <div class="card-body" id="aiInsights">
+                <!-- Rendered by JS -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- =============================================
+       MODAL: FOOD EDIT / ADD
+       ============================================= -->
+  <div class="modal-overlay" id="foodModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title" id="foodModalTitle">Add New Food</div>
+        <button class="modal-close" onclick="closeModal('foodModal')">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="foodEditId" value="" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Name *</label>
+            <input type="text" class="form-control" id="foodName" placeholder="e.g. Wagyu Burger" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category *</label>
+            <select class="form-control" id="foodCategory">
+              <option>Burgers</option>
+              <option>Mains</option>
+              <option>Starters</option>
+              <option>Sides</option>
+              <option>Desserts</option>
+              <option>Drinks</option>
+              <option>Sushi</option>
+              <option>Pizza</option>
+              <option>Salads</option>
+              <option>Soups</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Price (DA) *</label>
+            <input type="number" class="form-control" id="foodPrice" placeholder="0.00" step="0.01" min="0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rating (0–5)</label>
+            <input type="number" class="form-control" id="foodRating" value="4.5" step="0.1" min="0" max="5" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" id="foodDesc" rows="2" placeholder="Describe this dish…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Image URL</label>
+          <input type="text" class="form-control" id="foodImage" placeholder="https://…" oninput="updateFoodImagePreview()" />
+        </div>
+        <!-- Image preview -->
+        <div id="foodImgPreviewWrap" style="margin-bottom:16px;display:none;">
+          <img id="foodImgPreview" src="" alt="Preview" style="height:120px;border-radius:var(--radius-md);object-fit:cover;border:1px solid var(--border-color);" />
+        </div>
+
+        <div class="form-row-3" style="margin-bottom:16px;">
+          <div class="toggle-wrap">
+            <div class="toggle on" id="foodAvailable" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+            <span class="text-sm text-muted">Available</span>
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle" id="foodFeatured" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+            <span class="text-sm text-muted">Featured</span>
+          </div>
+          <div class="toggle-wrap">
+            <div class="toggle" id="foodBestseller" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+            <span class="text-sm text-muted">Bestseller</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('foodModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveFood()">
+          <i data-lucide="save" style="width:14px;height:14px;"></i> Save Food
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MODAL: TABLE EDIT
+       ============================================= -->
+  <div class="modal-overlay" id="tableModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="tableModalTitle">Add Table</div>
+        <button class="modal-close" onclick="closeModal('tableModal')">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="tableEditId" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Table Number</label>
+            <input type="number" class="form-control" id="tableNumber" placeholder="e.g. 12" min="1" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Capacity (seats)</label>
+            <input type="number" class="form-control" id="tableCapacity" placeholder="e.g. 4" min="1" max="20" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="tableStatus">
+            <option value="free">Free</option>
+            <option value="occupied">Occupied</option>
+            <option value="reserved">Reserved</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location / Zone</label>
+          <input type="text" class="form-control" id="tableZone" placeholder="e.g. Indoor, Terrace, VIP" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('tableModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveTable()">Save Table</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MODAL: STAFF
+       ============================================= -->
+  <div class="modal-overlay" id="staffModal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="staffModalTitle">Add Staff Member</div>
+        <button class="modal-close" onclick="closeModal('staffModal')">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="staffEditId" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="staffName" placeholder="John Smith" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role</label>
+            <select class="form-control" id="staffRole">
+              <option>Waiter</option>
+              <option>Chef</option>
+              <option>Manager</option>
+              <option>Delivery Driver</option>
+              <option>Cashier</option>
+              <option>Host</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-control" id="staffEmail" placeholder="john@nova.com" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-control" id="staffPhone" placeholder="+1 555 000 0000" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-control" id="staffStatus">
+            <option value="online">Online / On Duty</option>
+            <option value="offline">Offline</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('staffModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveStaff()">Save Staff</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MODAL: ORDER DETAIL / STATUS
+       ============================================= -->
+  <div class="modal-overlay" id="orderDetailModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title" id="orderDetailTitle">Order Detail</div>
+        <button class="modal-close" onclick="closeModal('orderDetailModal')">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <div class="modal-body" id="orderDetailBody">
+        <!-- Rendered by JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('orderDetailModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MODAL: CONFIRM DELETE
+       ============================================= -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal confirm-dialog">
+      <div class="modal-body" style="text-align:center;padding:32px 24px;">
+        <div class="confirm-icon" style="background:rgba(239,68,68,0.12);">
+          <i data-lucide="trash-2" style="width:22px;height:22px;color:var(--color-danger);"></i>
+        </div>
+        <div style="font-family:var(--font-heading);font-size:16px;font-weight:700;color:var(--text-primary);margin-bottom:8px;" id="confirmTitle">Are you sure?</div>
+        <div style="font-size:13px;color:var(--text-muted);margin-bottom:24px;" id="confirmDesc">This action cannot be undone.</div>
+        <div style="display:flex;gap:10px;justify-content:center;">
+          <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+          <button class="btn btn-danger" id="confirmOkBtn">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       JAVASCRIPT — ADMIN APPLICATION
+       ============================================= -->
+  <script>
+  /* =============================================
+     STORAGE MANAGER
+     Future: replace with Firestore SDK calls
+     ============================================= */
+  const StorageManager = {
+    get: (key)          => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
+    set: (key, val)     => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} },
+    remove: (key)       => { localStorage.removeItem(key); },
+  };
+
+  /* =============================================
+     DEFAULT DATA — seeded once on first run
+     ============================================= */
+  const DEFAULT_FOODS = [];
+
+  const DEFAULT_TABLES = [];
+
+  const DEFAULT_STAFF = [];
+
+  const DEFAULT_NOTIFICATIONS = [];
+
+  const AI_RESPONSES = {
+    'suggest a food description': [
+      '🍔 **Signature Wagyu Smash Burger** — *Two hand-smashed wagyu beef patties on a toasted brioche bun, layered with aged cheddar, caramelized onions, house-made truffle aioli, and crisp pickles. A luxurious twist on a timeless classic.*',
+      '🍝 **Saffron Lobster Linguine** — *Hand-made linguine tossed in a rich lobster bisque reduction, finished with saffron, cherry tomatoes, fresh basil, and a drizzle of aged balsamic. Elegance on a plate.*',
+    ],
+    'what\'s trending?': [
+      '📈 **Trending in Fine Dining (2025):**\n\n• **Smash burgers** with premium proteins (+34% searches)\n• **Korean fusion** tasting menus\n• **Zero-waste** tasting menus\n• **Craft mocktails** as premium offerings\n• **Hyper-local** seasonal ingredients\n\nI recommend adding a Korean-fusion item and a premium mocktail to your menu! 🌟',
+    ],
+    'optimize pricing': [
+      '💰 **Pricing Insights for NŌVA:**\n\nBased on your menu analysis:\n• Your **Truffle Fries** (11 DA) are underpriced vs market avg (14 DA–16). Consider a 1 DA–2 increase.\n• **Desserts** have the highest margin — promote them more aggressively.\n• A **prix fixe menu** at 65 DA–85 could increase avg spend by ~40%.\n• Add **premium combo bundles** (main + side + drink) for value perception.',
+    ],
+    'marketing copy': [
+      '📢 **Marketing Copy Suggestions:**\n\n**Instagram caption:**\n*"Where every bite tells a story. 🌟 Crafted with precision, plated with passion — NŌVA isn\'t just a meal, it\'s a memory. Reserve your table tonight. #NOVA #FineFood #LuxuryDining"*\n\n**Push notification:**\n*"🍽️ Tonight\'s special: Pan-Seared Wagyu with truffle jus. Only 8 portions left. Order now →"*',
+    ],
+    'suggest new dishes': [
+      '🍕 **Dish Suggestions for NŌVA:**\n\n1. **Miso Black Cod** — Nobu-inspired, pairs with your sake selection\n2. **Lobster Grilled Cheese** — Instagram-worthy, high margin\n3. **Matcha Tiramisu** — Fusion dessert trending globally\n4. **Wagyu Tartare** — Premium starter, low food cost\n5. **Kombucha Cocktails** — Wellness-forward mocktail option\n\nWant me to write full descriptions for any of these? 🎯',
+    ],
+  };
+
+  /* =============================================
+     ORDERS FILTER STATE
+     ============================================= */
+  let currentOrderFilter = 'all';
+
+  /* =============================================
+     THEME COLORS CONFIG
+     ============================================= */
+  const BRAND_COLORS = [
+    { label:'Primary',   var:'--color-primary',   default:'#e8a020' },
+    { label:'Secondary', var:'--color-secondary',  default:'#0ea5e9' },
+    { label:'Accent',    var:'--color-accent',     default:'#10b981' },
+    { label:'Danger',    var:'--color-danger',     default:'#ef4444' },
+    { label:'Warning',   var:'--color-warning',    default:'#f59e0b' },
+    { label:'Purple',    var:'--color-purple',     default:'#8b5cf6' },
+  ];
+  const BG_COLORS = [
+    { label:'Base BG',    var:'--bg-base',    default:'#080809' },
+    { label:'Surface',    var:'--bg-surface', default:'#0f0f12' },
+    { label:'Card',       var:'--bg-card',    default:'#161619' },
+  ];
+  const TEXT_COLORS = [
+    { label:'Primary Text',   var:'--text-primary',   default:'#f0ede8' },
+    { label:'Secondary Text', var:'--text-secondary', default:'#a09a90' },
+    { label:'Muted Text',     var:'--text-muted',     default:'#5a5650' },
+  ];
+  const SPACING_SLIDERS = [
+    { label:'Border Radius (sm)', var:'--radius-md', min:0, max:24, step:1, unit:'px', default:12 },
+    { label:'Border Radius (lg)', var:'--radius-lg', min:0, max:40, step:1, unit:'px', default:20 },
+    { label:'Font Size Scale',    var:'--font-scale', min:0.85, max:1.2, step:0.05, unit:'', default:1 },
+  ];
+
+  /* =============================================
+     TOAST SYSTEM
+     ============================================= */
+  function toast(message, type='info', title='') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const icons = { success:'check', error:'alert-circle', info:'info', warning:'alert-triangle' };
+    const dur = 4000;
+    const el = document.createElement('div');
+    el.className = `toast ${type}`;
+    el.innerHTML = `
+      <div class="toast-icon"><i data-lucide="${icons[type]||'info'}" style="width:14px;height:14px;"></i></div>
+      <div class="toast-content">
+        ${title ? `<div class="toast-title">${title}</div>` : ''}
+        <div class="toast-msg">${message}</div>
+      </div>
+      <button onclick="this.parentElement.remove()" style="color:var(--text-muted);margin-left:8px;">
+        <i data-lucide="x" style="width:14px;height:14px;"></i>
+      </button>
+      <div class="toast-progress" style="animation-duration:${dur}ms;"></div>
+    `;
+    container.appendChild(el);
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => {
+      el.classList.add('removing');
+      setTimeout(() => el.remove(), 300);
+    }, dur);
+  }
+
+  /* =============================================
+     MODAL SYSTEM
+     ============================================= */
+  function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
+  function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  });
+  document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+  });
+
+  /* =============================================
+     CONFIRM DIALOG
+     ============================================= */
+  function confirmAction(title, desc, onOk) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmDesc').textContent  = desc;
+    const btn = document.getElementById('confirmOkBtn');
+    btn.onclick = () => { onOk(); closeModal('confirmModal'); };
+    openModal('confirmModal');
+  }
+
+  /* =============================================
+     NAVIGATION
+     ============================================= */
+  const PAGE_TITLES = {
+    dashboard: 'Dashboard', analytics: 'Analytics', orders: 'Orders',
+    foods: 'Menu & Foods', tables: 'Tables', staff: 'Staff',
+    delivery: 'Delivery', branding: 'Branding', theme: 'Theme Editor',
+    notifications: 'Notifications', ai: 'AI Assistant',
+  };
+
+  function navigateTo(pageId, navEl) {
+    // Hide all pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + pageId)?.classList.add('active');
+
+    // Update nav items
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (navEl) navEl.classList.add('active');
+
+    // Update topbar title
+    document.getElementById('topbarTitle').textContent = PAGE_TITLES[pageId] || pageId;
+
+    // Page-specific init
+    if (pageId === 'dashboard')  { renderDashboard(); }
+    if (pageId === 'analytics')  { renderAnalytics(); }
+    if (pageId === 'orders')     { renderOrdersTable(); }
+    if (pageId === 'foods')      { renderFoodGrid(); }
+    if (pageId === 'tables')     { renderTablesGrid(); }
+    if (pageId === 'staff')      { renderStaffGrid(); }
+    if (pageId === 'delivery')   { renderDelivery(); }
+    if (pageId === 'notifications') { renderNotifications(); }
+    if (pageId === 'theme')      { initThemeEditor(); }
+    if (pageId === 'branding')   { loadBranding(); }
+    if (pageId === 'ai')         { initAI(); }
+
+    // Close sidebar on mobile
+    if (window.innerWidth < 768) toggleSidebar(true);
+  }
+
+  /* =============================================
+     SIDEBAR TOGGLE
+     ============================================= */
+  let sidebarOpen = true;
+  function toggleSidebar(forceClose = false) {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const main    = document.getElementById('mainContent');
+
+    if (window.innerWidth < 768) {
+      const isOpen = sidebar.classList.contains('mobile-open');
+      if (forceClose || isOpen) {
+        sidebar.classList.remove('mobile-open');
+        overlay.classList.remove('visible');
+      } else {
+        sidebar.classList.add('mobile-open');
+        overlay.classList.add('visible');
+      }
+    } else {
+      sidebarOpen = !sidebarOpen;
+      sidebar.classList.toggle('collapsed', !sidebarOpen);
+      main.classList.toggle('expanded', !sidebarOpen);
+    }
+  }
+
+  /* =============================================
+     THEME MANAGER
+     ============================================= */
+  const AdminTheme = {
+    init() {
+      const mode = StorageManager.get('themeMode') || 'dark';
+      document.documentElement.setAttribute('data-theme', mode);
+      this.updateIcon(mode);
+
+      // Apply saved custom colors
+      const saved = StorageManager.get('admin_theme');
+      if (saved) Object.entries(saved).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+    },
+    toggle() {
+      const cur  = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      StorageManager.set('themeMode', next);
+      this.updateIcon(next);
+      toast(`Switched to ${next} mode`, 'info', 'Theme');
+    },
+    updateIcon(mode) {
+      const sun  = document.getElementById('themeIconSun');
+      const moon = document.getElementById('themeIconMoon');
+      if (!sun || !moon) return;
+      sun.style.display  = mode === 'dark'  ? '' : 'none';
+      moon.style.display = mode === 'light' ? '' : 'none';
+    },
+  };
+
+  /* =============================================
+     DATA GETTERS
+     ============================================= */
+  function getFoods()  { return StorageManager.get('foods')   || DEFAULT_FOODS; }
+  function getTables() { return StorageManager.get('tables')  || DEFAULT_TABLES; }
+  function getStaff()  { return StorageManager.get('staff')   || DEFAULT_STAFF; }
+  function getOrders() { return StorageManager.get('kitchen_orders') || []; }
+  function getNotifs() { return StorageManager.get('admin_notifs') || DEFAULT_NOTIFICATIONS; }
+  function getBranding() { return StorageManager.get('branding') || {}; }
+
+  /* =============================================
+     DASHBOARD
+     ============================================= */
+  let revenueChartInst = null, typeChartInst = null;
+
+  function refreshDashboard() { renderDashboard(); toast('Dashboard refreshed', 'success', 'Refreshed'); }
+
+  function renderDashboard() {
+    const orders = getOrders();
+    const foods  = getFoods();
+
+    // Compute revenue
+    const todayRevenue = orders.reduce((s, o) => s + (o.total || 0), 0);
+    const ordersCount  = orders.length;
+
+    // KPI stats
+    const kpiData = [
+      { label:'Total Revenue', value: todayRevenue.toFixed(2) + ' DA', delta: '+12.4%', dir:'up', icon:'dollar-sign', color:'gold' },
+      { label:'Orders Today',  value: ordersCount, delta: '+8 vs yesterday', dir:'up', icon:'receipt', color:'blue' },
+      { label:'Avg Order Value', value: ordersCount ? (todayRevenue/ordersCount).toFixed(2) + ' DA' : '0 DA', delta: '+3.2%', dir:'up', icon:'trending-up', color:'green' },
+      { label:'Active Tables', value: getTables().filter(t=>t.status==='occupied').length + '/' + getTables().length, delta: '', dir:'', icon:'table-2', color:'purple' },
+      { label:'Menu Items',    value: foods.length, delta: '', dir:'', icon:'utensils', color:'gold' },
+    ];
+
+    document.getElementById('kpiGrid').innerHTML = kpiData.map(k => `
+      <div class="stat-card">
+        <div class="stat-header">
+          <div class="stat-icon ${k.color}"><i data-lucide="${k.icon}" style="width:18px;height:18px;"></i></div>
+          ${k.delta ? `<div class="stat-delta ${k.dir}">${k.dir==='up'?'↑':'↓'} ${k.delta}</div>` : ''}
+        </div>
+        <div class="stat-value">${k.value}</div>
+        <div class="stat-label">${k.label}</div>
+      </div>
+    `).join('');
+
+    // Order pipeline
+    const pipeline = [
+      { label:'Pending',   count: orders.filter(o=>o.kitchenStatus==='pending').length,    color:'var(--color-warning)' },
+      { label:'Preparing', count: orders.filter(o=>o.kitchenStatus==='preparing').length,  color:'var(--color-secondary)' },
+      { label:'Ready',     count: orders.filter(o=>o.kitchenStatus==='ready').length,      color:'var(--color-purple)' },
+      { label:'Delivered', count: orders.filter(o=>o.kitchenStatus==='delivered').length,  color:'var(--color-accent)' },
+      { label:'Cancelled', count: orders.filter(o=>o.kitchenStatus==='cancelled').length,  color:'var(--color-danger)' },
+    ];
+    document.getElementById('orderFlow').innerHTML = pipeline.map(p => `
+      <div class="order-flow-item">
+        <div class="order-flow-num" style="color:${p.color};">${p.count}</div>
+        <div class="order-flow-label">${p.label}</div>
+      </div>
+    `).join('');
+
+    // Update nav badge
+    const pendingCount = orders.filter(o => o.kitchenStatus === 'pending').length;
+    const ob = document.getElementById('ordersBadge');
+    if (ob) { ob.textContent = pendingCount; ob.style.display = pendingCount ? '' : 'none'; }
+
+    // Top items
+    const sortedFoods = [...foods].sort((a,b) => b.orders - a.orders).slice(0, 5);
+    document.getElementById('topItemsList').innerHTML = sortedFoods.map((f, i) => `
+      <div class="top-item">
+        <div class="top-item-rank ${i===0?'gold':''}">${i+1}</div>
+        <img class="top-item-img" src="${f.image}" alt="${f.name}" onerror="this.src='https://via.placeholder.com/36'" />
+        <div style="flex:1;">
+          <div class="top-item-name">${f.name}</div>
+          <div class="top-item-cat">${f.category}</div>
+        </div>
+        <div class="top-item-orders">${f.orders} orders</div>
+      </div>
+    `).join('');
+
+    // Activity feed
+    const activities = [
+      { text: '<strong>Marcus</strong> started preparing Order NVA-012', time: '2m ago', color: 'var(--color-warning)' },
+      { text: 'New order placed — Table 4, 42.50 DA', time: '5m ago', color: 'var(--color-primary)' },
+      { text: '<strong>Ravi</strong> completed delivery for NVA-009', time: '18m ago', color: 'var(--color-accent)' },
+      { text: 'Table 6 marked as <strong>occupied</strong>', time: '32m ago', color: 'var(--color-secondary)' },
+      { text: '5★ review received from a customer', time: '1h ago', color: 'var(--color-gold)' },
+      { text: '<strong>Alyssa</strong> clocked out', time: '2h ago', color: 'var(--color-muted)' },
+    ];
+    document.getElementById('activityFeed').innerHTML = activities.map((a, i) => `
+      <div class="activity-item">
+        <div class="activity-line">
+          <div class="activity-dot" style="background:${a.color};"></div>
+          ${i < activities.length-1 ? '<div class="activity-tail"></div>' : ''}
+        </div>
+        <div style="flex:1;padding-bottom:8px;">
+          <div class="activity-text">${a.text}</div>
+          <div class="activity-time">${a.time}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // Recent orders table
+    renderDashboardOrders(orders.slice(0, 6));
+
+    // Charts
+    renderDashboardCharts();
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function renderDashboardOrders(orders) {
+    const tbody = document.getElementById('dashOrdersBody');
+    if (!tbody) return;
+    if (!orders.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px;">No orders yet. Orders placed from the landing page appear here.</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = orders.map(o => `
+      <tr onclick="openOrderDetail('${o.id}')" style="cursor:pointer;">
+        <td><span style="font-family:monospace;font-size:12px;color:var(--color-primary);">${o.id || 'N/A'}</span></td>
+        <td>${o.name || o.customer || 'Guest'}</td>
+        <td>
+          <div class="order-items-preview">
+            ${(o.items||[]).slice(0,2).map(i=>`<span class="order-item-chip">${i.quantity}× ${i.name}</span>`).join('')}
+            ${(o.items||[]).length > 2 ? `<span class="order-item-chip">+${o.items.length-2}</span>` : ''}
+          </div>
+        </td>
+        <td><span class="badge badge-${o.type==='delivery'?'blue':'gold'}">${o.type||'dine-in'}</span></td>
+        <td style="font-family:var(--font-heading);font-weight:700;color:var(--color-primary);">${(o.total||0).toFixed(2)} DA</td>
+        <td>${statusBadge(o.kitchenStatus||o.status)}</td>
+        <td>${timeAgo(o.timestamp)}</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderDashboardCharts() {
+    // Revenue chart (last 7 days simulated)
+    const days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const rev  = [1840, 2100, 1750, 2340, 2800, 3200, 2640];
+
+    const ctx1 = document.getElementById('revenueChart');
+    if (ctx1) {
+      if (revenueChartInst) revenueChartInst.destroy();
+      revenueChartInst = new Chart(ctx1, {
+        type: 'line',
+        data: {
+          labels: days,
+          datasets: [{
+            label: 'Revenue',
+            data: rev,
+            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--color-primary').trim() || '#e8a020',
+            backgroundColor: 'rgba(232,160,32,0.08)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#e8a020',
+            pointRadius: 4,
+          }]
+        },
+        options: chartDefaults(),
+      });
+    }
+
+    // Order type donut
+    const ctx2 = document.getElementById('orderTypeChart');
+    if (ctx2) {
+      if (typeChartInst) typeChartInst.destroy();
+      const orders = getOrders();
+      const dineIn   = orders.filter(o=>o.type==='dine-in').length || 12;
+      const delivery = orders.filter(o=>o.type==='delivery').length || 8;
+      const pickup   = orders.filter(o=>o.type==='pickup').length || 4;
+      typeChartInst = new Chart(ctx2, {
+        type: 'doughnut',
+        data: {
+          labels: ['Dine-in','Delivery','Pickup'],
+          datasets: [{
+            data: [dineIn, delivery, pickup],
+            backgroundColor: ['rgba(232,160,32,0.8)','rgba(14,165,233,0.8)','rgba(16,185,129,0.8)'],
+            borderColor: 'transparent',
+            borderWidth: 2,
+          }]
+        },
+        options: {
+          ...chartDefaults(),
+          cutout: '65%',
+          plugins: { legend: { position: 'bottom', labels: { color: '#a09a90', font: { size: 12 }, padding: 12 } } },
+        },
+      });
+    }
+  }
+
+  /* =============================================
+     ANALYTICS
+     ============================================= */
+  let analyticsCharts = {};
+
+  function renderAnalytics() {
+    // Analytics KPIs
+    const statsEl = document.getElementById('analyticsStats');
+    if (statsEl) {
+      const items = [
+        { label:'Total Revenue',  value:'18 DA,420', delta:'+14.2%', dir:'up', icon:'dollar-sign', color:'gold' },
+        { label:'Avg Daily Orders', value:'47',    delta:'+8.1%',  dir:'up', icon:'receipt',     color:'blue' },
+        { label:'Returning Customers', value:'62%', delta:'+5%',  dir:'up', icon:'repeat',       color:'green' },
+        { label:'Avg Rating',     value:'4.7★',    delta:'+0.2',   dir:'up', icon:'star',        color:'gold' },
+      ];
+      statsEl.innerHTML = items.map(k => `
+        <div class="stat-card">
+          <div class="stat-header">
+            <div class="stat-icon ${k.color}"><i data-lucide="${k.icon}" style="width:18px;height:18px;"></i></div>
+            <div class="stat-delta up">↑ ${k.delta}</div>
+          </div>
+          <div class="stat-value">${k.value}</div>
+          <div class="stat-label">${k.label}</div>
+        </div>
+      `).join('');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    // Revenue over time
+    const rctx = document.getElementById('analyticsRevenueChart');
+    if (rctx) {
+      if (analyticsCharts.revenue) analyticsCharts.revenue.destroy();
+      analyticsCharts.revenue = new Chart(rctx, {
+        type: 'bar',
+        data: {
+          labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+          datasets: [
+            { label:'This Week',  data:[1840,2100,1750,2340,2800,3200,2640], backgroundColor:'rgba(232,160,32,0.7)', borderRadius:6 },
+            { label:'Last Week',  data:[1600,1900,1550,2100,2500,2900,2300], backgroundColor:'rgba(14,165,233,0.3)',  borderRadius:6 },
+          ]
+        },
+        options: { ...chartDefaults(), scales: { ...chartDefaults().scales, y: { ...chartDefaults().scales.y, stacked: false } } },
+      });
+    }
+
+    // Category donut
+    const catctx = document.getElementById('categoryChart');
+    if (catctx) {
+      if (analyticsCharts.category) analyticsCharts.category.destroy();
+      analyticsCharts.category = new Chart(catctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Burgers','Mains','Drinks','Sushi','Pizza','Desserts','Sides'],
+          datasets: [{
+            data: [28,22,18,12,10,6,4],
+            backgroundColor: ['rgba(232,160,32,0.8)','rgba(14,165,233,0.8)','rgba(16,185,129,0.8)','rgba(139,92,246,0.8)','rgba(239,68,68,0.8)','rgba(245,158,11,0.8)','rgba(99,102,241,0.8)'],
+            borderColor: 'transparent', borderWidth: 2,
+          }]
+        },
+        options: { ...chartDefaults(), cutout:'60%', plugins:{ legend:{ position:'bottom', labels:{ color:'#a09a90', font:{size:11}, padding:8 } } } },
+      });
+    }
+
+    // Peak hours (bar)
+    const hctx = document.getElementById('peakHoursChart');
+    if (hctx) {
+      if (analyticsCharts.peak) analyticsCharts.peak.destroy();
+      const hours = Array.from({length:24}, (_,i)=>i);
+      const vals  = [1,0,0,1,2,5,12,18,28,40,38,42,55,50,44,30,38,48,62,58,44,30,18,8];
+      analyticsCharts.peak = new Chart(hctx, {
+        type: 'bar',
+        data: {
+          labels: hours.map(h => h+':00'),
+          datasets: [{ label:'Orders', data:vals, backgroundColor: vals.map(v => `rgba(232,160,32,${(v/65).toFixed(2)})`), borderRadius:2 }]
+        },
+        options: {
+          ...chartDefaults(),
+          plugins: { legend: { display:false } },
+          scales: {
+            x: { grid:{color:'rgba(255,255,255,0.03)'}, ticks:{color:'#5a5650',font:{size:9},maxRotation:0,maxTicksLimit:8} },
+            y: { grid:{color:'rgba(255,255,255,0.03)'}, ticks:{color:'#5a5650',font:{size:10}} },
+          }
+        },
+      });
+    }
+
+    // Satisfaction radar
+    const sctx = document.getElementById('satisfactionChart');
+    if (sctx) {
+      if (analyticsCharts.satisfaction) analyticsCharts.satisfaction.destroy();
+      analyticsCharts.satisfaction = new Chart(sctx, {
+        type: 'radar',
+        data: {
+          labels: ['Food Quality','Service','Ambience','Speed','Value','Cleanliness'],
+          datasets: [{
+            label:'Rating',
+            data: [4.8,4.6,4.7,4.4,4.5,4.9],
+            borderColor: 'rgba(232,160,32,0.8)',
+            backgroundColor: 'rgba(232,160,32,0.1)',
+            pointBackgroundColor: '#e8a020',
+            pointRadius: 4,
+          }]
+        },
+        options: {
+          ...chartDefaults(),
+          scales: { r: { min:0, max:5, ticks:{color:'#5a5650',stepSize:1,backdropColor:'transparent'}, grid:{color:'rgba(255,255,255,0.06)'}, pointLabels:{color:'#a09a90',font:{size:11}} } },
+          plugins: { legend:{display:false} },
+        },
+      });
+    }
+
+    // Orders volume
+    const ovctx = document.getElementById('ordersVolumeChart');
+    if (ovctx) {
+      if (analyticsCharts.volume) analyticsCharts.volume.destroy();
+      const labels = Array.from({length:30},(_,i)=>`Day ${i+1}`);
+      const data   = labels.map(() => Math.floor(Math.random()*30)+20);
+      analyticsCharts.volume = new Chart(ovctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [{
+            label:'Orders', data,
+            borderColor:'rgba(14,165,233,0.8)',
+            backgroundColor:'rgba(14,165,233,0.06)',
+            borderWidth:2, fill:true, tension:0.4,
+            pointRadius:0,
+          }]
+        },
+        options: chartDefaults(),
+      });
+    }
+  }
+
+  function switchAnalyticsTab(range, el) {
+    document.querySelectorAll('#page-analytics .tab-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderAnalytics(); // Re-render with new range (same mock data for now)
+  }
+
+  function chartDefaults() {
+    return {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { backgroundColor:'rgba(22,22,25,0.95)', titleColor:'#f0ede8', bodyColor:'#a09a90', borderColor:'rgba(240,237,232,0.07)', borderWidth:1, padding:10 },
+      },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#5a5650', font: { size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#5a5650', font: { size: 11 } } },
+      },
+    };
+  }
+
+  /* =============================================
+     ORDERS MANAGEMENT
+     ============================================= */
+  function filterOrders(status, el) {
+    currentOrderFilter = status;
+    document.querySelectorAll('#page-orders .tab-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    renderOrdersTable();
+  }
+
+  function renderOrdersTable() {
+    let orders = getOrders();
+    const search = document.getElementById('ordersSearch')?.value.trim().toLowerCase();
+
+    if (currentOrderFilter !== 'all') {
+      orders = orders.filter(o => (o.kitchenStatus||o.status) === currentOrderFilter);
+    }
+    if (search) {
+      orders = orders.filter(o =>
+        (o.id||'').toLowerCase().includes(search) ||
+        (o.name||'').toLowerCase().includes(search) ||
+        (o.phone||'').includes(search)
+      );
+    }
+
+    const tbody = document.getElementById('ordersTableBody');
+    const empty = document.getElementById('ordersEmpty');
+    if (!orders.length) {
+      tbody.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+
+    tbody.innerHTML = orders.map(o => `
+      <tr>
+        <td><span style="font-family:monospace;font-size:12px;color:var(--color-primary);">${o.id||'—'}</span></td>
+        <td>${o.name||o.customer||'Guest'}</td>
+        <td>
+          <div class="order-items-preview">
+            ${(o.items||[]).slice(0,2).map(i=>`<span class="order-item-chip">${i.quantity}× ${i.name}</span>`).join('')}
+            ${(o.items||[]).length>2?`<span class="order-item-chip">+${o.items.length-2}</span>`:''}
+          </div>
+        </td>
+        <td><span class="badge badge-${o.type==='delivery'?'blue':'gold'}">${o.type||'dine-in'}</span></td>
+        <td>${o.table||'—'}</td>
+        <td style="font-family:var(--font-heading);font-weight:700;color:var(--color-primary);">${(o.total||0).toFixed(2)} DA</td>
+        <td>
+          <select class="form-control" style="padding:4px 8px;font-size:11px;height:28px;" onchange="updateOrderStatus('${o.id}', this.value)">
+            ${['pending','preparing','ready','delivered','cancelled'].map(s=>`<option value="${s}" ${(o.kitchenStatus||o.status)===s?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+          </select>
+        </td>
+        <td style="font-size:12px;color:var(--text-muted);">${timeAgo(o.timestamp)}</td>
+        <td>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost btn-sm btn-icon" onclick="openOrderDetail('${o.id}')" title="View">
+              <i data-lucide="eye" style="width:14px;height:14px;"></i>
+            </button>
+            <button class="btn btn-danger btn-sm btn-icon" onclick="deleteOrder('${o.id}')" title="Delete">
+              <i data-lucide="trash-2" style="width:14px;height:14px;"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function updateOrderStatus(id, status) {
+    const orders = getOrders();
+    const order  = orders.find(o => o.id === id);
+    if (!order) return;
+    order.kitchenStatus = status;
+    order.status        = status;
+    StorageManager.set('kitchen_orders', orders);
+    // Also update user-facing orders
+    const userOrders = StorageManager.get('orders') || [];
+    const uo = userOrders.find(o => o.id === id);
+    if (uo) { uo.status = status; StorageManager.set('orders', userOrders); }
+    toast(`Order ${id} → ${status}`, 'success', 'Status Updated');
+    updateOrdersBadge();
+  }
+
+  function deleteOrder(id) {
+    confirmAction('Delete Order', `Delete order ${id}? This cannot be undone.`, () => {
+      let orders = getOrders().filter(o => o.id !== id);
+      StorageManager.set('kitchen_orders', orders);
+      renderOrdersTable();
+      toast(`Order ${id} deleted`, 'info', 'Deleted');
+    });
+  }
+
+  function clearAllOrders() {
+    confirmAction('Clear All Orders', 'Delete ALL orders? This cannot be undone.', () => {
+      StorageManager.set('kitchen_orders', []);
+      StorageManager.set('orders', []);
+      renderOrdersTable();
+      toast('All orders cleared', 'warning', 'Cleared');
+    });
+  }
+
+  function openAddOrderModal() {
+    toast('Use the landing page to place orders, then manage them here.', 'info', 'Tip');
+  }
+
+  function openOrderDetail(id) {
+    const orders = getOrders();
+    const o = orders.find(x => x.id === id);
+    if (!o) return;
+
+    document.getElementById('orderDetailTitle').textContent = 'Order — ' + o.id;
+    document.getElementById('orderDetailBody').innerHTML = `
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+        <div style="flex:1;min-width:200px;">
+          <div class="form-label">Customer</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text-primary);">${o.name||'Guest'}</div>
+          <div style="font-size:12px;color:var(--text-muted);">${o.phone||''}</div>
+        </div>
+        <div style="flex:1;min-width:160px;">
+          <div class="form-label">Type</div>
+          <span class="badge badge-${o.type==='delivery'?'blue':'gold'}">${o.type||'dine-in'}</span>
+        </div>
+        <div style="flex:1;min-width:160px;">
+          <div class="form-label">Status</div>
+          ${statusBadge(o.kitchenStatus||o.status)}
+        </div>
+        <div style="flex:1;min-width:160px;">
+          <div class="form-label">Time</div>
+          <div style="font-size:13px;color:var(--text-secondary);">${new Date(o.timestamp||Date.now()).toLocaleString()}</div>
+        </div>
+      </div>
+
+      ${o.address ? `<div style="margin-bottom:16px;padding:12px;background:var(--bg-surface);border-radius:var(--radius-md);font-size:13px;color:var(--text-secondary);">📍 ${o.address}</div>` : ''}
+
+      <div class="form-label" style="margin-bottom:8px;">Order Items</div>
+      <div style="background:var(--bg-surface);border-radius:var(--radius-md);overflow:hidden;margin-bottom:16px;">
+        <table class="data-table">
+          <thead><tr><th>Item</th><th>Qty</th><th>Unit Price</th><th>Total</th></tr></thead>
+          <tbody>
+            ${(o.items||[]).map(i=>`
+              <tr>
+                <td>${i.name}</td>
+                <td>${i.quantity}</td>
+                <td>${i.price.toFixed(2)} DA</td>
+                <td style="font-weight:700;color:var(--color-primary);">${(i.price*i.quantity).toFixed(2)} DA</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:6px;max-width:260px;margin-left:auto;">
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);">
+          <span>Subtotal</span><span>${(o.subtotal||0).toFixed(2)} DA</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);">
+          <span>Delivery</span><span>${(o.delivery||0)===0?'FREE': (o.delivery||0).toFixed(2) + ' DA'}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);">
+          <span>Tax</span><span>${(o.tax||0).toFixed(2)} DA</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:800;color:var(--color-primary);border-top:1px solid var(--border-color);padding-top:8px;margin-top:4px;">
+          <span>Total</span><span>${(o.total||0).toFixed(2)} DA</span>
+        </div>
+      </div>
+
+      ${o.notes ? `<div style="margin-top:16px;padding:12px;background:var(--bg-surface);border-radius:var(--radius-md);font-size:13px;color:var(--text-secondary);">📝 Note: ${o.notes}</div>` : ''}
+    `;
+
+    openModal('orderDetailModal');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function updateOrdersBadge() {
+    const pending = getOrders().filter(o => (o.kitchenStatus||o.status) === 'pending').length;
+    const ob = document.getElementById('ordersBadge');
+    if (ob) { ob.textContent = pending; ob.style.display = pending ? '' : 'none'; }
+  }
+
+  /* =============================================
+     FOOD MANAGEMENT
+     ============================================= */
+  function renderFoodGrid() {
+    let foods = getFoods();
+    const search   = document.getElementById('foodSearch')?.value.trim().toLowerCase();
+    const catFilter = document.getElementById('foodCatFilter')?.value || 'all';
+
+    if (search)           foods = foods.filter(f => f.name.toLowerCase().includes(search) || f.category.toLowerCase().includes(search));
+    if (catFilter !== 'all') foods = foods.filter(f => f.category === catFilter);
+
+    const grid  = document.getElementById('foodGrid');
+    const empty = document.getElementById('foodEmpty');
+
+    if (!foods.length) { grid.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+
+    grid.innerHTML = foods.map(f => `
+      <div class="food-admin-card">
+        <div class="food-admin-img">
+          <img src="${f.image}" alt="${f.name}" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'" />
+          <div class="food-admin-img-overlay">
+            <div style="display:flex;gap:4px;">
+              ${f.featured   ? '<span class="badge badge-gold" style="font-size:9px;">Featured</span>' : ''}
+              ${f.bestseller ? '<span class="badge badge-green" style="font-size:9px;">Best</span>'   : ''}
+            </div>
+            <span class="badge ${f.available?'badge-green':'badge-red'}" style="font-size:9px;">${f.available?'Active':'Off'}</span>
+          </div>
+        </div>
+        <div class="food-admin-body">
+          <div class="food-admin-name">${f.name}</div>
+          <div class="food-admin-cat">${f.category} · ⭐ ${f.rating}</div>
+          <div class="food-admin-row">
+            <div class="food-admin-price">${f.price.toFixed(2)} DA</div>
+            <span style="font-size:11px;color:var(--text-muted);">${f.orders||0} orders</span>
+          </div>
+          <div class="food-admin-actions">
+            <button class="btn btn-ghost btn-sm flex-1" onclick="openFoodModal(${f.id})">
+              <i data-lucide="pencil" style="width:12px;height:12px;"></i> Edit
+            </button>
+            <button class="btn btn-danger btn-sm btn-icon" onclick="deleteFood(${f.id})" title="Delete">
+              <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    // Populate category filter
+    const cats = [...new Set(getFoods().map(f => f.category))].sort();
+    const sel  = document.getElementById('foodCatFilter');
+    if (sel && sel.options.length <= 2) {
+      cats.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c; o.textContent = c;
+        sel.appendChild(o);
+      });
+    }
+
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function openFoodModal(id = null) {
+    const modal = document.getElementById('foodModal');
+    document.getElementById('foodEditId').value = id || '';
+    document.getElementById('foodModalTitle').textContent = id ? 'Edit Food' : 'Add New Food';
+
+    // Reset form
+    ['foodName','foodDesc','foodImage','foodPrice','foodRating'].forEach(fid => {
+      const el = document.getElementById(fid);
+      if (el) el.value = '';
+    });
+    document.getElementById('foodAvailable').classList.add('on');
+    document.getElementById('foodFeatured').classList.remove('on');
+    document.getElementById('foodBestseller').classList.remove('on');
+    document.getElementById('foodImgPreviewWrap').style.display = 'none';
+
+    if (id) {
+      const foods = getFoods();
+      const food  = foods.find(f => f.id === id);
+      if (food) {
+        document.getElementById('foodName').value     = food.name;
+        document.getElementById('foodDesc').value     = food.description;
+        document.getElementById('foodImage').value    = food.image;
+        document.getElementById('foodPrice').value    = food.price;
+        document.getElementById('foodRating').value   = food.rating;
+        document.getElementById('foodCategory').value = food.category;
+        if (!food.available)  document.getElementById('foodAvailable').classList.remove('on');
+        if (food.featured)    document.getElementById('foodFeatured').classList.add('on');
+        if (food.bestseller)  document.getElementById('foodBestseller').classList.add('on');
+        updateFoodImagePreview();
+      }
+    }
+
+    openModal('foodModal');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function updateFoodImagePreview() {
+    const url  = document.getElementById('foodImage')?.value;
+    const wrap = document.getElementById('foodImgPreviewWrap');
+    const img  = document.getElementById('foodImgPreview');
+    if (url && wrap && img) { img.src = url; wrap.style.display = ''; }
+    else if (wrap) wrap.style.display = 'none';
+  }
+
+  function saveFood() {
+    const name     = document.getElementById('foodName').value.trim();
+    const price    = parseFloat(document.getElementById('foodPrice').value);
+    const category = document.getElementById('foodCategory').value;
+    const editId   = document.getElementById('foodEditId').value;
+
+    if (!name)  { toast('Food name is required', 'error'); return; }
+    if (!price || price < 0) { toast('Valid price is required', 'error'); return; }
+
+    const foods = getFoods();
+    const food = {
+      id:          editId ? parseInt(editId) : Date.now(),
+      name,
+      category,
+      price,
+      rating:      parseFloat(document.getElementById('foodRating').value) || 4.5,
+      description: document.getElementById('foodDesc').value.trim(),
+      image:       document.getElementById('foodImage').value.trim() || 'https://via.placeholder.com/400x200?text=No+Image',
+      available:   document.getElementById('foodAvailable').classList.contains('on'),
+      featured:    document.getElementById('foodFeatured').classList.contains('on'),
+      bestseller:  document.getElementById('foodBestseller').classList.contains('on'),
+      orders:      0,
+    };
+
+    if (editId) {
+      const idx = foods.findIndex(f => f.id === parseInt(editId));
+      if (idx >= 0) { food.orders = foods[idx].orders || 0; foods[idx] = food; }
+    } else {
+      foods.push(food);
+    }
+
+    StorageManager.set('foods', foods);
+    closeModal('foodModal');
+    renderFoodGrid();
+    toast(`"${name}" ${editId ? 'updated' : 'added'} successfully`, 'success', editId ? 'Updated' : 'Added');
+  }
+
+  function deleteFood(id) {
+    const food = getFoods().find(f => f.id === id);
+    confirmAction('Delete Food', `Delete "${food?.name}"? This cannot be undone.`, () => {
+      const foods = getFoods().filter(f => f.id !== id);
+      StorageManager.set('foods', foods);
+      renderFoodGrid();
+      toast(`"${food?.name}" deleted`, 'warning', 'Deleted');
+    });
+  }
+
+  /* =============================================
+     TABLES MANAGEMENT
+     ============================================= */
+  function renderTablesGrid() {
+    const tables = getTables();
+    document.getElementById('tablesGrid').innerHTML = tables.map(t => `
+      <div class="table-tile ${t.status}" onclick="cycleTableStatus(${t.id})">
+        <div class="table-actions">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="event.stopPropagation();openTableModal(${t.id})" title="Edit">
+            <i data-lucide="pencil" style="width:12px;height:12px;"></i>
+          </button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="event.stopPropagation();deleteTable(${t.id})" title="Delete">
+            <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+          </button>
+        </div>
+        <div class="table-num">${t.number}</div>
+        <div class="table-cap">${t.capacity} seats · ${t.zone||'Indoor'}</div>
+        <div class="table-status-dot"></div>
+      </div>
+    `).join('');
+
+    // Table stats
+    const free     = tables.filter(t=>t.status==='free').length;
+    const occupied = tables.filter(t=>t.status==='occupied').length;
+    const reserved = tables.filter(t=>t.status==='reserved').length;
+    document.getElementById('tableStats').innerHTML = `
+      <div class="stat-card">
+        <div class="stat-header"><div class="stat-icon green"><i data-lucide="check-circle" style="width:18px;height:18px;"></i></div></div>
+        <div class="stat-value">${free}</div><div class="stat-label">Free Tables</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header"><div class="stat-icon red"><i data-lucide="users" style="width:18px;height:18px;"></i></div></div>
+        <div class="stat-value">${occupied}</div><div class="stat-label">Occupied</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header"><div class="stat-icon gold"><i data-lucide="clock" style="width:18px;height:18px;"></i></div></div>
+        <div class="stat-value">${reserved}</div><div class="stat-label">Reserved</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-header"><div class="stat-icon blue"><i data-lucide="table-2" style="width:18px;height:18px;"></i></div></div>
+        <div class="stat-value">${tables.length}</div><div class="stat-label">Total Tables</div>
+      </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function cycleTableStatus(id) {
+    const tables = getTables();
+    const t = tables.find(x=>x.id===id);
+    if (!t) return;
+    const cycle = { free:'occupied', occupied:'reserved', reserved:'free' };
+    t.status = cycle[t.status] || 'free';
+    StorageManager.set('tables', tables);
+    renderTablesGrid();
+    toast(`Table ${t.number} → ${t.status}`, 'info');
+  }
+
+  function openTableModal(id = null) {
+    document.getElementById('tableEditId').value = id || '';
+    document.getElementById('tableModalTitle').textContent = id ? 'Edit Table' : 'Add Table';
+    ['tableNumber','tableCapacity','tableZone'].forEach(fid => document.getElementById(fid).value = '');
+    document.getElementById('tableStatus').value = 'free';
+
+    if (id) {
+      const t = getTables().find(x=>x.id===id);
+      if (t) {
+        document.getElementById('tableNumber').value   = t.number;
+        document.getElementById('tableCapacity').value = t.capacity;
+        document.getElementById('tableZone').value     = t.zone||'';
+        document.getElementById('tableStatus').value   = t.status;
+      }
+    }
+    openModal('tableModal');
+  }
+
+  function saveTable() {
+    const num  = parseInt(document.getElementById('tableNumber').value);
+    const cap  = parseInt(document.getElementById('tableCapacity').value);
+    const editId = document.getElementById('tableEditId').value;
+
+    if (!num)  { toast('Table number required', 'error'); return; }
+    if (!cap)  { toast('Capacity required', 'error'); return; }
+
+    const tables = getTables();
+    const table  = {
+      id:       editId ? parseInt(editId) : Date.now(),
+      number:   num, capacity: cap,
+      status:   document.getElementById('tableStatus').value,
+      zone:     document.getElementById('tableZone').value || 'Indoor',
+    };
+
+    if (editId) {
+      const idx = tables.findIndex(t=>t.id===parseInt(editId));
+      if (idx >= 0) tables[idx] = table;
+    } else { tables.push(table); }
+
+    StorageManager.set('tables', tables);
+    closeModal('tableModal');
+    renderTablesGrid();
+    toast(`Table ${num} ${editId?'updated':'added'}`, 'success');
+  }
+
+  function deleteTable(id) {
+    const t = getTables().find(x=>x.id===id);
+    confirmAction('Delete Table', `Delete Table ${t?.number}?`, () => {
+      StorageManager.set('tables', getTables().filter(x=>x.id!==id));
+      renderTablesGrid();
+      toast(`Table ${t?.number} deleted`, 'warning');
+    });
+  }
+
+  /* =============================================
+     STAFF MANAGEMENT
+     ============================================= */
+  function renderStaffGrid() {
+    const staff = getStaff();
+    const colors = ['#e8a020','#0ea5e9','#10b981','#8b5cf6','#ef4444','#f59e0b'];
+
+    document.getElementById('staffGrid').innerHTML = staff.map((s,i) => `
+      <div class="staff-card">
+        <div class="staff-avatar" style="background:${s.color||colors[i%colors.length]}22;color:${s.color||colors[i%colors.length]};">
+          ${s.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+          ${s.status==='online'?'<div class="staff-online-dot"></div>':''}
+        </div>
+        <div class="staff-info">
+          <div class="staff-name">${s.name}</div>
+          <div class="staff-role">${s.role} · <span style="color:${s.status==='online'?'var(--color-accent)':'var(--text-muted)'};">${s.status}</span></div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${s.email}</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openStaffModal(${s.id})" title="Edit">
+            <i data-lucide="pencil" style="width:12px;height:12px;"></i>
+          </button>
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteStaff(${s.id})" title="Delete">
+            <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+          </button>
+        </div>
+      </div>
+    `).join('');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function openStaffModal(id = null) {
+    document.getElementById('staffEditId').value = id || '';
+    document.getElementById('staffModalTitle').textContent = id ? 'Edit Staff Member' : 'Add Staff Member';
+    ['staffName','staffEmail','staffPhone'].forEach(fid => document.getElementById(fid).value = '');
+    document.getElementById('staffRole').value = 'Waiter';
+    document.getElementById('staffStatus').value = 'online';
+
+    if (id) {
+      const s = getStaff().find(x=>x.id===id);
+      if (s) {
+        document.getElementById('staffName').value   = s.name;
+        document.getElementById('staffEmail').value  = s.email;
+        document.getElementById('staffPhone').value  = s.phone;
+        document.getElementById('staffRole').value   = s.role;
+        document.getElementById('staffStatus').value = s.status;
+      }
+    }
+    openModal('staffModal');
+  }
+
+  function saveStaff() {
+    const name   = document.getElementById('staffName').value.trim();
+    const editId = document.getElementById('staffEditId').value;
+    if (!name) { toast('Name is required', 'error'); return; }
+
+    const staffList = getStaff();
+    const colors = ['#e8a020','#0ea5e9','#10b981','#8b5cf6','#ef4444','#f59e0b'];
+    const member = {
+      id:     editId ? parseInt(editId) : Date.now(),
+      name,
+      role:   document.getElementById('staffRole').value,
+      email:  document.getElementById('staffEmail').value,
+      phone:  document.getElementById('staffPhone').value,
+      status: document.getElementById('staffStatus').value,
+      color:  colors[staffList.length % colors.length],
+    };
+
+    if (editId) {
+      const idx = staffList.findIndex(s=>s.id===parseInt(editId));
+      if (idx>=0) { member.color = staffList[idx].color; staffList[idx] = member; }
+    } else { staffList.push(member); }
+
+    StorageManager.set('staff', staffList);
+    closeModal('staffModal');
+    renderStaffGrid();
+    toast(`${name} ${editId?'updated':'added'}`, 'success');
+  }
+
+  function deleteStaff(id) {
+    const s = getStaff().find(x=>x.id===id);
+    confirmAction('Remove Staff', `Remove ${s?.name}?`, () => {
+      StorageManager.set('staff', getStaff().filter(x=>x.id!==id));
+      renderStaffGrid();
+      toast(`${s?.name} removed`, 'warning');
+    });
+  }
+
+  /* =============================================
+     DELIVERY PAGE
+     ============================================= */
+  function renderDelivery() {
+    const orders = getOrders().filter(o => o.type === 'delivery');
+    const active   = orders.filter(o => ['pending','preparing','ready'].includes(o.kitchenStatus||o.status));
+    const done     = orders.filter(o => o.kitchenStatus === 'delivered' || o.status === 'delivered');
+
+    document.getElementById('delivActive').textContent  = active.length;
+    document.getElementById('delivDone').textContent    = done.length;
+
+    // Delivery queue
+    const queue = document.getElementById('deliveryQueue');
+    if (queue) {
+      if (!active.length) {
+        queue.innerHTML = '<div class="empty-state"><div class="empty-icon">🚚</div><div class="empty-title">No active deliveries</div><div class="empty-desc">Delivery orders appear here.</div></div>';
+      } else {
+        queue.innerHTML = active.map(o => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-color);">
+            <div style="width:36px;height:36px;border-radius:var(--radius-md);background:rgba(14,165,233,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+              <i data-lucide="truck" style="width:16px;height:16px;color:var(--color-secondary);"></i>
+            </div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${o.id}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${o.name||'Guest'} · ${o.address?.slice(0,30)||'No address'}…</div>
+            </div>
+            <span class="badge badge-blue" style="font-size:10px;">${o.kitchenStatus||o.status}</span>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Drivers
+    const driverStaff = getStaff().filter(s => s.role === 'Delivery Driver');
+    const drivers = document.getElementById('driversGrid');
+    if (drivers) {
+      if (!driverStaff.length) {
+        drivers.innerHTML = '<div class="empty-state"><div class="empty-icon">🚗</div><div class="empty-title">No drivers added</div><div class="empty-desc">Add delivery drivers in Staff management.</div></div>';
+      } else {
+        drivers.innerHTML = driverStaff.map(d => `
+          <div class="staff-card">
+            <div class="staff-avatar" style="background:rgba(14,165,233,0.1);color:var(--color-secondary);">
+              ${d.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+              ${d.status==='online'?'<div class="staff-online-dot"></div>':''}
+            </div>
+            <div class="staff-info">
+              <div class="staff-name">${d.name}</div>
+              <div class="staff-role" style="color:${d.status==='online'?'var(--color-accent)':'var(--text-muted)'};">${d.status==='online'?'On Duty':'Offline'}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${d.phone||'—'}</div>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+    if (window.lucide) lucide.createIcons();
+  }
+
+  /* =============================================
+     NOTIFICATIONS
+     ============================================= */
+  function renderNotifications() {
+    const notifs = getNotifs();
+    document.getElementById('notifList').innerHTML = notifs.map(n => `
+      <div class="notif-item ${n.unread?'unread':''}" onclick="readNotif(${n.id})">
+        <div class="notif-icon-wrap" style="background:${n.color}22;">
+          <i data-lucide="${n.icon}" style="width:16px;height:16px;color:${n.color};"></i>
+        </div>
+        <div class="notif-text">
+          <div class="notif-title">${n.title}</div>
+          <div class="notif-desc">${n.desc}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+          <div class="notif-time">${n.time}</div>
+          ${n.unread ? '<div class="notif-unread-dot"></div>' : ''}
+        </div>
+      </div>
+    `).join('');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function readNotif(id) {
+    const notifs = getNotifs();
+    const n = notifs.find(x=>x.id===id);
+    if (n) { n.unread = false; StorageManager.set('admin_notifs', notifs); renderNotifications(); updateNotifBadge(); }
+  }
+
+  function markAllRead() {
+    const notifs = getNotifs().map(n=>({...n,unread:false}));
+    StorageManager.set('admin_notifs', notifs);
+    renderNotifications();
+    updateNotifBadge();
+    toast('All notifications marked as read', 'success');
+  }
+
+  function updateNotifBadge() {
+    const unread = getNotifs().filter(n=>n.unread).length;
+    const badge  = document.getElementById('notifBadge');
+    const dot    = document.getElementById('notifDot');
+    if (badge) { badge.textContent = unread; badge.style.display = unread ? '' : 'none'; }
+    if (dot)   { dot.style.display = unread ? '' : 'none'; }
+  }
+
+  /* =============================================
+     BRANDING
+     ============================================= */
+  function loadBranding() {
+    const b = getBranding();
+    if (b.name)     document.getElementById('brandName').value    = b.name;
+    if (b.tagline)  document.getElementById('brandTagline').value = b.tagline;
+    if (b.desc)     document.getElementById('brandDesc').value    = b.desc;
+    if (b.address)  document.getElementById('brandAddress').value = b.address;
+    if (b.phone)    document.getElementById('brandPhone').value   = b.phone;
+    if (b.email)    document.getElementById('brandEmail').value   = b.email;
+    if (b.open)     document.getElementById('brandOpen').value    = b.open;
+    if (b.close)    document.getElementById('brandClose').value   = b.close;
+    if (b.deliveryFee) document.getElementById('deliveryFee').value = b.deliveryFee;
+    if (b.freeDeliveryThreshold) document.getElementById('freeDeliveryThreshold').value = b.freeDeliveryThreshold;
+    if (b.taxRate)  document.getElementById('taxRate').value      = b.taxRate;
+    if (b.currency) document.getElementById('currency').value     = b.currency;
+    if (b.logoText) {
+      document.getElementById('logoPreview').textContent = b.logoText;
+      document.getElementById('sidebarLogo').textContent  = b.logoText;
+    }
+    updateBrandPreview();
+  }
+
+  function updateBrandPreview() {
+    const name    = document.getElementById('brandName')?.value || 'NŌVA';
+    const tagline = document.getElementById('brandTagline')?.value || 'Premium Dining Experience';
+    const addr    = document.getElementById('brandAddress')?.value || '';
+    const phone   = document.getElementById('brandPhone')?.value || '';
+    const open    = document.getElementById('brandOpen')?.value || '11:00';
+    const close   = document.getElementById('brandClose')?.value || '23:00';
+
+    const el = id => document.getElementById(id);
+    if (el('previewLogo'))   el('previewLogo').textContent   = name;
+    if (el('previewTagline')) el('previewTagline').textContent = tagline;
+    if (el('previewAddr'))   el('previewAddr').textContent   = addr;
+    if (el('previewPhone'))  el('previewPhone').textContent  = phone;
+    if (el('previewHours'))  el('previewHours').textContent  = `${open} – ${close}`;
+    if (el('sidebarLogo'))   el('sidebarLogo').textContent   = name;
+    if (el('logoPreview'))   el('logoPreview').textContent   = name;
+
+    // Update page title
+    document.title = `${name} Admin — Control Center`;
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function saveBranding() {
+    const b = {
+      name:     document.getElementById('brandName').value,
+      tagline:  document.getElementById('brandTagline').value,
+      desc:     document.getElementById('brandDesc').value,
+      address:  document.getElementById('brandAddress').value,
+      phone:    document.getElementById('brandPhone').value,
+      email:    document.getElementById('brandEmail').value,
+      open:     document.getElementById('brandOpen').value,
+      close:    document.getElementById('brandClose').value,
+      deliveryFee: document.getElementById('deliveryFee').value,
+      freeDeliveryThreshold: document.getElementById('freeDeliveryThreshold').value,
+      taxRate:  document.getElementById('taxRate').value,
+      currency: document.getElementById('currency').value,
+      logoText: document.getElementById('brandName').value,
+    };
+    StorageManager.set('branding', b);
+    // Also save to a key the landing page reads
+    StorageManager.set('site_branding', b);
+    toast('Branding saved successfully', 'success', 'Saved ✓');
+  }
+
+  function handleLogoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const preview = document.getElementById('logoPreview');
+      preview.innerHTML = `<img src="${ev.target.result}" alt="Logo" />`;
+      StorageManager.set('logo_url', ev.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  /* =============================================
+     THEME EDITOR
+     ============================================= */
+  function initThemeEditor() {
+    // Brand colors
+    renderColorGroup('brandColorsGrid', BRAND_COLORS);
+    renderColorGroup('bgColorsGrid',    BG_COLORS);
+    renderColorGroup('textColorsGrid',  TEXT_COLORS);
+
+    // Fonts
+    const displayFonts = [
+      { name:'Cormorant Garamond', family:"'Cormorant Garamond', serif" },
+      { name:'Playfair Display',   family:"'Playfair Display', serif" },
+      { name:'DM Serif Display',   family:"'DM Serif Display', serif" },
+    ];
+    const bodyFonts = [
+      { name:'DM Sans',   family:"'DM Sans', sans-serif" },
+      { name:'Inter',     family:"'Inter', sans-serif" },
+      { name:'Plus Jakarta', family:"'Plus Jakarta Sans', sans-serif" },
+    ];
+
+    const savedTheme = StorageManager.get('admin_theme') || {};
+
+    document.getElementById('displayFontGrid').innerHTML = displayFonts.map(f => `
+      <div class="font-option ${(savedTheme['--font-display']||"'Cormorant Garamond', Georgia, serif").includes(f.name)?'selected':''}"
+           style="font-family:${f.family};" onclick="selectFont('display','${f.family}',this)">
+        <div style="font-size:18px;font-weight:600;">${f.name.split(' ')[0]}</div>
+        <div class="font-option-name">${f.name}</div>
+      </div>
+    `).join('');
+
+    document.getElementById('bodyFontGrid').innerHTML = bodyFonts.map(f => `
+      <div class="font-option ${(savedTheme['--font-body']||"'DM Sans', sans-serif").includes(f.name)?'selected':''}"
+           style="font-family:${f.family};" onclick="selectFont('body','${f.family}',this)">
+        <div style="font-size:14px;">Aa Bb Cc</div>
+        <div class="font-option-name">${f.name}</div>
+      </div>
+    `).join('');
+
+    // Sliders
+    document.getElementById('spacingSliders').innerHTML = SPACING_SLIDERS.map(s => {
+      const cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(s.var)) || s.default;
+      return `
+        <div class="slider-row">
+          <div class="slider-label">${s.label}</div>
+          <input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${cur}"
+            oninput="updateSlider('${s.var}',this.value,'${s.unit}',this.nextElementSibling)" />
+          <div class="slider-val">${cur}${s.unit}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderColorGroup(containerId, colors) {
+    const savedTheme = StorageManager.get('admin_theme') || {};
+    document.getElementById(containerId).innerHTML = colors.map(c => {
+      const cur = savedTheme[c.var] || getComputedStyle(document.documentElement).getPropertyValue(c.var).trim() || c.default;
+      return `
+        <div class="color-row">
+          <div class="color-preview" style="background:${cur};">
+            <input type="color" value="${cur}" oninput="updateColor('${c.var}',this.value,this.parentElement,this.parentElement.nextElementSibling.querySelector('.color-val'))" />
+          </div>
+          <div class="color-info">
+            <div class="color-name">${c.label}</div>
+            <div class="color-val">${cur}</div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function updateColor(cssVar, value, previewEl, valEl) {
+    document.documentElement.style.setProperty(cssVar, value);
+    if (previewEl) previewEl.style.background = value;
+    if (valEl)     valEl.textContent = value;
+    // Auto-save to temp
+    const saved = StorageManager.get('admin_theme') || {};
+    saved[cssVar] = value;
+    StorageManager.set('admin_theme', saved);
+  }
+
+  function updateSlider(cssVar, value, unit, labelEl) {
+    document.documentElement.style.setProperty(cssVar, value + unit);
+    if (labelEl) labelEl.textContent = value + unit;
+    const saved = StorageManager.get('admin_theme') || {};
+    saved[cssVar] = value + unit;
+    StorageManager.set('admin_theme', saved);
+  }
+
+  function selectFont(type, family, el) {
+    const group = type === 'display' ? '#displayFontGrid' : '#bodyFontGrid';
+    document.querySelectorAll(group + ' .font-option').forEach(f => f.classList.remove('selected'));
+    el.classList.add('selected');
+    const cssVar = type === 'display' ? '--font-display' : '--font-body';
+    document.documentElement.style.setProperty(cssVar, family);
+    const saved = StorageManager.get('admin_theme') || {};
+    saved[cssVar] = family;
+    StorageManager.set('admin_theme', saved);
+  }
+
+  function saveTheme() {
+    // Already auto-saved; just show confirmation
+    // Also push to landing-page key
+    const saved = StorageManager.get('admin_theme') || {};
+    StorageManager.set('theme', saved);
+    toast('Theme saved and applied to all pages', 'success', 'Theme Saved ✓');
+  }
+
+  function resetTheme() {
+    confirmAction('Reset Theme', 'Reset all colors and fonts to defaults?', () => {
+      StorageManager.remove('admin_theme');
+      StorageManager.remove('theme');
+      // Remove all inline styles
+      const root = document.documentElement;
+      [...BRAND_COLORS, ...BG_COLORS, ...TEXT_COLORS, ...SPACING_SLIDERS].forEach(c => {
+        root.style.removeProperty(c.var);
+      });
+      root.style.removeProperty('--font-display');
+      root.style.removeProperty('--font-body');
+      initThemeEditor();
+      toast('Theme reset to defaults', 'info', 'Reset');
+    });
+  }
+
+  /* =============================================
+     AI ASSISTANT
+     ============================================= */
+  function initAI() {
+    const chat = document.getElementById('aiChat');
+    if (chat && chat.children.length === 0) {
+      addAIMsg('bot', '👋 Hello! I\'m your NŌVA AI assistant. I can help you write food descriptions, analyze trends, generate marketing copy, and suggest menu improvements.\n\nWhat would you like to do today?');
+    }
+
+    // Quick suggestions panel
+    const suggs = [
+      { icon:'🌟', title:'Weekly Specials Copy', desc:'Generate marketing text for this week\'s specials.' },
+      { icon:'📊', title:'Menu Optimization',    desc:'Analyze your best sellers and suggest improvements.' },
+      { icon:'🍽️', title:'New Dish Ideas',       desc:'Get creative dish suggestions based on trends.' },
+      { icon:'💬', title:'Customer Response',    desc:'Draft responses to customer reviews.' },
+    ];
+    document.getElementById('aiSuggestionsPanel').innerHTML = suggs.map(s => `
+      <div class="notif-item" style="cursor:pointer;" onclick="sendAIMsg('${s.title}')">
+        <div style="font-size:20px;">${s.icon}</div>
+        <div class="notif-text">
+          <div class="notif-title">${s.title}</div>
+          <div class="notif-desc">${s.desc}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // Insights
+    const insights = [
+      { icon:'📈', text:'Your <strong>Truffle Fries</strong> are the most re-ordered item this week.' },
+      { icon:'⚡', text:'Peak hours are <strong>12–2 PM</strong> and <strong>7–9 PM</strong>. Staff accordingly.' },
+      { icon:'💡', text:'Adding a <strong>vegetarian section</strong> could increase reach by ~18%.' },
+      { icon:'⭐', text:'Your average rating is <strong>4.7★</strong> — above industry benchmark of 4.2.' },
+    ];
+    document.getElementById('aiInsights').innerHTML = insights.map(i => `
+      <div class="notif-item" style="border-bottom:1px solid var(--border-color);padding:10px 0;">
+        <div style="font-size:16px;flex-shrink:0;">${i.icon}</div>
+        <div style="font-size:13px;color:var(--text-secondary);">${i.text}</div>
+      </div>
+    `).join('');
+  }
+
+  function addAIMsg(role, text) {
+    const chat = document.getElementById('aiChat');
+    const div  = document.createElement('div');
+    div.className = `ai-msg ${role}`;
+    div.innerHTML = `
+      <div class="ai-avatar ${role === 'bot' ? 'bot' : 'user-av'}">
+        ${role === 'bot' ? '✦' : 'A'}
+      </div>
+      <div class="ai-bubble" style="white-space:pre-wrap;">${text}</div>
+    `;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function sendAIMsg(preset = null) {
+    const input = document.getElementById('aiInput');
+    const msg   = preset || (input ? input.value.trim() : '');
+    if (!msg) return;
+    if (input && !preset) input.value = '';
+
+    addAIMsg('user', msg);
+
+    // Show typing indicator
+    const chat = document.getElementById('aiChat');
+    const typing = document.createElement('div');
+    typing.className = 'ai-msg bot';
+    typing.id = 'aiTyping';
+    typing.innerHTML = `
+      <div class="ai-avatar bot">✦</div>
+      <div class="ai-typing"><span></span><span></span><span></span></div>
+    `;
+    chat.appendChild(typing);
+    chat.scrollTop = chat.scrollHeight;
+
+    // Simulate delay
+    setTimeout(() => {
+      typing.remove();
+      const key   = msg.toLowerCase();
+      const found = Object.keys(AI_RESPONSES).find(k => key.includes(k));
+      const resp  = found
+        ? AI_RESPONSES[found][Math.floor(Math.random() * AI_RESPONSES[found].length)]
+        : `That's an interesting question! For **"${msg}"**, I'd recommend analyzing your current menu performance first, then cross-referencing with seasonal trends. Would you like me to help you draft specific content or dive deeper into any particular aspect? 🎯`;
+
+      addAIMsg('bot', resp);
+    }, 1200 + Math.random() * 800);
+  }
+
+  /* =============================================
+     HELPERS
+     ============================================= */
+  function statusBadge(status) {
+    const map = {
+      pending:   'badge-gold',
+      confirmed: 'badge-blue',
+      preparing: 'badge-blue',
+      ready:     'badge-purple',
+      delivered: 'badge-green',
+      cancelled: 'badge-red',
+    };
+    return `<span class="badge ${map[status]||'badge-gray'}">${status||'—'}</span>`;
+  }
+
+  function timeAgo(timestamp) {
+    if (!timestamp) return '—';
+    const diff = Date.now() - new Date(timestamp).getTime();
+    if (diff < 60000)    return 'just now';
+    if (diff < 3600000)  return Math.floor(diff/60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+    return Math.floor(diff/86400000) + 'd ago';
+  }
+
+  /* =============================================
+     GLOBAL SEARCH
+     ============================================= */
+  function initGlobalSearch() {
+    const input = document.getElementById('globalSearch');
+    input?.addEventListener('input', e => {
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) return;
+      // Quick navigation hints
+      if (q.includes('food') || q.includes('menu')) navigateTo('foods', document.querySelector('[data-page=foods]'));
+      else if (q.includes('order')) navigateTo('orders', document.querySelector('[data-page=orders]'));
+      else if (q.includes('table')) navigateTo('tables', document.querySelector('[data-page=tables]'));
+      else if (q.includes('staff') || q.includes('team')) navigateTo('staff', document.querySelector('[data-page=staff]'));
+      else if (q.includes('theme') || q.includes('color')) navigateTo('theme', document.querySelector('[data-page=theme]'));
+    });
+
+    input?.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { input.value = ''; input.blur(); }
+    });
+  }
+
+  /* =============================================
+     KEYBOARD SHORTCUTS
+     ============================================= */
+  document.addEventListener('keydown', e => {
+    if ((e.ctrlKey||e.metaKey) && e.key === 'k') {
+      e.preventDefault();
+      document.getElementById('globalSearch')?.focus();
+    }
+  });
+
+  /* =============================================
+     SIMULATED REAL-TIME UPDATES
+     ============================================= */
+  function startRealTimeSimulation() {
+    // Every 30s, simulate a new notification ping
+    setInterval(() => {
+      const count = getNotifs().filter(n=>n.unread).length;
+      if (count) updateNotifBadge();
+    }, 30000);
+
+    // Every 60s, auto-refresh dashboard if visible
+    setInterval(() => {
+      if (document.getElementById('page-dashboard').classList.contains('active')) {
+        renderDashboard();
+      }
+    }, 60000);
+  }
+
+  /* =============================================
+     ADMIN APP CONTROLLER
+     ============================================= */
+  /* =============================================
+     ADMIN PIN LOGIN SYSTEM
+     ============================================= */
+  let _adminPinBuf = '';
+  const ADMIN_PIN  = '121212';
+
+  function adminPinPress(n) {
+    if (_adminPinBuf.length >= 6) return;
+    _adminPinBuf += String(n);
+    _adminUpdateDisplay();
+    if (_adminPinBuf.length === 6) setTimeout(adminPinEnter, 120);
+  }
+
+  function adminPinClear() {
+    _adminPinBuf = _adminPinBuf.slice(0, -1);
+    _adminUpdateDisplay();
+    document.getElementById('adminPinError').textContent = '';
+  }
+
+  function adminPinEnter() {
+    if (_adminPinBuf === ADMIN_PIN) {
+      const remember = document.getElementById('adminRememberMe')?.checked;
+      if (remember) localStorage.setItem('nova_admin_session', '1');
+      document.getElementById('adminPinLogin').classList.add('hidden');
+      AdminApp.init();
+    } else {
+      document.getElementById('adminPinError').textContent = 'Incorrect PIN. Try again.';
+      const disp = document.getElementById('adminPinDisplay');
+      disp.style.animation = 'adminShake 0.3s ease';
+      setTimeout(() => disp.style.animation = '', 400);
+      _adminPinBuf = '';
+      _adminUpdateDisplay();
+    }
+  }
+
+  function _adminUpdateDisplay() {
+    const d = document.getElementById('adminPinDisplay');
+    d.textContent = _adminPinBuf.length > 0
+      ? '●'.repeat(_adminPinBuf.length) + '—'.repeat(6 - _adminPinBuf.length)
+      : '——————';
+  }
+
+  const AdminApp = {
+    toggleTheme() { AdminTheme.toggle(); },
+
+    init() {
+      AdminTheme.init();
+      initGlobalSearch();
+      updateNotifBadge();
+      updateOrdersBadge();
+      startRealTimeSimulation();
+
+      // Init default page
+      renderDashboard();
+
+      // Seed defaults to localStorage if not set
+      if (!StorageManager.get('foods'))  StorageManager.set('foods',  DEFAULT_FOODS);
+      if (!StorageManager.get('tables')) StorageManager.set('tables', DEFAULT_TABLES);
+      if (!StorageManager.get('staff'))  StorageManager.set('staff',  DEFAULT_STAFF);
+      if (!StorageManager.get('admin_notifs')) StorageManager.set('admin_notifs', DEFAULT_NOTIFICATIONS);
+
+      // Load branding sidebar logo
+      const b = getBranding();
+      if (b.name) {
+        const sl = document.getElementById('sidebarLogo');
+        if (sl) sl.textContent = b.name;
+      }
+
+      // Init icons
+      if (window.lucide) lucide.createIcons();
+
+      // Hide loader
+      setTimeout(() => {
+        document.getElementById('pageLoader')?.classList.add('hidden');
+      }, 900);
+    },
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // If previously remembered, skip PIN and go straight in
+    if (localStorage.getItem('nova_admin_session') === '1') {
+      document.getElementById('adminPinLogin').classList.add('hidden');
+      AdminApp.init();
+    }
+    // Otherwise the PIN overlay stays visible — user must authenticate
+  });
+  </script>
+</body>
+</html>

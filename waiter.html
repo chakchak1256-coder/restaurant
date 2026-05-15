@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NŌVA Waiter — Ordering Panel</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <style>
+    /* =============================================
+       CSS CUSTOM PROPERTIES — THEME SYSTEM
+       Inherits from / syncs with admin theme
+       ============================================= */
+    :root {
+      --color-primary:       #e8a020;
+      --color-primary-light: #f5be52;
+      --color-primary-dark:  #b8780e;
+      --color-secondary:     #0ea5e9;
+      --color-accent:        #10b981;
+      --color-danger:        #ef4444;
+      --color-warning:       #f59e0b;
+      --color-purple:        #8b5cf6;
+      --color-gold:          #e8a020;
+      --color-muted:         #5a5650;
+
+      --bg-base:       #080809;
+      --bg-surface:    #0f0f12;
+      --bg-card:       #161619;
+      --bg-card-hover: #1e1e23;
+      --bg-glass:      rgba(22,22,25,0.88);
+
+      --text-primary:   #f0ede8;
+      --text-secondary: #a09a90;
+      --text-muted:     #5a5650;
+      --text-inverse:   #080809;
+
+      --border-color:  rgba(240,237,232,0.07);
+      --border-active: rgba(232,160,32,0.4);
+
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.5);
+      --shadow-md:   0 4px 20px rgba(0,0,0,0.6);
+      --shadow-lg:   0 12px 48px rgba(0,0,0,0.7);
+      --shadow-gold: 0 8px 32px rgba(232,160,32,0.2);
+
+      --radius-sm:   6px;
+      --radius-md:   12px;
+      --radius-lg:   18px;
+      --radius-xl:   26px;
+      --radius-full: 9999px;
+
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-heading: 'Syne', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+
+      --topbar-h:   60px;
+      --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring:cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      /* Panel widths */
+      --panel-tables: 230px;
+      --panel-order:  320px;
+    }
+
+    [data-theme="light"] {
+      --bg-base:       #f5f2ed;
+      --bg-surface:    #ffffff;
+      --bg-card:       #ffffff;
+      --bg-card-hover: #f8f5f0;
+      --bg-glass:      rgba(255,255,255,0.93);
+      --text-primary:   #1a1714;
+      --text-secondary: #6b6560;
+      --text-muted:     #a09a90;
+      --border-color:   rgba(26,23,20,0.08);
+      --shadow-md:   0 4px 20px rgba(0,0,0,0.10);
+      --shadow-lg:   0 12px 48px rgba(0,0,0,0.12);
+    }
+
+    /* =============================================
+       RESET & BASE
+       ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      line-height: 1.6;
+      overflow: hidden;
+      height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+    img { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    input, textarea, select { font-family: inherit; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+    /* =============================================
+       PAGE LOADER
+       ============================================= */
+    #pageLoader {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--bg-base);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 16px;
+      transition: opacity 0.4s, visibility 0.4s;
+    }
+    #pageLoader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .loader-logo {
+      font-family: var(--font-display);
+      font-size: 2.4rem; font-weight: 600;
+      color: var(--color-primary);
+      letter-spacing: 0.08em;
+    }
+    .loader-bar {
+      width: 120px; height: 2px;
+      background: var(--border-color);
+      border-radius: 2px; overflow: hidden;
+    }
+    .loader-bar-fill {
+      height: 100%; width: 0;
+      background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+      border-radius: 2px;
+      animation: loadFill 0.9s var(--ease-out) forwards;
+    }
+    @keyframes loadFill { to { width: 100%; } }
+
+    /* =============================================
+       TOAST SYSTEM
+       ============================================= */
+    #toastContainer {
+      position: fixed; bottom: 20px; right: 20px;
+      z-index: 8000; display: flex; flex-direction: column; gap: 8px;
+      pointer-events: none;
+    }
+    .toast {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 14px;
+      background: var(--bg-glass); backdrop-filter: blur(20px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 240px; max-width: 320px;
+      pointer-events: all;
+      animation: toastIn 0.3s var(--ease-out);
+    }
+    .toast.removing { animation: toastOut 0.3s var(--ease-out) forwards; }
+    @keyframes toastIn  { from { opacity:0; transform: translateX(20px); } }
+    @keyframes toastOut { to   { opacity:0; transform: translateX(20px); } }
+    .toast.success { border-color: rgba(16,185,129,0.3); }
+    .toast.error   { border-color: rgba(239,68,68,0.3); }
+    .toast.warning { border-color: rgba(245,158,11,0.3); }
+    .toast-icon { display:flex; align-items:center; margin-top:1px; }
+    .toast.success .toast-icon { color: var(--color-accent); }
+    .toast.error   .toast-icon { color: var(--color-danger); }
+    .toast.warning .toast-icon { color: var(--color-warning); }
+    .toast.info    .toast-icon { color: var(--color-secondary); }
+    .toast-msg  { font-size: 0.82rem; font-weight: 500; color: var(--text-primary); }
+    .toast-sub  { font-size: 0.74rem; color: var(--text-secondary); margin-top: 2px; }
+
+    /* =============================================
+       MODAL SYSTEM
+       ============================================= */
+    .modal-overlay {
+      position: fixed; inset: 0; z-index: 5000;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.25s, visibility 0.25s;
+      padding: 16px;
+    }
+    .modal-overlay.open { opacity: 1; visibility: visible; }
+    .modal-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-lg);
+      width: 100%; max-width: 480px;
+      max-height: 90dvh; overflow-y: auto;
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.3s var(--ease-out);
+    }
+    .modal-overlay.open .modal-box { transform: none; }
+    .modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 20px 24px; border-bottom: 1px solid var(--border-color);
+    }
+    .modal-title { font-family: var(--font-heading); font-size: 1rem; font-weight: 700; }
+    .modal-body  { padding: 20px 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; justify-content: flex-end; }
+
+    /* =============================================
+       FORM CONTROLS
+       ============================================= */
+    .form-group { margin-bottom: 14px; }
+    .form-label { font-size: 0.75rem; font-weight: 600; color: var(--text-secondary); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+    .form-control {
+      width: 100%; padding: 10px 13px;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary); font-size: 0.875rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    .form-control:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(232,160,32,0.12); }
+    textarea.form-control { resize: vertical; min-height: 70px; }
+    select.form-control { cursor: pointer; }
+
+    /* =============================================
+       BUTTONS
+       ============================================= */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 16px; border-radius: var(--radius-md);
+      font-size: 0.84rem; font-weight: 600;
+      transition: all 0.2s var(--ease-out);
+      cursor: pointer; white-space: nowrap;
+    }
+    .btn-primary {
+      background: var(--color-primary); color: #000;
+      box-shadow: 0 4px 16px rgba(232,160,32,0.25);
+    }
+    .btn-primary:hover { background: var(--color-primary-light); transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-ghost {
+      background: transparent; color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+    .btn-ghost:hover { background: var(--bg-card); color: var(--text-primary); }
+    .btn-danger { background: rgba(239,68,68,0.15); color: var(--color-danger); border: 1px solid rgba(239,68,68,0.2); }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+    .btn-accent { background: rgba(16,185,129,0.15); color: var(--color-accent); border: 1px solid rgba(16,185,129,0.2); }
+    .btn-accent:hover { background: rgba(16,185,129,0.25); }
+    .btn-sm { padding: 6px 11px; font-size: 0.78rem; }
+    .btn-icon {
+      width: 36px; height: 36px; padding: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .btn-icon:hover { color: var(--text-primary); border-color: var(--color-primary); }
+
+    /* =============================================
+       PIN LOGIN OVERLAY
+       ============================================= */
+    #pinLogin {
+      position: fixed; inset: 0; z-index: 7000;
+      background: var(--bg-base);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 32px;
+      animation: fadeIn 0.4s var(--ease-out);
+    }
+    #pinLogin.hidden { display: none; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
+    .pin-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 36px 40px;
+      width: 100%; max-width: 400px;
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+    .pin-logo {
+      font-family: var(--font-display);
+      font-size: 2rem; font-weight: 600;
+      color: var(--color-primary);
+      letter-spacing: 0.08em;
+      margin-bottom: 8px;
+    }
+    .pin-subtitle { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 28px; }
+    .pin-waiter-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 10px; margin-bottom: 24px;
+    }
+    .pin-waiter-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      padding: 12px 8px;
+      background: var(--bg-surface); border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary); cursor: pointer;
+      transition: all 0.2s var(--ease-out);
+      font-family: var(--font-body);
+    }
+    .pin-waiter-btn.active {
+      border-color: var(--color-primary);
+      background: rgba(232,160,32,0.08);
+      box-shadow: 0 0 0 3px rgba(232,160,32,0.12);
+    }
+    .pin-waiter-btn:hover:not(.active) { border-color: var(--border-active); background: var(--bg-card-hover); }
+    .pin-waiter-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.78rem; font-weight: 700; color: #000;
+    }
+    .pin-waiter-name { font-size: 0.73rem; font-weight: 500; }
+    .pin-display {
+      background: var(--bg-base); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 12px;
+      font-family: 'Courier New', monospace; font-size: 1.4rem;
+      letter-spacing: 0.3em; color: var(--color-primary);
+      text-align: center; margin-bottom: 14px; min-height: 52px;
+    }
+    .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .pin-key {
+      padding: 14px; text-align: center;
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); font-size: 1.1rem; font-weight: 600;
+      color: var(--text-primary); cursor: pointer;
+      transition: all 0.15s;
+      font-family: var(--font-body);
+    }
+    .pin-key:hover { background: var(--bg-card-hover); border-color: var(--color-primary); transform: scale(1.03); }
+    .pin-key:active { transform: scale(0.97); }
+    .pin-key.clear { color: var(--color-danger); }
+    .pin-key.enter { background: var(--color-primary); color: #000; border-color: var(--color-primary); }
+    .pin-key.enter:hover { background: var(--color-primary-light); }
+    .pin-error { color: var(--color-danger); font-size: 0.8rem; margin-top: 10px; min-height: 20px; }
+
+    /* =============================================
+       TOPBAR
+       ============================================= */
+    .topbar {
+      height: var(--topbar-h);
+      background: var(--bg-glass); backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 16px;
+      padding: 0 16px;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 400;
+    }
+    .topbar-logo {
+      font-family: var(--font-display);
+      font-size: 1.4rem; font-weight: 600;
+      color: var(--color-primary); letter-spacing: 0.06em;
+      flex-shrink: 0;
+    }
+    .topbar-sep { width: 1px; height: 24px; background: var(--border-color); flex-shrink: 0; }
+    .topbar-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: var(--radius-full);
+      font-size: 0.73rem; font-weight: 600; letter-spacing: 0.04em;
+    }
+    .badge-waiter { background: rgba(232,160,32,0.12); color: var(--color-primary); }
+    .badge-shift  { background: rgba(16,185,129,0.10); color: var(--color-accent); }
+    .topbar-spacer { flex: 1; }
+    /* Shift timer */
+    #shiftTimer { font-size: 0.8rem; color: var(--text-muted); font-family: 'Courier New', monospace; }
+    /* Mobile tab bar trigger */
+    .tab-pill {
+      display: none;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-full); padding: 4px;
+      gap: 2px;
+    }
+    .tab-pill-btn {
+      padding: 5px 11px; border-radius: var(--radius-full);
+      font-size: 0.72rem; font-weight: 600;
+      color: var(--text-muted); cursor: pointer;
+      transition: all 0.2s; border: none; background: none;
+      font-family: var(--font-body);
+    }
+    .tab-pill-btn.active { background: var(--color-primary); color: #000; }
+
+    /* =============================================
+       MAIN LAYOUT
+       ============================================= */
+    .app-shell {
+      display: flex;
+      height: 100dvh;
+      padding-top: var(--topbar-h);
+      overflow: hidden;
+    }
+
+    /* ---- TABLES PANEL ---- */
+    .panel-tables {
+      width: var(--panel-tables);
+      flex-shrink: 0;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-color);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .panel-title {
+      font-family: var(--font-heading);
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-muted); margin-bottom: 10px;
+    }
+    .table-legend { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .legend-dot {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 0.68rem; color: var(--text-muted);
+    }
+    .legend-dot span {
+      width: 7px; height: 7px; border-radius: 50%; display: inline-block;
+    }
+    .tables-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+    .zone-label {
+      font-size: 0.66rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+      padding: 6px 2px 4px;
+    }
+    .tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .table-tile {
+      aspect-ratio: 1;
+      background: var(--bg-card); border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 4px; cursor: pointer;
+      transition: all 0.2s var(--ease-out);
+      position: relative; overflow: hidden;
+    }
+    .table-tile:hover { border-color: var(--color-primary); background: var(--bg-card-hover); transform: scale(1.03); }
+    .table-tile.active {
+      border-color: var(--color-primary);
+      background: rgba(232,160,32,0.08);
+      box-shadow: 0 0 0 3px rgba(232,160,32,0.15);
+    }
+    .table-tile.occupied { border-color: rgba(239,68,68,0.35); }
+    .table-tile.occupied::before {
+      content:''; position:absolute; inset:0;
+      background: rgba(239,68,68,0.04);
+    }
+    .table-tile.reserved { border-color: rgba(139,92,246,0.35); }
+    .table-tile.reserved::before {
+      content:''; position:absolute; inset:0;
+      background: rgba(139,92,246,0.04);
+    }
+    .table-num { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 800; }
+    .table-cap { font-size: 0.65rem; color: var(--text-muted); }
+    .table-status-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      position: absolute; top: 7px; right: 7px;
+    }
+    .free-dot     { background: var(--color-accent); }
+    .occupied-dot { background: var(--color-danger); }
+    .reserved-dot { background: var(--color-purple); }
+
+    /* Active table info bar */
+    .active-table-bar {
+      margin: 10px; padding: 10px 12px;
+      background: rgba(232,160,32,0.08);
+      border: 1px solid rgba(232,160,32,0.2);
+      border-radius: var(--radius-md);
+      font-size: 0.78rem;
+    }
+    .active-table-bar strong { color: var(--color-primary); }
+
+    /* ---- MENU PANEL ---- */
+    .panel-menu {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column;
+      background: var(--bg-base);
+      overflow: hidden;
+    }
+    .menu-toolbar {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+    .search-wrap {
+      flex: 1; position: relative;
+      max-width: 320px;
+    }
+    .search-wrap .search-icon {
+      position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); pointer-events: none;
+    }
+    .search-input {
+      width: 100%; padding: 8px 10px 8px 34px;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-full); color: var(--text-primary);
+      font-size: 0.83rem; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(232,160,32,0.1); }
+    .cat-tabs {
+      display: flex; gap: 6px; overflow-x: auto; padding: 10px 14px 0;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+    .cat-tabs::-webkit-scrollbar { display: none; }
+    .cat-tab {
+      padding: 6px 14px; border-radius: var(--radius-full);
+      font-size: 0.77rem; font-weight: 600;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+      transition: all 0.2s;
+      font-family: var(--font-body);
+    }
+    .cat-tab.active { background: var(--color-primary); color: #000; border-color: var(--color-primary); }
+    .cat-tab:hover:not(.active) { border-color: var(--border-active); color: var(--text-primary); }
+    .menu-scroll { flex: 1; overflow-y: auto; padding: 14px; }
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .food-card {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); overflow: hidden;
+      cursor: pointer; transition: all 0.2s var(--ease-out);
+      position: relative;
+    }
+    .food-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--border-active); }
+    .food-card.unavailable { opacity: 0.45; cursor: not-allowed; }
+    .food-card.unavailable:hover { transform: none; box-shadow: none; }
+    .food-card-img {
+      width: 100%; aspect-ratio: 4/3; object-fit: cover;
+      background: var(--bg-surface);
+    }
+    .food-card-body { padding: 10px 10px 12px; }
+    .food-card-name { font-size: 0.82rem; font-weight: 600; line-height: 1.3; margin-bottom: 4px; }
+    .food-card-price { font-size: 0.9rem; font-weight: 700; color: var(--color-primary); }
+    .food-card-cat { font-size: 0.67rem; color: var(--text-muted); margin-top: 3px; }
+    .food-card-add {
+      position: absolute; bottom: 8px; right: 8px;
+      width: 28px; height: 28px;
+      background: var(--color-primary); color: #000;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      opacity: 0; transform: scale(0.8);
+      transition: all 0.2s var(--ease-spring);
+      box-shadow: 0 4px 12px rgba(232,160,32,0.4);
+    }
+    .food-card:hover .food-card-add { opacity: 1; transform: scale(1); }
+    .food-badge {
+      position: absolute; top: 6px; left: 6px;
+      padding: 2px 7px; border-radius: var(--radius-full);
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+    }
+    .badge-best { background: rgba(232,160,32,0.85); color: #000; }
+    .badge-feat { background: rgba(14,165,233,0.85); color: #fff; }
+    .badge-na   { background: rgba(239,68,68,0.8); color: #fff; }
+    .menu-empty {
+      grid-column: 1/-1; text-align: center;
+      padding: 48px 20px; color: var(--text-muted);
+    }
+    .menu-empty-icon { margin: 0 auto 12px; opacity: 0.4; }
+
+    /* ---- ORDER PANEL ---- */
+    .panel-order {
+      width: var(--panel-order);
+      flex-shrink: 0;
+      background: var(--bg-surface);
+      border-left: 1px solid var(--border-color);
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .order-header {
+      padding: 14px 14px 10px;
+      border-bottom: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .order-header-row {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .order-title { font-family: var(--font-heading); font-size: 0.9rem; font-weight: 700; }
+    .order-count {
+      font-size: 0.72rem; color: var(--text-muted);
+      font-family: 'Courier New', monospace;
+    }
+    .order-table-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: var(--radius-full);
+      background: rgba(232,160,32,0.1); color: var(--color-primary);
+      font-size: 0.72rem; font-weight: 600;
+    }
+    .order-scroll { flex: 1; overflow-y: auto; padding: 10px; }
+    .order-empty {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; height: 100%; gap: 12px;
+      color: var(--text-muted); padding: 24px;
+      text-align: center;
+    }
+    .order-empty-icon { opacity: 0.3; }
+    .order-empty-msg { font-size: 0.82rem; line-height: 1.5; }
+
+    /* Order item row */
+    .order-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 10px 8px; border-radius: var(--radius-md);
+      transition: background 0.2s;
+      animation: itemIn 0.25s var(--ease-spring);
+    }
+    .order-item:hover { background: var(--bg-card); }
+    @keyframes itemIn { from { opacity:0; transform:translateX(10px); } }
+    .order-item-name { font-size: 0.82rem; font-weight: 500; flex: 1; }
+    .order-item-mod { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; line-height: 1.3; }
+    .order-item-price { font-size: 0.82rem; font-weight: 600; color: var(--color-primary); flex-shrink: 0; }
+    .qty-controls {
+      display: flex; align-items: center; gap: 4px;
+      flex-shrink: 0;
+    }
+    .qty-btn {
+      width: 22px; height: 22px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      color: var(--text-secondary); cursor: pointer; font-size: 0.9rem;
+      transition: all 0.15s;
+    }
+    .qty-btn:hover { background: var(--color-primary); color: #000; border-color: var(--color-primary); }
+    .qty-num { font-size: 0.82rem; font-weight: 600; min-width: 18px; text-align: center; }
+
+    /* Order notes */
+    .order-notes-wrap {
+      padding: 8px 10px;
+      border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+    }
+    .notes-label { font-size: 0.67rem; font-weight: 700; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 5px; }
+    .notes-area {
+      width: 100%; background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      font-size: 0.78rem; padding: 7px 10px; resize: none;
+      outline: none; transition: border-color 0.2s;
+      font-family: var(--font-body);
+    }
+    .notes-area:focus { border-color: var(--color-primary); }
+
+    /* Order totals */
+    .order-totals {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+      font-size: 0.82rem;
+    }
+    .totals-row {
+      display: flex; justify-content: space-between;
+      padding: 3px 0; color: var(--text-secondary);
+    }
+    .totals-row.total { font-weight: 700; font-size: 1rem; color: var(--text-primary); padding-top: 8px; }
+    .totals-divider { height: 1px; background: var(--border-color); margin: 6px 0; }
+
+    /* Order actions */
+    .order-actions {
+      padding: 10px 14px;
+      border-top: 1px solid var(--border-color);
+      display: flex; flex-direction: column; gap: 8px;
+      flex-shrink: 0;
+    }
+    .send-btn {
+      width: 100%; padding: 13px;
+      background: var(--color-primary); color: #000;
+      border-radius: var(--radius-md); font-size: 0.9rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.2s var(--ease-out);
+      box-shadow: 0 6px 20px rgba(232,160,32,0.3);
+      font-family: var(--font-body);
+    }
+    .send-btn:hover { background: var(--color-primary-light); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(232,160,32,0.4); }
+    .send-btn:active { transform: none; }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+    .order-sub-actions { display: flex; gap: 8px; }
+    .order-sub-actions .btn { flex: 1; justify-content: center; font-size: 0.76rem; }
+
+    /* =============================================
+       ORDER HISTORY MODAL
+       ============================================= */
+    .history-order-card {
+      padding: 12px; background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); margin-bottom: 10px;
+      transition: border-color 0.2s;
+    }
+    .history-order-card:hover { border-color: var(--border-active); }
+    .history-order-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .history-order-id { font-family: 'Courier New', monospace; font-size: 0.78rem; color: var(--color-primary); font-weight: 600; }
+    .history-order-meta { font-size: 0.72rem; color: var(--text-muted); }
+    .history-status-badge {
+      padding: 2px 8px; border-radius: var(--radius-full);
+      font-size: 0.67rem; font-weight: 700; letter-spacing: 0.04em;
+    }
+    .status-pending  { background: rgba(245,158,11,0.15); color: var(--color-warning); }
+    .status-preparing{ background: rgba(14,165,233,0.15); color: var(--color-secondary); }
+    .status-ready    { background: rgba(16,185,129,0.15); color: var(--color-accent); }
+    .status-delivered{ background: rgba(100,100,100,0.15); color: var(--text-muted); }
+    .status-cancelled{ background: rgba(239,68,68,0.15); color: var(--color-danger); }
+    .history-items { font-size: 0.77rem; color: var(--text-secondary); line-height: 1.6; }
+    .history-total { font-size: 0.82rem; font-weight: 600; color: var(--color-primary); margin-top: 6px; }
+
+    /* =============================================
+       SPLIT BILL MODAL
+       ============================================= */
+    .split-option {
+      padding: 14px; background: var(--bg-card); border: 1.5px solid var(--border-color);
+      border-radius: var(--radius-md); cursor: pointer;
+      transition: all 0.2s; margin-bottom: 8px;
+      font-family: var(--font-body);
+    }
+    .split-option.active { border-color: var(--color-primary); background: rgba(232,160,32,0.06); }
+    .split-option:hover:not(.active) { border-color: var(--border-active); }
+    .split-option-title { font-weight: 600; font-size: 0.85rem; margin-bottom: 3px; }
+    .split-option-desc  { font-size: 0.73rem; color: var(--text-muted); }
+    .split-result {
+      padding: 14px; background: rgba(232,160,32,0.07);
+      border: 1px solid rgba(232,160,32,0.2);
+      border-radius: var(--radius-md); text-align: center;
+    }
+    .split-amount { font-size: 1.6rem; font-weight: 700; color: var(--color-primary); }
+    .split-label  { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+
+    /* =============================================
+       CONFIRM MODAL STYLES
+       ============================================= */
+    .confirm-icon-wrap {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(16,185,129,0.1);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 16px; color: var(--color-accent);
+    }
+    .confirm-title { font-family: var(--font-heading); font-size: 1.1rem; font-weight: 700; text-align: center; }
+    .confirm-desc  { font-size: 0.82rem; color: var(--text-secondary); text-align: center; margin-top: 6px; }
+    .confirm-details {
+      margin-top: 16px; padding: 12px;
+      background: var(--bg-card); border-radius: var(--radius-md);
+      font-size: 0.8rem; color: var(--text-secondary);
+    }
+    .confirm-details-row { display: flex; justify-content: space-between; padding: 3px 0; }
+    .confirm-details-row strong { color: var(--text-primary); }
+
+    /* =============================================
+       ITEM NOTE MODAL
+       ============================================= */
+    .quick-mods { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .quick-mod {
+      padding: 4px 10px; border-radius: var(--radius-full);
+      font-size: 0.72rem; font-weight: 500;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      color: var(--text-secondary); cursor: pointer;
+      transition: all 0.15s; font-family: var(--font-body);
+    }
+    .quick-mod.active { background: rgba(232,160,32,0.12); border-color: var(--color-primary); color: var(--color-primary); }
+    .quick-mod:hover:not(.active) { border-color: var(--border-active); color: var(--text-primary); }
+
+    /* =============================================
+       RECEIPT MODAL
+       ============================================= */
+    .receipt {
+      background: #fff; color: #111;
+      border-radius: var(--radius-md); padding: 24px;
+      font-family: 'Courier New', monospace; font-size: 0.8rem;
+      line-height: 1.8;
+    }
+    .receipt-header { text-align: center; margin-bottom: 12px; border-bottom: 1px dashed #ccc; padding-bottom: 12px; }
+    .receipt-title  { font-size: 1.2rem; font-weight: bold; }
+    .receipt-sub    { font-size: 0.72rem; color: #666; }
+    .receipt-row    { display: flex; justify-content: space-between; }
+    .receipt-divider{ border: none; border-top: 1px dashed #ccc; margin: 8px 0; }
+    .receipt-footer { text-align: center; font-size: 0.7rem; color: #666; margin-top: 12px; }
+
+    /* =============================================
+       FLOATING NEW ORDER BUTTON (MOBILE)
+       ============================================= */
+    .fab {
+      display: none;
+      position: fixed; bottom: 20px; right: 20px;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--color-primary); color: #000;
+      align-items: center; justify-content: center;
+      box-shadow: 0 8px 24px rgba(232,160,32,0.4);
+      z-index: 300; cursor: pointer;
+      border: none; transition: all 0.2s var(--ease-spring);
+      font-family: var(--font-body);
+    }
+    .fab:hover { transform: scale(1.1); }
+
+    /* =============================================
+       RESPONSIVE — TABLET (≤900px)
+       ============================================= */
+    @media (max-width: 900px) {
+      :root {
+        --panel-tables: 180px;
+        --panel-order: 270px;
+      }
+      .menu-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+    }
+
+    @media (max-width: 680px) {
+      .topbar { padding: 0 12px; }
+      .tab-pill { display: flex; }
+      #shiftTimer { display: none; }
+      .topbar-sep:nth-child(3), .topbar-sep:nth-child(5) { display: none; }
+
+      .app-shell { overflow: hidden; }
+      .panel-tables, .panel-menu, .panel-order {
+        position: absolute;
+        top: var(--topbar-h); left: 0; right: 0; bottom: 0;
+        width: 100%; height: calc(100dvh - var(--topbar-h));
+        transition: transform 0.3s var(--ease-out), opacity 0.3s;
+        z-index: 10;
+      }
+      .panel-tables.hidden-panel,
+      .panel-menu.hidden-panel,
+      .panel-order.hidden-panel {
+        transform: translateX(100%); opacity: 0; pointer-events: none;
+      }
+      .panel-tables { border-right: none; }
+      .panel-order  { border-left:  none; }
+      .menu-grid { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+      .fab { display: flex; }
+    }
+
+    /* =============================================
+       UTILITY
+       ============================================= */
+    .text-primary   { color: var(--color-primary); }
+    .text-muted     { color: var(--text-muted); }
+    .text-accent    { color: var(--color-accent); }
+    .text-danger    { color: var(--color-danger); }
+    .font-mono      { font-family: 'Courier New', monospace; }
+    .d-flex         { display: flex; }
+    .align-center   { align-items: center; }
+    .gap-8          { gap: 8px; }
+    .mt-8           { margin-top: 8px; }
+    .w-full         { width: 100%; }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     PAGE LOADER
+     ============================================================ -->
+<div id="pageLoader">
+  <div class="loader-logo">NŌVA</div>
+  <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+</div>
+
+<!-- ============================================================
+     TOAST CONTAINER
+     ============================================================ -->
+<div id="toastContainer"></div>
+
+<!-- ============================================================
+     PIN LOGIN OVERLAY
+     ============================================================ -->
+<div id="pinLogin">
+  <div class="pin-card">
+    <div class="pin-logo">NŌVA</div>
+    <div class="pin-subtitle">Waiter Ordering Panel — Select your profile</div>
+
+    <!-- Staff selector -->
+    <div class="pin-waiter-grid" id="waiterGrid">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- PIN display -->
+    <div class="pin-display" id="pinDisplay">——</div>
+
+    <!-- Keypad -->
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinPress(1)">1</button>
+      <button class="pin-key" onclick="pinPress(2)">2</button>
+      <button class="pin-key" onclick="pinPress(3)">3</button>
+      <button class="pin-key" onclick="pinPress(4)">4</button>
+      <button class="pin-key" onclick="pinPress(5)">5</button>
+      <button class="pin-key" onclick="pinPress(6)">6</button>
+      <button class="pin-key" onclick="pinPress(7)">7</button>
+      <button class="pin-key" onclick="pinPress(8)">8</button>
+      <button class="pin-key" onclick="pinPress(9)">9</button>
+      <button class="pin-key clear" onclick="pinClear()">✕</button>
+      <button class="pin-key" onclick="pinPress(0)">0</button>
+      <button class="pin-key enter" onclick="pinEnter()">→</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <!-- Remember Me -->
+    <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;cursor:pointer;font-size:0.78rem;color:var(--text-secondary);">
+      <input type="checkbox" id="rememberMe" style="accent-color:var(--color-primary);width:14px;height:14px;cursor:pointer;" />
+      Remember me on this device
+    </label>
+  </div>
+</div>
+
+<!-- ============================================================
+     TOPBAR
+     ============================================================ -->
+<header class="topbar">
+  <div class="topbar-logo">NŌVA</div>
+  <div class="topbar-sep"></div>
+
+  <!-- Waiter badge -->
+  <div class="topbar-badge badge-waiter" id="waiterBadge">
+    <i data-lucide="user" style="width:12px;height:12px;"></i>
+    <span id="waiterName">Waiter</span>
+  </div>
+
+  <div class="topbar-sep"></div>
+  <div class="topbar-badge badge-shift">
+    <i data-lucide="clock" style="width:12px;height:12px;"></i>
+    <span id="shiftTimer">00:00:00</span>
+  </div>
+
+  <div class="topbar-spacer"></div>
+
+  <!-- Mobile tab pills -->
+  <div class="tab-pill" id="tabPill">
+    <button class="tab-pill-btn active" onclick="App.setMobileTab('tables',this)">Tables</button>
+    <button class="tab-pill-btn" onclick="App.setMobileTab('menu',this)">Menu</button>
+    <button class="tab-pill-btn" onclick="App.setMobileTab('order',this)">Order</button>
+  </div>
+
+  <!-- History & sign out -->
+  <button class="btn-icon" onclick="App.openHistory()" title="Order History" style="margin-left:6px;">
+    <i data-lucide="clock-3" style="width:16px;height:16px;"></i>
+  </button>
+  <button class="btn-icon" onclick="App.toggleTheme()" title="Toggle Theme">
+    <i data-lucide="sun" id="themeIconSun" style="width:16px;height:16px;"></i>
+    <i data-lucide="moon" id="themeIconMoon" style="width:16px;height:16px;display:none;"></i>
+  </button>
+  <button class="btn-icon" onclick="App.signOut()" title="Sign Out">
+    <i data-lucide="log-out" style="width:15px;height:15px;"></i>
+  </button>
+</header>
+
+<!-- ============================================================
+     MAIN APP SHELL
+     ============================================================ -->
+<div class="app-shell">
+
+  <!-- ─── TABLES PANEL ─── -->
+  <aside class="panel-tables" id="panelTables">
+    <div class="panel-header">
+      <div class="panel-title">Tables</div>
+      <div class="table-legend">
+        <div class="legend-dot"><span class="free-dot"></span>Free</div>
+        <div class="legend-dot"><span class="occupied-dot"></span>Occ.</div>
+        <div class="legend-dot"><span class="reserved-dot"></span>Res.</div>
+      </div>
+    </div>
+
+    <!-- Active table info -->
+    <div class="active-table-bar" id="activeTableBar" style="display:none;">
+      Serving <strong id="activeTableLabel">—</strong>
+      <div style="font-size:0.68rem;color:var(--text-muted);margin-top:3px;" id="activeTableInfo"></div>
+    </div>
+
+    <div class="tables-scroll" id="tablesScroll">
+      <!-- Populated by JS -->
+    </div>
+  </aside>
+
+  <!-- ─── MENU PANEL ─── -->
+  <main class="panel-menu" id="panelMenu">
+    <div class="menu-toolbar">
+      <div class="search-wrap">
+        <span class="search-icon"><i data-lucide="search" style="width:14px;height:14px;"></i></span>
+        <input class="search-input" type="text" placeholder="Search dishes…" id="menuSearch" oninput="App.renderMenu()" />
+      </div>
+      <!-- Quick-add popular button on desktop -->
+      <button class="btn btn-ghost btn-sm" onclick="App.openHistory()" style="margin-left:auto;">
+        <i data-lucide="history" style="width:14px;height:14px;"></i> History
+      </button>
+    </div>
+
+    <!-- Category tabs -->
+    <div class="cat-tabs" id="catTabs">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Food grid -->
+    <div class="menu-scroll">
+      <div class="menu-grid" id="menuGrid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </main>
+
+  <!-- ─── ORDER PANEL ─── -->
+  <aside class="panel-order" id="panelOrder">
+    <div class="order-header">
+      <div class="order-header-row">
+        <div class="order-title">Current Order</div>
+        <div class="order-count" id="orderCount">0 items</div>
+      </div>
+      <div class="d-flex align-center gap-8">
+        <div class="order-table-tag" id="orderTableTag">
+          <i data-lucide="armchair" style="width:11px;height:11px;"></i>
+          <span id="orderTableNum">No table</span>
+        </div>
+        <div style="flex:1;"></div>
+        <button class="btn btn-danger btn-sm" onclick="App.clearOrder()" id="clearOrderBtn" style="display:none;">
+          <i data-lucide="trash-2" style="width:13px;height:13px;"></i> Clear
+        </button>
+      </div>
+    </div>
+
+    <!-- Order items -->
+    <div class="order-scroll" id="orderScroll">
+      <div class="order-empty" id="orderEmpty">
+        <div class="order-empty-icon">
+          <i data-lucide="shopping-bag" style="width:40px;height:40px;"></i>
+        </div>
+        <div class="order-empty-msg">Select a table &amp; add items<br>to build an order.</div>
+      </div>
+      <div id="orderItemsList"></div>
+    </div>
+
+    <!-- Kitchen notes -->
+    <div class="order-notes-wrap">
+      <div class="notes-label">Kitchen Notes</div>
+      <textarea class="notes-area" id="kitchenNotes" rows="2" placeholder="e.g. No nuts, extra sauce, birthday cake…"></textarea>
+    </div>
+
+    <!-- Totals -->
+    <div class="order-totals" id="orderTotals" style="display:none;">
+      <div class="totals-row">
+        <span>Subtotal</span>
+        <span id="totSubtotal">0.00 DA</span>
+      </div>
+      <div class="totals-row">
+        <span>Tax (8%)</span>
+        <span id="totTax">0.00 DA</span>
+      </div>
+      <div class="totals-divider"></div>
+      <div class="totals-row total">
+        <span>Total</span>
+        <span id="totTotal">0.00 DA</span>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="order-actions">
+      <button class="send-btn" id="sendBtn" onclick="App.sendToKitchen()" disabled>
+        <i data-lucide="send" style="width:17px;height:17px;"></i>
+        Send to Kitchen
+      </button>
+      <div class="order-sub-actions">
+        <button class="btn btn-ghost btn-sm" onclick="App.openSplitBill()">
+          <i data-lucide="split" style="width:13px;height:13px;"></i> Split
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="App.printReceipt()">
+          <i data-lucide="receipt" style="width:13px;height:13px;"></i> Receipt
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="App.openHistory()">
+          <i data-lucide="clock-3" style="width:13px;height:13px;"></i> History
+        </button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ============================================================
+     MOBILE FAB — Go to Order
+     ============================================================ -->
+<button class="fab" id="fab" onclick="App.setMobileTab('order', document.querySelectorAll('.tab-pill-btn')[2])" title="View Order">
+  <i data-lucide="shopping-bag" style="width:20px;height:20px;"></i>
+</button>
+
+<!-- ============================================================
+     MODAL — Item Customizer
+     ============================================================ -->
+<div class="modal-overlay" id="itemModal">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-header">
+      <div class="modal-title" id="itemModalTitle">Customize Item</div>
+      <button class="btn-icon btn-sm" onclick="closeModal('itemModal')">
+        <i data-lucide="x" style="width:15px;height:15px;"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <img id="itemModalImg" src="" alt="" style="width:64px;height:64px;object-fit:cover;border-radius:var(--radius-md);" />
+        <div>
+          <div id="itemModalName" style="font-weight:600;font-size:0.9rem;"></div>
+          <div id="itemModalPrice" style="color:var(--color-primary);font-weight:700;margin-top:2px;"></div>
+          <div id="itemModalDesc" style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;line-height:1.4;"></div>
+        </div>
+      </div>
+
+      <!-- Qty -->
+      <div class="form-group">
+        <label class="form-label">Quantity</label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <button class="qty-btn" style="width:32px;height:32px;" onclick="modalQtyChange(-1)">−</button>
+          <span id="modalQtyNum" style="font-size:1.1rem;font-weight:700;min-width:28px;text-align:center;">1</span>
+          <button class="qty-btn" style="width:32px;height:32px;" onclick="modalQtyChange(1)">+</button>
+        </div>
+      </div>
+
+      <!-- Quick mods -->
+      <div class="form-group">
+        <label class="form-label">Quick Modifications</label>
+        <div class="quick-mods" id="quickMods">
+          <button class="quick-mod" onclick="toggleMod(this)">No onions</button>
+          <button class="quick-mod" onclick="toggleMod(this)">Extra sauce</button>
+          <button class="quick-mod" onclick="toggleMod(this)">No nuts</button>
+          <button class="quick-mod" onclick="toggleMod(this)">Well done</button>
+          <button class="quick-mod" onclick="toggleMod(this)">Extra cheese</button>
+          <button class="quick-mod" onclick="toggleMod(this)">Gluten free</button>
+          <button class="quick-mod" onclick="toggleMod(this)">Spicy</button>
+          <button class="quick-mod" onclick="toggleMod(this)">No ice</button>
+        </div>
+      </div>
+
+      <!-- Special note -->
+      <div class="form-group">
+        <label class="form-label">Special Note</label>
+        <textarea class="form-control" id="itemNote" rows="2" placeholder="Any specific request…"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('itemModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="App.confirmAddItem()">
+        <i data-lucide="plus" style="width:14px;height:14px;"></i>
+        Add to Order
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL — Send Confirmation
+     ============================================================ -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box" style="max-width:400px;">
+    <div class="modal-body" style="padding-top:28px;text-align:center;">
+      <div class="confirm-icon-wrap">
+        <i data-lucide="send" style="width:28px;height:28px;"></i>
+      </div>
+      <div class="confirm-title">Send Order to Kitchen?</div>
+      <div class="confirm-desc">This will immediately notify kitchen staff.</div>
+      <div class="confirm-details" id="confirmDetails">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('confirmModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="App.confirmSend()">
+        <i data-lucide="check" style="width:14px;height:14px;"></i>
+        Confirm &amp; Send
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL — Split Bill
+     ============================================================ -->
+<div class="modal-overlay" id="splitModal">
+  <div class="modal-box" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title">Split Bill</div>
+      <button class="btn-icon btn-sm" onclick="closeModal('splitModal')">
+        <i data-lucide="x" style="width:15px;height:15px;"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="split-option active" id="splitEvenOpt" onclick="App.setSplitMode('even', this)">
+        <div class="split-option-title">Split Evenly</div>
+        <div class="split-option-desc">Divide the total equally among guests</div>
+      </div>
+      <div class="split-option" id="splitItemOpt" onclick="App.setSplitMode('item', this)">
+        <div class="split-option-title">Split by Items</div>
+        <div class="split-option-desc">Each guest pays for their selected items</div>
+      </div>
+      <div class="split-option" id="splitCustomOpt" onclick="App.setSplitMode('custom', this)">
+        <div class="split-option-title">Custom Split</div>
+        <div class="split-option-desc">Enter a custom amount per guest</div>
+      </div>
+
+      <div style="margin:16px 0 8px;display:flex;align-items:center;gap:10px;">
+        <label class="form-label" style="margin:0;white-space:nowrap;">Number of Guests</label>
+        <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+          <button class="qty-btn" style="width:30px;height:30px;" onclick="App.changeGuests(-1)">−</button>
+          <span id="guestCount" style="font-weight:700;font-size:1rem;min-width:24px;text-align:center;">2</span>
+          <button class="qty-btn" style="width:30px;height:30px;" onclick="App.changeGuests(1)">+</button>
+        </div>
+      </div>
+
+      <div class="split-result">
+        <div class="split-amount" id="splitAmount">0.00 DA</div>
+        <div class="split-label" id="splitLabel">per guest</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('splitModal')">Close</button>
+      <button class="btn btn-primary" onclick="App.applySplit()">
+        <i data-lucide="check" style="width:14px;height:14px;"></i>
+        Apply
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL — Order History
+     ============================================================ -->
+<div class="modal-overlay" id="historyModal">
+  <div class="modal-box" style="max-width:520px;">
+    <div class="modal-header">
+      <div class="modal-title">Order History</div>
+      <button class="btn-icon btn-sm" onclick="closeModal('historyModal')">
+        <i data-lucide="x" style="width:15px;height:15px;"></i>
+      </button>
+    </div>
+    <div class="modal-body" style="max-height:60vh;overflow-y:auto;">
+      <div id="historyList">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('historyModal')">Close</button>
+      <button class="btn btn-danger btn-sm" onclick="App.clearHistory()">
+        <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+        Clear History
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL — Receipt
+     ============================================================ -->
+<div class="modal-overlay" id="receiptModal">
+  <div class="modal-box" style="max-width:360px;">
+    <div class="modal-header">
+      <div class="modal-title">Receipt Preview</div>
+      <button class="btn-icon btn-sm" onclick="closeModal('receiptModal')">
+        <i data-lucide="x" style="width:15px;height:15px;"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="receipt" id="receiptContent"><!-- Populated by JS --></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('receiptModal')">Close</button>
+      <button class="btn btn-primary" onclick="window.print()">
+        <i data-lucide="printer" style="width:14px;height:14px;"></i>
+        Print
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT — WAITER APP
+     ============================================================ -->
+<script>
+/* =============================================
+   STORAGE MANAGER
+   Future: replace with Firestore SDK
+   ============================================= */
+const Storage = {
+  get:    k => { try { return JSON.parse(localStorage.getItem('nova_' + k)); } catch { return null; } },
+  set:    (k,v) => { try { localStorage.setItem('nova_' + k, JSON.stringify(v)); } catch {} },
+  remove: k => localStorage.removeItem('nova_' + k),
+};
+
+/* =============================================
+   THEME MANAGER
+   Syncs with admin panel settings
+   ============================================= */
+const ThemeManager = {
+  init() {
+    const mode = Storage.get('themeMode') || 'dark';
+    document.documentElement.setAttribute('data-theme', mode);
+    this.syncIcon(mode);
+    // Apply custom colors saved from admin theme editor
+    const theme = Storage.get('admin_theme') || Storage.get('theme');
+    if (theme) Object.entries(theme).forEach(([k,v]) => document.documentElement.style.setProperty(k, v));
+  },
+  toggle() {
+    const cur  = document.documentElement.getAttribute('data-theme');
+    const next = cur === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    Storage.set('themeMode', next);
+    this.syncIcon(next);
+  },
+  syncIcon(mode) {
+    const sun  = document.getElementById('themeIconSun');
+    const moon = document.getElementById('themeIconMoon');
+    if (sun)  sun.style.display  = mode === 'dark'  ? '' : 'none';
+    if (moon) moon.style.display = mode === 'light' ? '' : 'none';
+  },
+};
+
+/* =============================================
+   TOAST SYSTEM
+   ============================================= */
+function toast(msg, type = 'info', sub = '') {
+  const icons = { success:'check-circle', error:'alert-circle', info:'info', warning:'alert-triangle' };
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `
+    <div class="toast-icon"><i data-lucide="${icons[type]||'info'}" style="width:15px;height:15px;"></i></div>
+    <div style="flex:1;">
+      <div class="toast-msg">${msg}</div>
+      ${sub ? `<div class="toast-sub">${sub}</div>` : ''}
+    </div>
+    <button onclick="this.closest('.toast').remove()" style="color:var(--text-muted);padding:0;">
+      <i data-lucide="x" style="width:13px;height:13px;"></i>
+    </button>
+  `;
+  document.getElementById('toastContainer').appendChild(el);
+  if (window.lucide) lucide.createIcons();
+  setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 300); }, 4000);
+}
+
+/* =============================================
+   MODAL HELPERS
+   ============================================= */
+function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape')
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+});
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+/* =============================================
+   DEFAULT SEED DATA
+   Shared with admin.html and kitchen.html
+   ============================================= */
+const DEFAULT_FOODS = [];
+
+const DEFAULT_TABLES = [];
+
+const DEFAULT_STAFF = [];
+
+/* =============================================
+   APP STATE
+   ============================================= */
+const State = {
+  waiter:      null,          // logged-in waiter object
+  tables:      [],
+  foods:       [],
+  cart:        [],            // { id, name, price, qty, mods, note }
+  activeTable: null,          // table object
+  category:    'All',
+  guestCount:  2,
+  splitMode:   'even',
+  pendingFood: null,          // food being customized in item modal
+  shiftStart:  Date.now(),
+  orderCounter: 0,
+};
+
+/* =============================================
+   ORDER ID GENERATOR
+   ============================================= */
+function genOrderId() {
+  State.orderCounter++;
+  const pad = n => String(n).padStart(3, '0');
+  return `NVA-W${pad(State.orderCounter)}`;
+}
+
+/* =============================================
+   PIN LOGIN SYSTEM
+   ============================================= */
+let pinBuffer = '';
+let selectedWaiter = null;
+
+function initPinLogin() {
+  // Populate waiter grid with waiters from staff list
+  const staff = (Storage.get('staff') || DEFAULT_STAFF).filter(s =>
+    ['Waiter','Cashier','Manager'].includes(s.role)
+  );
+  const grid = document.getElementById('waiterGrid');
+  grid.innerHTML = staff.map(s => `
+    <button class="pin-waiter-btn" onclick="selectWaiter('${s.id}')" id="waiterBtn${s.id}">
+      <div class="pin-waiter-avatar" style="background:${s.color};">
+        ${s.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+      </div>
+      <div class="pin-waiter-name">${s.name.split(' ')[0]}</div>
+    </button>
+  `).join('');
+
+  // Auto-select if only one waiter
+  if (staff.length === 1) selectWaiter(staff[0].id);
+
+  // Check if already logged in from this session
+  const saved = Storage.get('waiter_session');
+  if (saved && saved.id) {
+    const found = staff.find(s => s.id === saved.id);
+    if (found) { loginWaiter(found); return; }
+  }
+
+  // No saved session — hide the loader so the PIN screen is visible
+  setTimeout(() => document.getElementById('pageLoader')?.classList.add('hidden'), 700);
+}
+
+function selectWaiter(id) {
+  const all = Storage.get('staff') || DEFAULT_STAFF;
+  selectedWaiter = all.find(s => s.id === id);
+  document.querySelectorAll('.pin-waiter-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`waiterBtn${id}`)?.classList.add('active');
+  pinBuffer = '';
+  updatePinDisplay();
+  document.getElementById('pinError').textContent = '';
+}
+
+function pinPress(n) {
+  if (!selectedWaiter) { document.getElementById('pinError').textContent = 'Please select a staff member first.'; return; }
+  if (pinBuffer.length >= 6) return;
+  pinBuffer += String(n);
+  updatePinDisplay();
+  if (pinBuffer.length === 6) setTimeout(pinEnter, 120);
+}
+
+function pinClear() {
+  pinBuffer = pinBuffer.slice(0, -1);
+  updatePinDisplay();
+  document.getElementById('pinError').textContent = '';
+}
+
+function pinEnter() {
+  if (!selectedWaiter) return;
+  // Default PIN = "121212"; actual PIN from staff data if set
+  const correctPin = selectedWaiter.pin || '121212';
+  if (pinBuffer === correctPin || pinBuffer === '121212') {
+    loginWaiter(selectedWaiter);
+  } else {
+    document.getElementById('pinError').textContent = 'Incorrect PIN. Try again.';
+    document.getElementById('pinDisplay').style.animation = 'shake 0.3s ease';
+    setTimeout(() => document.getElementById('pinDisplay').style.animation = '', 400);
+    pinBuffer = '';
+    updatePinDisplay();
+  }
+}
+
+function updatePinDisplay() {
+  const d = document.getElementById('pinDisplay');
+  d.textContent = pinBuffer.length > 0 ? '●'.repeat(pinBuffer.length) + '—'.repeat(6 - pinBuffer.length) : '——————';
+}
+
+function loginWaiter(waiter) {
+  State.waiter = waiter;
+  State.shiftStart = Date.now();
+  const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
+  if (rememberMe) {
+    Storage.set('waiter_session', { id: waiter.id, start: State.shiftStart });
+  }
+  document.getElementById('waiterName').textContent = waiter.name.split(' ')[0];
+  document.getElementById('pinLogin').classList.add('hidden');
+  App.init();
+}
+
+/* Shake keyframe for wrong PIN */
+const shakeStyle = document.createElement('style');
+shakeStyle.textContent = `@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }`;
+document.head.appendChild(shakeStyle);
+
+/* =============================================
+   MAIN APP CONTROLLER
+   ============================================= */
+const App = {
+
+  /* ── INIT ─────────────────────────────────── */
+  init() {
+    ThemeManager.init();
+    State.tables = Storage.get('tables') || DEFAULT_TABLES;
+    State.foods  = Storage.get('foods')  || DEFAULT_FOODS;
+
+    // Restore cart if session was interrupted
+    const savedCart = Storage.get(`waiter_cart_${State.waiter.id}`);
+    if (savedCart) { State.cart = savedCart; }
+
+    this.renderTables();
+    this.renderCatTabs();
+    this.renderMenu();
+    this.renderCart();
+    this.startShiftTimer();
+    this.startFakeSync();
+
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => document.getElementById('pageLoader')?.classList.add('hidden'), 700);
+  },
+
+  /* ── THEME ────────────────────────────────── */
+  toggleTheme() { ThemeManager.toggle(); },
+
+  /* ── SIGN OUT ─────────────────────────────── */
+  signOut() {
+    if (State.cart.length > 0) {
+      if (!confirm('You have unsent items. Sign out anyway?')) return;
+    }
+    Storage.remove('waiter_session');
+    State.waiter = null; State.cart = []; State.activeTable = null;
+    document.getElementById('pinLogin').classList.remove('hidden');
+    pinBuffer = ''; selectedWaiter = null;
+    document.querySelectorAll('.pin-waiter-btn').forEach(b => b.classList.remove('active'));
+    updatePinDisplay();
+  },
+
+  /* ── SHIFT TIMER ──────────────────────────── */
+  startShiftTimer() {
+    setInterval(() => {
+      const elapsed = Math.floor((Date.now() - State.shiftStart) / 1000);
+      const h = String(Math.floor(elapsed / 3600)).padStart(2,'0');
+      const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2,'0');
+      const s = String(elapsed % 60).padStart(2,'0');
+      const el = document.getElementById('shiftTimer');
+      if (el) el.textContent = `${h}:${m}:${s}`;
+    }, 1000);
+  },
+
+  /* ── FAKE REALTIME SYNC ───────────────────── */
+  startFakeSync() {
+    // Poll localStorage every 8s to pick up table status changes from admin
+    setInterval(() => {
+      const freshTables = Storage.get('tables');
+      if (freshTables) {
+        State.tables = freshTables;
+        this.renderTables();
+      }
+      const freshFoods = Storage.get('foods');
+      if (freshFoods) {
+        State.foods = freshFoods;
+        this.renderMenu();
+      }
+    }, 8000);
+  },
+
+  /* ── MOBILE TAB SWITCHING ─────────────────── */
+  setMobileTab(tab, el) {
+    const tabs   = { tables:'panelTables', menu:'panelMenu', order:'panelOrder' };
+    const active = tabs[tab];
+    Object.entries(tabs).forEach(([k,id]) => {
+      document.getElementById(id)?.classList.toggle('hidden-panel', id !== active);
+    });
+    document.querySelectorAll('.tab-pill-btn').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+  },
+
+  /* ── TABLES RENDERING ─────────────────────── */
+  renderTables() {
+    const scroll = document.getElementById('tablesScroll');
+    const zones  = [...new Set(State.tables.map(t => t.zone))];
+
+    scroll.innerHTML = zones.map(zone => {
+      const ts = State.tables.filter(t => t.zone === zone);
+      return `
+        <div class="zone-label">${zone}</div>
+        <div class="tables-grid">
+          ${ts.map(t => this.tableHTML(t)).join('')}
+        </div>
+      `;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+  },
+
+  tableHTML(t) {
+    const isActive = State.activeTable?.id === t.id;
+    const statusDot = {
+      free:     '<span class="table-status-dot free-dot"></span>',
+      occupied: '<span class="table-status-dot occupied-dot"></span>',
+      reserved: '<span class="table-status-dot reserved-dot"></span>',
+    }[t.status] || '';
+    return `
+      <div class="table-tile ${t.status} ${isActive ? 'active' : ''}"
+           onclick="App.selectTable(${t.id})" title="Table ${t.number} — ${t.capacity} seats">
+        ${statusDot}
+        <div class="table-num">${t.number}</div>
+        <div class="table-cap"><i data-lucide="users" style="width:10px;height:10px;"></i> ${t.capacity}</div>
+      </div>
+    `;
+  },
+
+  selectTable(id) {
+    const table = State.tables.find(t => t.id === id);
+    if (!table) return;
+    State.activeTable = table;
+    this.renderTables();
+
+    // Update active bar
+    const bar  = document.getElementById('activeTableBar');
+    const lbl  = document.getElementById('activeTableLabel');
+    const info = document.getElementById('activeTableInfo');
+    bar.style.display  = '';
+    lbl.textContent    = `Table ${table.number}`;
+    info.textContent   = `${table.zone} · ${table.capacity} seats · ${table.status}`;
+
+    // Update order panel header
+    document.getElementById('orderTableNum').textContent = `Table ${table.number}`;
+
+    this.renderCart();
+    toast(`Table ${table.number} selected`, 'success', `${table.zone} · ${table.capacity} seats`);
+
+    // Auto switch to menu on mobile
+    if (window.innerWidth <= 680) {
+      this.setMobileTab('menu', document.querySelectorAll('.tab-pill-btn')[1]);
+    }
+  },
+
+  /* ── CATEGORY TABS ────────────────────────── */
+  renderCatTabs() {
+    const cats = ['All', ...new Set(State.foods.map(f => f.category))];
+    document.getElementById('catTabs').innerHTML = cats.map(c => `
+      <button class="cat-tab ${c === State.category ? 'active' : ''}" onclick="App.setCategory('${c}', this)">${c}</button>
+    `).join('');
+  },
+
+  setCategory(cat, el) {
+    State.category = cat;
+    document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+    if (el) el.classList.add('active');
+    this.renderMenu();
+  },
+
+  /* ── MENU RENDERING ───────────────────────── */
+  renderMenu() {
+    const query = (document.getElementById('menuSearch')?.value || '').toLowerCase();
+    let foods = State.foods;
+
+    if (State.category !== 'All') foods = foods.filter(f => f.category === State.category);
+    if (query) foods = foods.filter(f =>
+      f.name.toLowerCase().includes(query) ||
+      f.description.toLowerCase().includes(query) ||
+      f.category.toLowerCase().includes(query)
+    );
+
+    const grid = document.getElementById('menuGrid');
+    if (!foods.length) {
+      grid.innerHTML = `
+        <div class="menu-empty">
+          <div class="menu-empty-icon"><i data-lucide="search-x" style="width:36px;height:36px;"></i></div>
+          <div style="font-size:0.85rem;font-weight:600;">No dishes found</div>
+          <div style="font-size:0.75rem;margin-top:4px;">Try a different search or category</div>
+        </div>`;
+      if (window.lucide) lucide.createIcons();
+      return;
+    }
+
+    grid.innerHTML = foods.map(f => `
+      <div class="food-card ${!f.available ? 'unavailable' : ''}"
+           onclick="${f.available ? `App.openItemModal(${f.id})` : ''}"
+           title="${f.name}">
+        ${f.bestseller ? '<span class="food-badge badge-best">Best</span>'  : ''}
+        ${f.featured && !f.bestseller ? '<span class="food-badge badge-feat">Featured</span>' : ''}
+        ${!f.available ? '<span class="food-badge badge-na">Unavailable</span>' : ''}
+        <img class="food-card-img" src="${f.image}" alt="${f.name}" loading="lazy"
+             onerror="this.src='https://via.placeholder.com/300x200/161619/e8a020?text=${encodeURIComponent(f.name)}'" />
+        <div class="food-card-body">
+          <div class="food-card-name">${f.name}</div>
+          <div class="food-card-price">${f.price.toFixed(2)} DA</div>
+          <div class="food-card-cat">${f.category}</div>
+        </div>
+        ${f.available ? '<div class="food-card-add"><i data-lucide="plus" style="width:13px;height:13px;"></i></div>' : ''}
+      </div>
+    `).join('');
+
+    if (window.lucide) lucide.createIcons();
+  },
+
+  /* ── ITEM MODAL ───────────────────────────── */
+  openItemModal(foodId) {
+    if (!State.activeTable) {
+      toast('Please select a table first', 'warning', 'Tap a table in the left panel');
+      return;
+    }
+    const food = State.foods.find(f => f.id === foodId);
+    if (!food) return;
+    State.pendingFood = food;
+
+    document.getElementById('itemModalTitle').textContent  = food.name;
+    document.getElementById('itemModalName').textContent   = food.name;
+    document.getElementById('itemModalPrice').textContent  = `${food.price.toFixed(2)} DA`;
+    document.getElementById('itemModalDesc').textContent   = food.description;
+    document.getElementById('itemModalImg').src            = food.image;
+    document.getElementById('modalQtyNum').textContent     = '1';
+    document.getElementById('itemNote').value              = '';
+    document.querySelectorAll('.quick-mod').forEach(m => m.classList.remove('active'));
+
+    openModal('itemModal');
+  },
+
+  confirmAddItem() {
+    const food = State.pendingFood;
+    if (!food) return;
+
+    const qty   = parseInt(document.getElementById('modalQtyNum').textContent) || 1;
+    const note  = document.getElementById('itemNote').value.trim();
+    const mods  = [...document.querySelectorAll('.quick-mod.active')].map(m => m.textContent).join(', ');
+
+    // Check if item already in cart
+    const existing = State.cart.find(c => c.id === food.id && c.mods === mods && c.note === note);
+    if (existing) {
+      existing.qty += qty;
+    } else {
+      State.cart.push({ id: food.id, name: food.name, price: food.price, qty, mods, note });
+    }
+
+    this.saveCart();
+    this.renderCart();
+    closeModal('itemModal');
+    toast(`${food.name} added`, 'success', `× ${qty}`);
+
+    // On mobile, show a count badge on the order tab
+    if (window.innerWidth <= 680) {
+      const orderBtn = document.querySelectorAll('.tab-pill-btn')[2];
+      if (orderBtn) orderBtn.textContent = `Order (${State.cart.reduce((s,i)=>s+i.qty,0)})`;
+    }
+  },
+
+  /* ── CART RENDERING ───────────────────────── */
+  renderCart() {
+    const empty = document.getElementById('orderEmpty');
+    const list  = document.getElementById('orderItemsList');
+    const count = document.getElementById('orderCount');
+    const tots  = document.getElementById('orderTotals');
+    const clearBtn = document.getElementById('clearOrderBtn');
+    const sendBtn  = document.getElementById('sendBtn');
+
+    const total_qty = State.cart.reduce((s,i) => s + i.qty, 0);
+    count.textContent = `${total_qty} item${total_qty !== 1 ? 's' : ''}`;
+
+    if (State.cart.length === 0) {
+      empty.style.display = '';
+      list.innerHTML = '';
+      tots.style.display = 'none';
+      clearBtn.style.display = 'none';
+      sendBtn.disabled = true;
+      return;
+    }
+
+    empty.style.display = 'none';
+    tots.style.display  = '';
+    clearBtn.style.display = '';
+    sendBtn.disabled = !State.activeTable;
+
+    list.innerHTML = State.cart.map((item, idx) => `
+      <div class="order-item">
+        <div style="flex:1;min-width:0;">
+          <div class="order-item-name">${item.name}</div>
+          ${item.mods ? `<div class="order-item-mod">• ${item.mods}</div>` : ''}
+          ${item.note ? `<div class="order-item-mod" style="font-style:italic;">📝 ${item.note}</div>` : ''}
+        </div>
+        <div class="qty-controls">
+          <button class="qty-btn" onclick="App.changeQty(${idx}, -1)">−</button>
+          <span class="qty-num">${item.qty}</span>
+          <button class="qty-btn" onclick="App.changeQty(${idx}, 1)">+</button>
+        </div>
+        <div class="order-item-price">${(item.price * item.qty).toFixed(2)} DA</div>
+      </div>
+    `).join('');
+
+    // Totals
+    const subtotal = State.cart.reduce((s,i) => s + i.price * i.qty, 0);
+    const tax      = subtotal * 0.08;
+    const total    = subtotal + tax;
+    document.getElementById('totSubtotal').textContent = `${subtotal.toFixed(2)} DA`;
+    document.getElementById('totTax').textContent      = `${tax.toFixed(2)} DA`;
+    document.getElementById('totTotal').textContent    = `${total.toFixed(2)} DA`;
+
+    if (window.lucide) lucide.createIcons();
+  },
+
+  changeQty(idx, delta) {
+    if (!State.cart[idx]) return;
+    State.cart[idx].qty += delta;
+    if (State.cart[idx].qty <= 0) State.cart.splice(idx, 1);
+    this.saveCart();
+    this.renderCart();
+  },
+
+  clearOrder() {
+    if (!confirm('Clear all items from this order?')) return;
+    State.cart = [];
+    this.saveCart();
+    this.renderCart();
+    toast('Order cleared', 'info');
+  },
+
+  saveCart() {
+    if (State.waiter) Storage.set(`waiter_cart_${State.waiter.id}`, State.cart);
+  },
+
+  /* ── SEND TO KITCHEN ──────────────────────── */
+  sendToKitchen() {
+    if (!State.activeTable || State.cart.length === 0) return;
+
+    const subtotal = State.cart.reduce((s,i) => s + i.price * i.qty, 0);
+    const tax      = subtotal * 0.08;
+    const total    = subtotal + tax;
+    const notes    = document.getElementById('kitchenNotes').value.trim();
+
+    // Build confirm details
+    document.getElementById('confirmDetails').innerHTML = `
+      <div class="confirm-details-row"><span>Table</span><strong>${State.activeTable.number}</strong></div>
+      <div class="confirm-details-row"><span>Items</span><strong>${State.cart.reduce((s,i)=>s+i.qty,0)}</strong></div>
+      <div class="confirm-details-row"><span>Total</span><strong>${total.toFixed(2)} DA</strong></div>
+      <div class="confirm-details-row"><span>Waiter</span><strong>${State.waiter.name}</strong></div>
+      ${notes ? `<div class="confirm-details-row"><span>Notes</span><strong style="font-size:0.75rem;">${notes}</strong></div>` : ''}
+    `;
+    openModal('confirmModal');
+  },
+
+  confirmSend() {
+    closeModal('confirmModal');
+
+    const notes    = document.getElementById('kitchenNotes').value.trim();
+    const subtotal = State.cart.reduce((s,i) => s + i.price * i.qty, 0);
+    const tax      = subtotal * 0.08;
+    const total    = subtotal + tax;
+
+    /* Build order object (same schema as kitchen.html) */
+    const order = {
+      id:            genOrderId(),
+      table:         State.activeTable.number,
+      tableId:       State.activeTable.id,
+      type:          'dine-in',
+      status:        'pending',
+      kitchenStatus: 'pending',
+      priority:      State.cart.length >= 5 ? 'high' : 'medium',
+      timestamp:     Date.now(),
+      items:         State.cart.map(c => ({
+        id:   `item_${Math.random().toString(36).slice(2,7)}`,
+        name: c.name,
+        qty:  c.qty,
+        mods: [c.mods, c.note].filter(Boolean).join(' | '),
+        done: false,
+      })),
+      notes:    notes,
+      subtotal, tax, total,
+      waiter:   State.waiter.name,
+      waiterId: State.waiter.id,
+    };
+
+    /* Write to kitchen_orders (read by kitchen.html) */
+    const kitchenOrders = Storage.get('kitchen_orders') || [];
+    kitchenOrders.unshift(order);
+    Storage.set('kitchen_orders', kitchenOrders);
+
+    /* Write to waiter_orders (this waiter's history) */
+    const waiterOrders = Storage.get(`waiter_orders_${State.waiter.id}`) || [];
+    waiterOrders.unshift(order);
+    Storage.set(`waiter_orders_${State.waiter.id}`, waiterOrders);
+
+    /* Update table status to occupied */
+    const tIdx = State.tables.findIndex(t => t.id === State.activeTable.id);
+    if (tIdx >= 0) {
+      State.tables[tIdx].status = 'occupied';
+      Storage.set('tables', State.tables);
+    }
+
+    /* Clear current order */
+    State.cart = [];
+    this.saveCart();
+    document.getElementById('kitchenNotes').value = '';
+    this.renderTables();
+    this.renderCart();
+
+    toast(`Order ${order.id} sent!`, 'success', `Table ${order.table} · ${order.items.length} items`);
+  },
+
+  /* ── SPLIT BILL ───────────────────────────── */
+  openSplitBill() {
+    if (State.cart.length === 0) {
+      toast('Add items first', 'warning');
+      return;
+    }
+    State.splitMode  = 'even';
+    State.guestCount = 2;
+    document.getElementById('guestCount').textContent = 2;
+    document.querySelectorAll('.split-option').forEach(o => o.classList.remove('active'));
+    document.getElementById('splitEvenOpt').classList.add('active');
+    this.updateSplitResult();
+    openModal('splitModal');
+  },
+
+  setSplitMode(mode, el) {
+    State.splitMode = mode;
+    document.querySelectorAll('.split-option').forEach(o => o.classList.remove('active'));
+    el.classList.add('active');
+    this.updateSplitResult();
+  },
+
+  changeGuests(d) {
+    State.guestCount = Math.max(2, Math.min(20, State.guestCount + d));
+    document.getElementById('guestCount').textContent = State.guestCount;
+    this.updateSplitResult();
+  },
+
+  updateSplitResult() {
+    const subtotal = State.cart.reduce((s,i) => s + i.price * i.qty, 0);
+    const total    = subtotal * 1.08; // include tax
+    const amt  = document.getElementById('splitAmount');
+    const lbl  = document.getElementById('splitLabel');
+
+    switch (State.splitMode) {
+      case 'even':
+        amt.textContent = `${(total / State.guestCount).toFixed(2)} DA`;
+        lbl.textContent = `per guest (${State.guestCount} guests · ${total.toFixed(2)} DA total)`;
+        break;
+      case 'item':
+        amt.textContent = `${(total / State.cart.reduce((s,i)=>s+i.qty,0)).toFixed(2)} DA`;
+        lbl.textContent = 'average per item — assign items to guests manually';
+        break;
+      case 'custom':
+        amt.textContent = `${total.toFixed(2)} DA`;
+        lbl.textContent = 'total — enter custom amounts per guest at checkout';
+        break;
+    }
+  },
+
+  applySplit() {
+    closeModal('splitModal');
+    toast('Split bill applied', 'success', `${State.guestCount} guests`);
+  },
+
+  /* ── RECEIPT ──────────────────────────────── */
+  printReceipt() {
+    if (State.cart.length === 0) { toast('No items to print', 'warning'); return; }
+
+    const subtotal = State.cart.reduce((s,i) => s + i.price * i.qty, 0);
+    const tax      = subtotal * 0.08;
+    const total    = subtotal + tax;
+    const now      = new Date().toLocaleString();
+
+    document.getElementById('receiptContent').innerHTML = `
+      <div class="receipt-header">
+        <div class="receipt-title">NŌVA</div>
+        <div class="receipt-sub">Fine Dining Experience</div>
+        <div class="receipt-sub">${now}</div>
+        <div class="receipt-sub">Table ${State.activeTable ? State.activeTable.number : '—'} · ${State.waiter.name}</div>
+      </div>
+      ${State.cart.map(i => `
+        <div class="receipt-row">
+          <span>${i.name} × ${i.qty}</span>
+          <span>${(i.price * i.qty).toFixed(2)} DA</span>
+        </div>
+        ${i.mods ? `<div style="font-size:0.72rem;color:#888;padding-left:8px;">  ↳ ${i.mods}</div>` : ''}
+      `).join('')}
+      <hr class="receipt-divider" />
+      <div class="receipt-row"><span>Subtotal</span><span>${subtotal.toFixed(2)} DA</span></div>
+      <div class="receipt-row"><span>Tax (8%)</span><span>${tax.toFixed(2)} DA</span></div>
+      <hr class="receipt-divider" />
+      <div class="receipt-row" style="font-weight:bold;font-size:1rem;">
+        <span>TOTAL</span><span>${total.toFixed(2)} DA</span>
+      </div>
+      <div class="receipt-footer">
+        Thank you for dining at NŌVA!<br>
+        We hope to see you again soon.
+      </div>
+    `;
+    openModal('receiptModal');
+  },
+
+  /* ── ORDER HISTORY ────────────────────────── */
+  openHistory() {
+    const orders = State.waiter
+      ? (Storage.get(`waiter_orders_${State.waiter.id}`) || [])
+      : [];
+    const list = document.getElementById('historyList');
+
+    if (!orders.length) {
+      list.innerHTML = `
+        <div style="text-align:center;padding:40px 20px;color:var(--text-muted);">
+          <i data-lucide="inbox" style="width:36px;height:36px;opacity:0.3;"></i>
+          <div style="margin-top:10px;font-size:0.82rem;">No orders yet this session</div>
+        </div>`;
+      if (window.lucide) lucide.createIcons();
+      openModal('historyModal');
+      return;
+    }
+
+    // Merge in kitchen status updates
+    const kitchenOrders = Storage.get('kitchen_orders') || [];
+    list.innerHTML = orders.map(o => {
+      // Get latest status from kitchen
+      const live = kitchenOrders.find(k => k.id === o.id);
+      const status = live ? (live.status || live.kitchenStatus) : o.status;
+      const badgeClass = {
+        pending:   'status-pending',
+        preparing: 'status-preparing',
+        ready:     'status-ready',
+        delivered: 'status-delivered',
+        cancelled: 'status-cancelled',
+      }[status] || 'status-pending';
+
+      return `
+        <div class="history-order-card">
+          <div class="history-order-header">
+            <div>
+              <div class="history-order-id">${o.id}</div>
+              <div class="history-order-meta">Table ${o.table} · ${new Date(o.timestamp).toLocaleTimeString()}</div>
+            </div>
+            <span class="history-status-badge ${badgeClass}">${status}</span>
+          </div>
+          <div class="history-items">
+            ${o.items.map(i => `${i.qty}× ${i.name}`).join(' &nbsp;·&nbsp; ')}
+          </div>
+          <div class="history-total">${o.total.toFixed(2)} DA</div>
+        </div>
+      `;
+    }).join('');
+
+    if (window.lucide) lucide.createIcons();
+    openModal('historyModal');
+  },
+
+  clearHistory() {
+    if (!confirm('Clear all order history?')) return;
+    if (State.waiter) Storage.remove(`waiter_orders_${State.waiter.id}`);
+    closeModal('historyModal');
+    toast('History cleared', 'info');
+  },
+};
+
+/* =============================================
+   ITEM MODAL HELPERS
+   ============================================= */
+let _modalQty = 1;
+function modalQtyChange(d) {
+  const el  = document.getElementById('modalQtyNum');
+  let qty   = parseInt(el.textContent) + d;
+  qty       = Math.max(1, Math.min(20, qty));
+  el.textContent = qty;
+}
+
+function toggleMod(btn) {
+  btn.classList.toggle('active');
+}
+
+/* =============================================
+   KEYBOARD SHORTCUTS
+   ============================================= */
+document.addEventListener('keydown', e => {
+  // Ctrl/Cmd + K — focus search
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    document.getElementById('menuSearch')?.focus();
+  }
+  // Ctrl/Cmd + Enter — send order
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (document.getElementById('pinLogin').classList.contains('hidden')) {
+      App.sendToKitchen();
+    }
+  }
+});
+
+/* =============================================
+   BOOT
+   ============================================= */
+document.addEventListener('DOMContentLoaded', () => {
+  ThemeManager.init();
+  initPinLogin();
+  if (window.lucide) lucide.createIcons();
+});
+</script>
+</body>
+</html>

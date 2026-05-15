@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NŌVA — Delivery Command Center</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <style>
+    /* =============================================
+       CSS CUSTOM PROPERTIES
+       ============================================= */
+    :root {
+      --color-primary:       #e8a020;
+      --color-primary-light: #f5be52;
+      --color-primary-dark:  #b8780e;
+      --color-secondary:     #0ea5e9;
+      --color-accent:        #10b981;
+      --color-danger:        #ef4444;
+      --color-warning:       #f59e0b;
+      --color-purple:        #8b5cf6;
+
+      --bg-base:    #06060a;
+      --bg-surface: #0c0c12;
+      --bg-card:    #131318;
+      --bg-card-hover: #1a1a22;
+      --bg-glass:   rgba(13,13,18,0.88);
+
+      --text-primary:   #f0ede8;
+      --text-secondary: #9e9890;
+      --text-muted:     #54504a;
+
+      --border-color:  rgba(240,237,232,0.07);
+      --border-active: rgba(232,160,32,0.45);
+
+      --shadow-sm:   0 1px 4px rgba(0,0,0,0.6);
+      --shadow-md:   0 4px 20px rgba(0,0,0,0.7);
+      --shadow-lg:   0 12px 48px rgba(0,0,0,0.8);
+      --glow-gold:   0 0 24px rgba(232,160,32,0.3);
+      --glow-green:  0 0 20px rgba(16,185,129,0.25);
+      --glow-blue:   0 0 20px rgba(14,165,233,0.25);
+
+      --radius-sm:   6px;
+      --radius-md:   12px;
+      --radius-lg:   18px;
+      --radius-xl:   26px;
+      --radius-full: 9999px;
+
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-heading: 'Syne', sans-serif;
+      --font-body:    'DM Sans', sans-serif;
+      --font-mono:    'JetBrains Mono', monospace;
+
+      --topbar-h: 62px;
+      --ease-out:    cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    [data-theme="light"] {
+      --bg-base: #f0ede8; --bg-surface: #ffffff; --bg-card: #ffffff;
+      --bg-card-hover: #f8f5f0; --bg-glass: rgba(255,255,255,0.92);
+      --text-primary: #1a1714; --text-secondary: #6b6560; --text-muted: #a09a90;
+      --border-color: rgba(26,23,20,0.08); --shadow-md: 0 4px 20px rgba(0,0,0,0.09);
+    }
+
+    /* =============================================
+       RESET & BASE
+       ============================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body); background: var(--bg-base);
+      color: var(--text-primary); min-height: 100vh;
+      overflow-x: hidden; -webkit-font-smoothing: antialiased;
+    }
+    img { display: block; max-width: 100%; }
+    button { font-family: inherit; cursor: pointer; border: none; background: none; }
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+    /* =============================================
+       PAGE LOADER
+       ============================================= */
+    #pageLoader {
+      position: fixed; inset: 0; z-index: 9999; background: var(--bg-base);
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 18px;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+    #pageLoader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .loader-logo { font-family: var(--font-display); font-size: 32px; font-weight: 700; color: var(--color-primary); letter-spacing: 0.06em; }
+    .loader-ring { width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--border-color); border-top-color: var(--color-primary); animation: spin 0.9s linear infinite; }
+    .loader-label { font-family: var(--font-heading); font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =============================================
+       TOPBAR
+       ============================================= */
+    .topbar {
+      height: var(--topbar-h); background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; gap: 16px; padding: 0 24px;
+      position: sticky; top: 0; z-index: 100; backdrop-filter: blur(16px);
+    }
+    .topbar-brand {
+      display: flex; align-items: center; gap: 10px;
+    }
+    .topbar-logo {
+      font-family: var(--font-display); font-size: 22px; font-weight: 700;
+      color: var(--color-primary); letter-spacing: 0.05em;
+    }
+    .topbar-sep { width: 1px; height: 26px; background: var(--border-color); }
+    .topbar-module {
+      font-family: var(--font-heading); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .topbar-live {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: var(--radius-full);
+      background: rgba(16,185,129,0.10); border: 1px solid rgba(16,185,129,0.25);
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent);
+    }
+    .topbar-live::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--color-accent); animation: livePulse 1.5s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
+      50%      { box-shadow: 0 0 0 5px rgba(16,185,129,0); }
+    }
+    .topbar-right { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+    .topbar-clock {
+      font-family: var(--font-mono); font-size: 14px; font-weight: 600;
+      color: var(--text-secondary); letter-spacing: 0.04em;
+    }
+    .topbar-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: var(--radius-md);
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      transition: all 0.2s ease; white-space: nowrap;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+    .topbar-btn:hover { border-color: var(--border-active); color: var(--text-primary); }
+    .topbar-btn.primary {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: #fff; border: none; box-shadow: 0 4px 14px rgba(232,160,32,0.3);
+    }
+    .topbar-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,160,32,0.4); }
+    .theme-btn {
+      width: 34px; height: 34px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      color: var(--text-secondary); transition: all 0.2s ease;
+    }
+    .theme-btn:hover { border-color: var(--border-active); color: var(--text-primary); }
+
+    /* =============================================
+       KPI STRIP
+       ============================================= */
+    .kpi-strip {
+      display: flex; gap: 12px; padding: 16px 24px;
+      overflow-x: auto; border-bottom: 1px solid var(--border-color);
+      background: var(--bg-surface);
+    }
+    .kpi-strip::-webkit-scrollbar { height: 0; }
+    .kpi-card {
+      flex-shrink: 0; background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 16px 20px;
+      display: flex; align-items: center; gap: 14px;
+      min-width: 180px; transition: all 0.25s ease; cursor: default;
+      position: relative; overflow: hidden;
+    }
+    .kpi-card::before {
+      content: ''; position: absolute; inset: 0;
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .kpi-card:hover::before { opacity: 1; }
+    .kpi-card.gold  { border-color: rgba(232,160,32,0.25); }
+    .kpi-card.gold::before  { background: linear-gradient(135deg, rgba(232,160,32,0.06), transparent); }
+    .kpi-card.green { border-color: rgba(16,185,129,0.25); }
+    .kpi-card.green::before { background: linear-gradient(135deg, rgba(16,185,129,0.06), transparent); }
+    .kpi-card.blue  { border-color: rgba(14,165,233,0.25); }
+    .kpi-card.blue::before  { background: linear-gradient(135deg, rgba(14,165,233,0.06), transparent); }
+    .kpi-card.red   { border-color: rgba(239,68,68,0.25); }
+    .kpi-card.red::before   { background: linear-gradient(135deg, rgba(239,68,68,0.06), transparent); }
+    .kpi-card.purple { border-color: rgba(139,92,246,0.25); }
+    .kpi-card.purple::before { background: linear-gradient(135deg, rgba(139,92,246,0.06), transparent); }
+    .kpi-icon {
+      width: 40px; height: 40px; border-radius: var(--radius-md); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .kpi-icon.gold   { background: rgba(232,160,32,0.15); color: var(--color-primary); }
+    .kpi-icon.green  { background: rgba(16,185,129,0.15); color: var(--color-accent); }
+    .kpi-icon.blue   { background: rgba(14,165,233,0.15); color: var(--color-secondary); }
+    .kpi-icon.red    { background: rgba(239,68,68,0.15);  color: var(--color-danger); }
+    .kpi-icon.purple { background: rgba(139,92,246,0.15); color: var(--color-purple); }
+    .kpi-num {
+      font-family: var(--font-heading); font-size: 26px; font-weight: 800;
+      letter-spacing: -0.02em; line-height: 1; color: var(--text-primary);
+    }
+    .kpi-label { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    /* =============================================
+       MAIN LAYOUT
+       ============================================= */
+    .delivery-layout {
+      display: grid;
+      grid-template-columns: 380px 1fr 320px;
+      gap: 0;
+      height: calc(100vh - var(--topbar-h) - 88px);
+      overflow: hidden;
+    }
+    @media (max-width: 1200px) {
+      .delivery-layout { grid-template-columns: 340px 1fr; }
+      .drivers-panel { display: none; }
+    }
+    @media (max-width: 768px) {
+      .delivery-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
+      .map-panel { display: none; }
+    }
+
+    /* =============================================
+       QUEUE PANEL (LEFT)
+       ============================================= */
+    .queue-panel {
+      border-right: 1px solid var(--border-color);
+      display: flex; flex-direction: column;
+      background: var(--bg-surface);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0;
+    }
+    .panel-title {
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
+    }
+    .panel-actions { display: flex; gap: 6px; align-items: center; }
+
+    /* Filter tabs */
+    .filter-tabs {
+      display: flex; gap: 4px; padding: 12px 20px;
+      border-bottom: 1px solid var(--border-color); flex-shrink: 0;
+      overflow-x: auto;
+    }
+    .filter-tabs::-webkit-scrollbar { height: 0; }
+    .filter-tab {
+      padding: 5px 12px; border-radius: var(--radius-full);
+      font-family: var(--font-heading); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer;
+      transition: all 0.2s ease; white-space: nowrap;
+      background: transparent; color: var(--text-muted); border: 1px solid transparent;
+    }
+    .filter-tab:hover { color: var(--text-secondary); background: var(--bg-card); }
+    .filter-tab.active {
+      background: rgba(232,160,32,0.12); color: var(--color-primary);
+      border-color: rgba(232,160,32,0.25);
+    }
+
+    /* Delivery queue list */
+    .queue-list { flex: 1; overflow-y: auto; }
+    .delivery-item {
+      padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+      cursor: pointer; transition: background 0.15s ease;
+      animation: slideIn 0.3s var(--ease-out);
+    }
+    .delivery-item:hover { background: var(--bg-card-hover); }
+    .delivery-item.selected { background: rgba(232,160,32,0.06); border-left: 3px solid var(--color-primary); }
+    .delivery-item:last-child { border-bottom: none; }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .di-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .di-order-num {
+      font-family: var(--font-mono); font-size: 12px; font-weight: 600;
+      color: var(--color-primary); letter-spacing: 0.04em;
+    }
+    .di-time {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);
+    }
+    .di-customer { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+    .di-address { font-size: 12px; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 4px; }
+    .di-footer { display: flex; align-items: center; justify-content: space-between; }
+    .di-amount {
+      font-family: var(--font-heading); font-size: 13px; font-weight: 700;
+      color: var(--text-primary);
+    }
+    .di-driver {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; color: var(--text-muted);
+    }
+    .di-driver-dot {
+      width: 6px; height: 6px; border-radius: 50%; background: var(--color-accent);
+    }
+
+    /* Status badges */
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 8px; border-radius: var(--radius-full);
+      font-family: var(--font-heading); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase;
+    }
+    .sb-waiting  { background: rgba(245,158,11,0.12); color: var(--color-warning); border: 1px solid rgba(245,158,11,0.25); }
+    .sb-assigned { background: rgba(14,165,233,0.12); color: var(--color-secondary); border: 1px solid rgba(14,165,233,0.25); }
+    .sb-transit  { background: rgba(139,92,246,0.12); color: var(--color-purple); border: 1px solid rgba(139,92,246,0.25); }
+    .sb-delivered{ background: rgba(16,185,129,0.12); color: var(--color-accent); border: 1px solid rgba(16,185,129,0.25); }
+    .sb-cancelled{ background: rgba(239,68,68,0.12); color: var(--color-danger); border: 1px solid rgba(239,68,68,0.25); }
+
+    /* =============================================
+       MAP PANEL (MIDDLE)
+       ============================================= */
+    .map-panel {
+      display: flex; flex-direction: column;
+      background: var(--bg-base); overflow: hidden;
+    }
+    .map-container {
+      flex: 1; position: relative; overflow: hidden;
+      background: var(--bg-base);
+    }
+    /* SVG map grid */
+    .map-svg {
+      width: 100%; height: 100%; position: absolute; inset: 0;
+    }
+    .map-grid-overlay {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(240,237,232,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(240,237,232,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    /* Animated "roads" */
+    .map-roads {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(232,160,32,0.06) 2px, transparent 2px),
+        linear-gradient(90deg, rgba(232,160,32,0.06) 2px, transparent 2px);
+      background-size: 160px 160px;
+      background-position: 40px 40px;
+    }
+
+    /* Restaurant marker */
+    .map-restaurant {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .map-restaurant-dot {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 6px rgba(232,160,32,0.2), 0 0 0 12px rgba(232,160,32,0.08);
+      color: #fff; font-size: 12px;
+    }
+
+    /* Moving delivery pins */
+    .map-pin {
+      position: absolute; cursor: pointer;
+      transition: top 3s ease, left 3s ease;
+    }
+    .map-pin-inner {
+      display: flex; align-items: center; justify-content: center; flex-direction: column;
+    }
+    .map-pin-head {
+      width: 30px; height: 30px; border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg); display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-md);
+    }
+    .map-pin-head span { transform: rotate(45deg); font-size: 11px; font-weight: 700; font-family: var(--font-heading); }
+    .map-pin-pulse {
+      position: absolute; width: 30px; height: 30px; border-radius: 50%;
+      animation: pinPulse 2s ease-out infinite; opacity: 0.6;
+    }
+    @keyframes pinPulse {
+      0%   { transform: scale(1);   opacity: 0.6; }
+      100% { transform: scale(2.5); opacity: 0; }
+    }
+    .map-pin-label {
+      margin-top: 4px; font-family: var(--font-mono); font-size: 9px; font-weight: 600;
+      color: var(--text-secondary); background: var(--bg-card); border: 1px solid var(--border-color);
+      padding: 2px 6px; border-radius: var(--radius-sm); white-space: nowrap;
+    }
+    .pin-transit  .map-pin-head { background: linear-gradient(135deg, #8b5cf6, #6d28d9); }
+    .pin-transit  .map-pin-pulse { background: #8b5cf6; }
+    .pin-assigned .map-pin-head { background: linear-gradient(135deg, #0ea5e9, #0284c7); }
+    .pin-assigned .map-pin-pulse { background: #0ea5e9; }
+    .pin-delivered .map-pin-head { background: linear-gradient(135deg, #10b981, #059669); }
+    .pin-delivered .map-pin-pulse { background: #10b981; }
+
+    /* Map bottom bar */
+    .map-info-bar {
+      padding: 12px 20px; border-top: 1px solid var(--border-color);
+      background: var(--bg-surface); display: flex; align-items: center; gap: 16px;
+      flex-shrink: 0;
+    }
+    .map-legend { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-muted); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    /* =============================================
+       DRIVERS PANEL (RIGHT)
+       ============================================= */
+    .drivers-panel {
+      border-left: 1px solid var(--border-color);
+      display: flex; flex-direction: column;
+      background: var(--bg-surface); overflow: hidden;
+    }
+    .drivers-list { flex: 1; overflow-y: auto; }
+    .driver-card {
+      padding: 16px 20px; border-bottom: 1px solid var(--border-color);
+      cursor: pointer; transition: background 0.15s ease;
+    }
+    .driver-card:hover { background: var(--bg-card); }
+    .driver-card:last-child { border-bottom: none; }
+    .driver-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .driver-avatar {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-size: 14px; font-weight: 700; color: #fff;
+    }
+    .driver-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .driver-vehicle { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .driver-status-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .driver-online {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 600;
+    }
+    .driver-online-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .driver-online.online  .driver-online-dot { background: var(--color-accent); }
+    .driver-online.offline .driver-online-dot { background: var(--text-muted); }
+    .driver-online.busy    .driver-online-dot { background: var(--color-warning); animation: livePulse 1.5s infinite; }
+    .driver-stats { display: flex; gap: 12px; }
+    .driver-stat { text-align: center; }
+    .driver-stat-val { font-family: var(--font-heading); font-size: 16px; font-weight: 800; color: var(--text-primary); }
+    .driver-stat-lbl { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1px; }
+    .driver-progress-bar {
+      height: 3px; background: var(--bg-card); border-radius: 2px;
+      overflow: hidden; margin-top: 8px;
+    }
+    .driver-progress-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--color-primary), var(--color-accent)); transition: width 0.5s ease; }
+
+    /* =============================================
+       ORDER DETAIL DRAWER
+       ============================================= */
+    .order-drawer {
+      position: fixed; right: 0; top: var(--topbar-h); bottom: 0;
+      width: 400px; background: var(--bg-card); border-left: 1px solid var(--border-color);
+      z-index: 500; transform: translateX(100%); transition: transform 0.35s var(--ease-out);
+      display: flex; flex-direction: column; box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+    .order-drawer.open { transform: translateX(0); }
+    .drawer-header {
+      padding: 20px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .drawer-title {
+      font-family: var(--font-heading); font-size: 16px; font-weight: 800;
+      color: var(--text-primary);
+    }
+    .drawer-close {
+      width: 32px; height: 32px; border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      color: var(--text-secondary); transition: all 0.2s ease;
+    }
+    .drawer-close:hover { border-color: var(--border-active); color: var(--text-primary); }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .drawer-footer {
+      padding: 16px 20px; border-top: 1px solid var(--border-color);
+      display: flex; gap: 10px; flex-shrink: 0;
+    }
+
+    /* Status timeline */
+    .status-timeline { display: flex; flex-direction: column; gap: 0; margin: 20px 0; }
+    .st-step { display: flex; gap: 14px; }
+    .st-line { display: flex; flex-direction: column; align-items: center; width: 20px; flex-shrink: 0; }
+    .st-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--border-color); flex-shrink: 0; transition: all 0.3s ease; }
+    .st-dot.done { background: var(--color-primary); border-color: var(--color-primary); box-shadow: 0 0 8px rgba(232,160,32,0.4); }
+    .st-dot.active { background: var(--color-accent); border-color: var(--color-accent); animation: activePulse 1.5s ease-in-out infinite; }
+    @keyframes activePulse { 0%,100%{box-shadow: 0 0 0 0 rgba(16,185,129,0.5)} 50%{box-shadow: 0 0 0 5px rgba(16,185,129,0)} }
+    .st-connector { flex: 1; width: 2px; background: var(--border-color); margin: 3px 0; transition: background 0.3s ease; }
+    .st-connector.done { background: var(--color-primary); }
+    .st-content { padding-bottom: 18px; flex: 1; }
+    .st-label { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .st-label.active { color: var(--color-accent); }
+    .st-time { font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* Order items list */
+    .order-item-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid var(--border-color);
+    }
+    .order-item-row:last-child { border-bottom: none; }
+    .order-item-name { font-size: 13px; color: var(--text-primary); }
+    .order-item-qty {
+      font-family: var(--font-mono); font-size: 11px; color: var(--text-muted);
+      background: var(--bg-surface); padding: 2px 8px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+    .order-item-price { font-family: var(--font-heading); font-size: 13px; font-weight: 700; color: var(--text-primary); }
+
+    /* Customer card */
+    .customer-card {
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 16px; margin-bottom: 16px;
+    }
+    .customer-card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .customer-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-heading); font-size: 16px; font-weight: 700; color: #fff;
+    }
+    .customer-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .customer-orders-count { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .customer-info-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: var(--text-secondary); padding: 4px 0;
+    }
+
+    /* Assign driver select */
+    .assign-driver-row {
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 14px; margin-bottom: 16px;
+    }
+    .assign-label {
+      font-family: var(--font-heading); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px;
+    }
+    .driver-select-grid { display: flex; flex-direction: column; gap: 6px; }
+    .driver-option {
+      display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+      border-radius: var(--radius-md); cursor: pointer; transition: background 0.15s ease;
+      border: 1px solid transparent;
+    }
+    .driver-option:hover { background: var(--bg-card); }
+    .driver-option.selected { background: rgba(232,160,32,0.08); border-color: rgba(232,160,32,0.25); }
+    .driver-option-name { font-size: 13px; font-weight: 500; color: var(--text-primary); flex: 1; }
+    .driver-option-status { font-size: 11px; color: var(--text-muted); }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 18px; border-radius: var(--radius-md);
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      transition: all 0.2s ease; cursor: pointer; border: none; white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: #fff; box-shadow: 0 4px 14px rgba(232,160,32,0.3); flex: 1;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(232,160,32,0.45); }
+    .btn-ghost {
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+    .btn-ghost:hover { border-color: var(--border-active); color: var(--text-primary); }
+    .btn-danger {
+      background: rgba(239,68,68,0.12); color: var(--color-danger); border: 1px solid rgba(239,68,68,0.25);
+    }
+    .btn-danger:hover { background: var(--color-danger); color: #fff; }
+    .btn-green {
+      background: rgba(16,185,129,0.12); color: var(--color-accent); border: 1px solid rgba(16,185,129,0.25); flex: 1;
+    }
+    .btn-green:hover { background: var(--color-accent); color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 10px; }
+    .btn-icon { padding: 8px; width: 32px; height: 32px; justify-content: center; border-radius: var(--radius-md); }
+    .btn-icon.ghost { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); }
+    .btn-icon.ghost:hover { border-color: var(--border-active); color: var(--text-primary); }
+
+    /* =============================================
+       TOAST SYSTEM
+       ============================================= */
+    #toastContainer {
+      position: fixed; bottom: 24px; right: 24px; z-index: 9000;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 12px 16px; border-radius: var(--radius-lg);
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      box-shadow: var(--shadow-lg); min-width: 280px; max-width: 360px;
+      animation: toastIn 0.35s var(--ease-out); pointer-events: all;
+      position: relative; overflow: hidden;
+    }
+    .toast.removing { animation: toastOut 0.3s ease forwards; }
+    .toast-icon { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; }
+    .toast.success .toast-icon { color: var(--color-accent); }
+    .toast.error   .toast-icon { color: var(--color-danger); }
+    .toast.info    .toast-icon { color: var(--color-secondary); }
+    .toast.warning .toast-icon { color: var(--color-warning); }
+    .toast-content { flex: 1; }
+    .toast-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .toast-msg   { font-size: 12px; color: var(--text-muted); }
+    .toast-progress {
+      position: absolute; bottom: 0; left: 0; height: 2px;
+      background: var(--color-primary); width: 100%;
+      animation: toastProgress linear forwards;
+    }
+    @keyframes toastIn  { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { to   { opacity:0; transform:translateX(20px); } }
+    @keyframes toastProgress { from { width:100%; } to { width:0; } }
+
+    /* =============================================
+       SECTION LABELS
+       ============================================= */
+    .section-label {
+      font-family: var(--font-heading); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted);
+    }
+
+    /* Search input */
+    .search-input-wrap {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); padding: 0 12px; height: 34px;
+      transition: border-color 0.2s ease;
+    }
+    .search-input-wrap:focus-within { border-color: var(--border-active); }
+    .search-input-wrap input {
+      background: none; border: none; outline: none;
+      color: var(--text-primary); font-size: 12px; width: 100%;
+    }
+    .search-input-wrap input::placeholder { color: var(--text-muted); }
+
+    /* Info rows */
+    .info-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 0; border-bottom: 1px solid var(--border-color); font-size: 13px;
+    }
+    .info-row:last-child { border-bottom: none; }
+    .info-key { color: var(--text-muted); }
+    .info-val { color: var(--text-primary); font-weight: 500; }
+
+    /* Empty state */
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 48px 24px; text-align: center; gap: 12px;
+    }
+    .empty-icon { font-size: 40px; opacity: 0.4; }
+    .empty-title { font-family: var(--font-heading); font-size: 14px; font-weight: 700; color: var(--text-secondary); }
+    .empty-desc  { font-size: 12px; color: var(--text-muted); max-width: 240px; line-height: 1.5; }
+
+    /* Drawer overlay */
+    .drawer-overlay {
+      display: none; position: fixed; inset: 0; z-index: 499;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(2px);
+    }
+    .drawer-overlay.visible { display: block; }
+
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      .kpi-strip { padding: 12px 16px; }
+      .topbar { padding: 0 16px; }
+      .order-drawer { width: 100%; right: 0; top: var(--topbar-h); }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Page Loader -->
+  <div id="pageLoader">
+    <div class="loader-logo">NŌVA</div>
+    <div class="loader-ring"></div>
+    <div class="loader-label">Loading Delivery Center</div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer"></div>
+
+  <!-- Drawer overlay -->
+  <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+  <!-- =============================================
+       TOPBAR
+       ============================================= -->
+  <header class="topbar">
+    <div class="topbar-brand">
+      <div class="topbar-logo">NŌVA</div>
+      <div class="topbar-sep"></div>
+      <div class="topbar-module">Delivery Command</div>
+    </div>
+    <div class="topbar-live" id="liveIndicator">Live</div>
+
+    <div class="topbar-right">
+      <div class="topbar-clock" id="topClock">--:--:--</div>
+      <button class="topbar-btn" onclick="location.href='admin.html'">
+        <i data-lucide="arrow-left" style="width:13px;height:13px;"></i> Admin
+      </button>
+      <button class="topbar-btn" onclick="location.href='waiter.html'">
+        <i data-lucide="clipboard-list" style="width:13px;height:13px;"></i> Waiter
+      </button>
+      <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle Theme">
+        <i data-lucide="sun" style="width:14px;height:14px;" id="themeIcon"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- =============================================
+       KPI STRIP
+       ============================================= -->
+  <div class="kpi-strip">
+    <div class="kpi-card gold">
+      <div class="kpi-icon gold"><i data-lucide="package" style="width:18px;height:18px;"></i></div>
+      <div>
+        <div class="kpi-num" id="kpiActive">0</div>
+        <div class="kpi-label">Active Deliveries</div>
+      </div>
+    </div>
+    <div class="kpi-card blue">
+      <div class="kpi-icon blue"><i data-lucide="clock" style="width:18px;height:18px;"></i></div>
+      <div>
+        <div class="kpi-num" id="kpiWaiting">0</div>
+        <div class="kpi-label">Waiting Pickup</div>
+      </div>
+    </div>
+    <div class="kpi-card green">
+      <div class="kpi-icon green"><i data-lucide="check-circle" style="width:18px;height:18px;"></i></div>
+      <div>
+        <div class="kpi-num" id="kpiDelivered">0</div>
+        <div class="kpi-label">Delivered Today</div>
+      </div>
+    </div>
+    <div class="kpi-card purple">
+      <div class="kpi-icon purple"><i data-lucide="users" style="width:18px;height:18px;"></i></div>
+      <div>
+        <div class="kpi-num" id="kpiDrivers">0</div>
+        <div class="kpi-label">Drivers Online</div>
+      </div>
+    </div>
+    <div class="kpi-card red">
+      <div class="kpi-icon red"><i data-lucide="timer" style="width:18px;height:18px;"></i></div>
+      <div>
+        <div class="kpi-num" id="kpiAvgTime">–</div>
+        <div class="kpi-label">Avg Delivery Time</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MAIN LAYOUT
+       ============================================= -->
+  <div class="delivery-layout">
+
+    <!-- LEFT: Delivery Queue -->
+    <div class="queue-panel">
+      <div class="panel-header">
+        <div class="panel-title">Delivery Queue</div>
+        <div class="panel-actions">
+          <button class="btn-icon ghost" onclick="refreshQueue()" title="Refresh">
+            <i data-lucide="refresh-cw" style="width:14px;height:14px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div style="padding:10px 20px; border-bottom:1px solid var(--border-color);">
+        <div class="search-input-wrap">
+          <i data-lucide="search" style="width:13px;height:13px;color:var(--text-muted);flex-shrink:0;"></i>
+          <input type="text" placeholder="Search orders, customers…" id="queueSearch" oninput="filterQueue(this.value)" />
+        </div>
+      </div>
+
+      <!-- Filter tabs -->
+      <div class="filter-tabs">
+        <div class="filter-tab active" onclick="setFilter('all', this)">All</div>
+        <div class="filter-tab" onclick="setFilter('waiting', this)">Waiting</div>
+        <div class="filter-tab" onclick="setFilter('assigned', this)">Assigned</div>
+        <div class="filter-tab" onclick="setFilter('transit', this)">On the Way</div>
+        <div class="filter-tab" onclick="setFilter('delivered', this)">Delivered</div>
+      </div>
+
+      <!-- Queue list -->
+      <div class="queue-list" id="queueList">
+        <div class="empty-state">
+          <div class="loader-ring" style="width:32px;height:32px;border-width:2px;"></div>
+          <div class="empty-title">Loading deliveries…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: Map Simulation -->
+    <div class="map-panel">
+      <div class="panel-header">
+        <div class="panel-title">Live Tracking Map</div>
+        <div class="panel-actions">
+          <button class="topbar-btn btn-sm" onclick="addTestDelivery()">
+            <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Test Order
+          </button>
+        </div>
+      </div>
+
+      <div class="map-container" id="mapContainer">
+        <div class="map-grid-overlay"></div>
+        <div class="map-roads"></div>
+
+        <!-- Restaurant at center -->
+        <div class="map-restaurant">
+          <div class="map-restaurant-dot">
+            <i data-lucide="utensils" style="width:12px;height:12px;"></i>
+          </div>
+        </div>
+
+        <!-- Delivery pins rendered by JS -->
+        <div id="mapPins"></div>
+      </div>
+
+      <div class="map-info-bar">
+        <div class="map-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#0ea5e9;"></div>
+            <span>Assigned</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#8b5cf6;"></div>
+            <span>In Transit</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#10b981;"></div>
+            <span>Delivered</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#e8a020;"></div>
+            <span>Restaurant</span>
+          </div>
+        </div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);" id="mapUpdateTime">
+          Simulated positions
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Drivers Panel -->
+    <div class="drivers-panel">
+      <div class="panel-header">
+        <div class="panel-title">Drivers</div>
+        <span style="font-family:var(--font-mono);font-size:11px;color:var(--color-accent);" id="onlineDriverCount">0 online</span>
+      </div>
+      <div class="drivers-list" id="driversList">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+  </div><!-- /.delivery-layout -->
+
+  <!-- =============================================
+       ORDER DETAIL DRAWER
+       ============================================= -->
+  <aside class="order-drawer" id="orderDrawer">
+    <div class="drawer-header">
+      <div>
+        <div class="drawer-title" id="drawerOrderNum">Order Detail</div>
+        <div id="drawerStatus" style="margin-top:4px;"></div>
+      </div>
+      <button class="drawer-close" onclick="closeDrawer()">
+        <i data-lucide="x" style="width:14px;height:14px;"></i>
+      </button>
+    </div>
+
+    <div class="drawer-body" id="drawerBody">
+      <!-- Rendered by JS -->
+    </div>
+
+    <div class="drawer-footer" id="drawerFooter">
+      <!-- Rendered by JS -->
+    </div>
+  </aside>
+
+  <!-- =============================================
+       JAVASCRIPT — DELIVERY APP
+       ============================================= -->
+  <script>
+    /* =============================================
+       STORAGE MANAGER
+       ============================================= */
+    const Storage = {
+      get: k => { try { const v = localStorage.getItem('nova_' + k); return v ? JSON.parse(v) : null; } catch { return null; } },
+      set: (k, v) => { try { localStorage.setItem('nova_' + k, JSON.stringify(v)); } catch {} },
+    };
+
+    /* =============================================
+       MOCK DATA
+       ============================================= */
+    const DRIVERS = [
+      { id: 'D1', name: 'Ravi Singh',    vehicle: 'Motorcycle — #MX-2241', color: '#ef4444', status: 'busy',    deliveries: 8,  rating: 4.9 },
+      { id: 'D2', name: 'Lena Park',     vehicle: 'Bicycle — #BK-0419',    color: '#10b981', status: 'online',  deliveries: 5,  rating: 4.7 },
+      { id: 'D3', name: 'Marco Diaz',    vehicle: 'Car — #CR-8872',         color: '#0ea5e9', status: 'busy',    deliveries: 11, rating: 4.8 },
+      { id: 'D4', name: 'Yuki Tanaka',   vehicle: 'Scooter — #SC-3315',     color: '#8b5cf6', status: 'offline', deliveries: 3,  rating: 4.6 },
+      { id: 'D5', name: 'Hassan Ali',    vehicle: 'Car — #CR-1190',         color: '#f59e0b', status: 'online',  deliveries: 6,  rating: 5.0 },
+    ];
+
+    const NOW = Date.now();
+    function minsAgo(m) { return new Date(NOW - m * 60000).toISOString(); }
+
+    const SEED_DELIVERIES = [];  // starts empty — real orders come from the ordering panels
+
+    /* =============================================
+       APP STATE
+       ============================================= */
+    let deliveries    = [];
+    let activeFilter  = 'all';
+    let searchQuery   = '';
+    let selectedId    = null;
+    let selectedDriver = null;
+
+    /* =============================================
+       INIT
+       ============================================= */
+    function init() {
+      // Load theme
+      const mode = Storage.get('themeMode') || 'dark';
+      document.documentElement.setAttribute('data-theme', mode);
+      updateThemeIcon(mode);
+
+      // Load or seed deliveries
+      const saved = Storage.get('deliveries');
+      deliveries = saved?.length ? saved : [...SEED_DELIVERIES];
+      Storage.set('deliveries', deliveries);
+
+      renderQueue();
+      renderDrivers();
+      renderMap();
+      updateKPIs();
+      startClock();
+      startSimulation();
+
+      if (window.lucide) lucide.createIcons();
+
+      setTimeout(() => {
+        document.getElementById('pageLoader')?.classList.add('hidden');
+      }, 800);
+    }
+
+    /* =============================================
+       CLOCK
+       ============================================= */
+    function startClock() {
+      function tick() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2,'0');
+        const m = String(now.getMinutes()).padStart(2,'0');
+        const s = String(now.getSeconds()).padStart(2,'0');
+        const el = document.getElementById('topClock');
+        if (el) el.textContent = `${h}:${m}:${s}`;
+      }
+      tick();
+      setInterval(tick, 1000);
+    }
+
+    /* =============================================
+       KPI UPDATES
+       ============================================= */
+    function updateKPIs() {
+      const active    = deliveries.filter(d => d.status === 'transit').length;
+      const waiting   = deliveries.filter(d => d.status === 'waiting').length;
+      const delivered = deliveries.filter(d => d.status === 'delivered').length;
+      const onlineD   = DRIVERS.filter(d => d.status !== 'offline').length;
+
+      animateNum('kpiActive',    active);
+      animateNum('kpiWaiting',   waiting);
+      animateNum('kpiDelivered', delivered);
+      animateNum('kpiDrivers',   onlineD);
+      document.getElementById('kpiAvgTime').textContent = '28m';
+      document.getElementById('onlineDriverCount').textContent = onlineD + ' online';
+    }
+
+    function animateNum(id, target) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const start = parseInt(el.textContent) || 0;
+      let frame = 0;
+      const dur = 20;
+      const step = () => {
+        frame++;
+        const val = Math.round(start + (target - start) * (frame / dur));
+        el.textContent = val;
+        if (frame < dur) requestAnimationFrame(step);
+        else el.textContent = target;
+      };
+      requestAnimationFrame(step);
+    }
+
+    /* =============================================
+       QUEUE RENDER
+       ============================================= */
+    function renderQueue() {
+      const list = document.getElementById('queueList');
+      if (!list) return;
+
+      let filtered = deliveries;
+      if (activeFilter !== 'all') filtered = filtered.filter(d => d.status === activeFilter);
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        filtered = filtered.filter(d =>
+          d.customer.toLowerCase().includes(q) ||
+          d.orderNum.toLowerCase().includes(q) ||
+          d.address.toLowerCase().includes(q)
+        );
+      }
+
+      // Sort: waiting first, then transit, assigned, delivered
+      const order = { waiting:0, assigned:1, transit:2, delivered:3, cancelled:4 };
+      filtered.sort((a,b) => (order[a.status]||5) - (order[b.status]||5));
+
+      if (!filtered.length) {
+        list.innerHTML = `<div class="empty-state">
+          <div class="empty-icon">📦</div>
+          <div class="empty-title">No deliveries found</div>
+          <div class="empty-desc">Adjust your filter or add a test order.</div>
+        </div>`;
+        return;
+      }
+
+      list.innerHTML = filtered.map(d => {
+        const driver = DRIVERS.find(dr => dr.id === d.driverId);
+        const elapsed = Math.floor((Date.now() - new Date(d.createdAt).getTime()) / 60000);
+        return `
+        <div class="delivery-item ${selectedId === d.id ? 'selected' : ''}" onclick="selectDelivery('${d.id}')">
+          <div class="di-top">
+            <div class="di-order-num">${d.orderNum}</div>
+            <div class="di-time">${elapsed}m ago</div>
+          </div>
+          <div class="di-customer">${d.customer}</div>
+          <div class="di-address">
+            <i data-lucide="map-pin" style="width:11px;height:11px;flex-shrink:0;"></i>
+            ${d.address}
+          </div>
+          <div class="di-footer">
+            <div class="di-amount">${d.total.toFixed(2)} DA</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              ${driver ? `<div class="di-driver"><div class="di-driver-dot"></div>${driver.name.split(' ')[0]}</div>` : ''}
+              ${statusBadge(d.status)}
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function statusBadge(status) {
+      const map = {
+        waiting:   'sb-waiting',
+        assigned:  'sb-assigned',
+        transit:   'sb-transit',
+        delivered: 'sb-delivered',
+        cancelled: 'sb-cancelled',
+      };
+      const labels = {
+        waiting:'Waiting', assigned:'Assigned', transit:'On the Way',
+        delivered:'Delivered', cancelled:'Cancelled',
+      };
+      return `<span class="status-badge ${map[status]||''}">${labels[status]||status}</span>`;
+    }
+
+    /* =============================================
+       FILTER & SEARCH
+       ============================================= */
+    function setFilter(f, el) {
+      activeFilter = f;
+      document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      renderQueue();
+    }
+
+    function filterQueue(q) {
+      searchQuery = q;
+      renderQueue();
+    }
+
+    /* =============================================
+       DRIVERS RENDER
+       ============================================= */
+    function renderDrivers() {
+      const list = document.getElementById('driversList');
+      if (!list) return;
+
+      list.innerHTML = DRIVERS.map(d => {
+        const activeDelivery = deliveries.find(del => del.driverId === d.id && ['transit','assigned'].includes(del.status));
+        const statusLabel = d.status === 'busy' ? 'On Delivery' : d.status === 'online' ? 'Available' : 'Offline';
+        const progressPct = d.status === 'busy' ? (Math.floor(Math.random() * 60) + 30) : 0;
+        return `
+        <div class="driver-card">
+          <div class="driver-header">
+            <div class="driver-avatar" style="background:${d.color}20;color:${d.color};border:2px solid ${d.color}40;">
+              ${d.name.charAt(0)}
+            </div>
+            <div style="flex:1;">
+              <div class="driver-name">${d.name}</div>
+              <div class="driver-vehicle">${d.vehicle}</div>
+            </div>
+            <div class="driver-online ${d.status}">
+              <div class="driver-online-dot"></div>
+              <span style="color:var(--text-secondary);">${statusLabel}</span>
+            </div>
+          </div>
+          ${activeDelivery ? `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;padding:6px 8px;background:var(--bg-card);border-radius:var(--radius-sm);">
+            <i data-lucide="navigation" style="width:10px;height:10px;margin-right:4px;"></i>
+            → ${activeDelivery.customer} · ${activeDelivery.address.split(',')[0]}
+          </div>` : ''}
+          <div class="driver-stats">
+            <div class="driver-stat">
+              <div class="driver-stat-val">${d.deliveries}</div>
+              <div class="driver-stat-lbl">Today</div>
+            </div>
+            <div class="driver-stat">
+              <div class="driver-stat-val" style="color:var(--color-primary);">${d.rating}★</div>
+              <div class="driver-stat-lbl">Rating</div>
+            </div>
+            <div class="driver-stat">
+              <div class="driver-stat-val" style="color:var(--color-accent);">~28m</div>
+              <div class="driver-stat-lbl">Avg Time</div>
+            </div>
+          </div>
+          ${d.status === 'busy' ? `<div class="driver-progress-bar"><div class="driver-progress-fill" style="width:${progressPct}%;"></div></div>` : ''}
+        </div>`;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    /* =============================================
+       MAP RENDER
+       ============================================= */
+    function renderMap() {
+      const pinsEl = document.getElementById('mapPins');
+      const container = document.getElementById('mapContainer');
+      if (!pinsEl || !container) return;
+
+      const activeDeliveries = deliveries.filter(d => d.mapPos && ['transit','assigned','delivered'].includes(d.status));
+      pinsEl.innerHTML = activeDeliveries.map(d => {
+        const pinClass = d.status === 'transit' ? 'pin-transit' : d.status === 'assigned' ? 'pin-assigned' : 'pin-delivered';
+        const label = d.orderNum;
+        return `
+        <div class="map-pin ${pinClass}" id="pin-${d.id}"
+          style="left:${d.mapPos.x}%;top:${d.mapPos.y}%;transform:translate(-50%,-100%);"
+          onclick="selectDelivery('${d.id}')" title="${d.customer}">
+          <div class="map-pin-pulse"></div>
+          <div class="map-pin-inner">
+            <div class="map-pin-head"><span>${d.id.split('-')[1]}</span></div>
+            <div class="map-pin-label">${label}</div>
+          </div>
+        </div>`;
+      }).join('');
+
+      document.getElementById('mapUpdateTime').textContent = 'Updated just now';
+      if (window.lucide) lucide.createIcons();
+    }
+
+    /* =============================================
+       SELECT DELIVERY — OPEN DRAWER
+       ============================================= */
+    function selectDelivery(id) {
+      selectedId = id;
+      const d = deliveries.find(x => x.id === id);
+      if (!d) return;
+
+      renderQueue(); // re-render to show selected state
+
+      const driver = DRIVERS.find(dr => dr.id === d.driverId);
+      const elapsed = Math.floor((Date.now() - new Date(d.createdAt).getTime()) / 60000);
+      const eta = d.status === 'transit' ? Math.max(5, 35 - elapsed) : null;
+
+      // Steps
+      const steps = [
+        { label: 'Order Placed',    done: true,   time: formatTime(d.createdAt) },
+        { label: 'Driver Assigned', done: !!d.driverId, active: d.status === 'assigned', time: d.assignedAt ? formatTime(d.assignedAt) : null },
+        { label: 'On the Way',      done: d.status === 'transit' || d.status === 'delivered', active: d.status === 'transit', time: d.status !== 'waiting' && d.status !== 'assigned' ? 'In progress' : null },
+        { label: 'Delivered',       done: d.status === 'delivered', active: false, time: d.status === 'delivered' ? 'Completed' : eta ? `ETA ~${eta}m` : null },
+      ];
+
+      const stepsHTML = steps.map((s, i) => `
+        <div class="st-step">
+          <div class="st-line">
+            <div class="st-dot ${s.done ? 'done' : s.active ? 'active' : ''}"></div>
+            ${i < steps.length - 1 ? `<div class="st-connector ${s.done ? 'done' : ''}"></div>` : ''}
+          </div>
+          <div class="st-content">
+            <div class="st-label ${s.active ? 'active' : ''}">${s.label}</div>
+            ${s.time ? `<div class="st-time">${s.time}</div>` : ''}
+          </div>
+        </div>`).join('');
+
+      // Items
+      const itemsHTML = d.items.map(item => `
+        <div class="order-item-row">
+          <div class="order-item-name">${item.name}</div>
+          <div class="order-item-qty">×${item.qty}</div>
+          <div class="order-item-price">${(item.price * item.qty).toFixed(2)} DA</div>
+        </div>`).join('');
+
+      // Available drivers for assignment
+      const availDrivers = DRIVERS.filter(dr => dr.status !== 'offline');
+      const driverSelectHTML = `
+        <div class="assign-driver-row">
+          <div class="assign-label">Assign Driver</div>
+          <div class="driver-select-grid" id="driverSelectGrid">
+            ${availDrivers.map(dr => `
+            <div class="driver-option ${d.driverId === dr.id ? 'selected' : ''}" onclick="selectDriver('${dr.id}', '${d.id}')">
+              <div style="width:26px;height:26px;border-radius:50%;background:${dr.color}20;color:${dr.color};border:1px solid ${dr.color}40;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:11px;font-weight:700;">
+                ${dr.name.charAt(0)}
+              </div>
+              <div class="driver-option-name">${dr.name}</div>
+              <div class="driver-option-status">${dr.status === 'busy' ? '🚴 On delivery' : '✅ Available'}</div>
+            </div>`).join('')}
+          </div>
+        </div>`;
+
+      // Customer card
+      const customerHTML = `
+        <div class="customer-card">
+          <div class="customer-card-header">
+            <div class="customer-avatar">${d.customer.charAt(0)}</div>
+            <div>
+              <div class="customer-name">${d.customer}</div>
+              <div class="customer-orders-count">Loyal customer</div>
+            </div>
+          </div>
+          <div class="customer-info-row">
+            <i data-lucide="phone" style="width:13px;height:13px;color:var(--text-muted);"></i>
+            ${d.phone}
+          </div>
+          <div class="customer-info-row">
+            <i data-lucide="map-pin" style="width:13px;height:13px;color:var(--text-muted);"></i>
+            ${d.address}
+          </div>
+          ${d.notes ? `<div class="customer-info-row"><i data-lucide="message-square" style="width:13px;height:13px;color:var(--text-muted);"></i>${d.notes}</div>` : ''}
+        </div>`;
+
+      // Totals
+      const subtotal = d.items.reduce((s, i) => s + i.price * i.qty, 0);
+      const deliveryFee = 3.50;
+
+      document.getElementById('drawerOrderNum').textContent = `${d.orderNum} · ${d.customer}`;
+      document.getElementById('drawerStatus').innerHTML = statusBadge(d.status);
+      document.getElementById('drawerBody').innerHTML = `
+        <div style="margin-bottom:16px;">
+          <div class="section-label" style="margin-bottom:12px;">Delivery Progress</div>
+          <div class="status-timeline">${stepsHTML}</div>
+        </div>
+
+        ${customerHTML}
+
+        ${d.status === 'waiting' || d.status === 'assigned' ? driverSelectHTML : ''}
+
+        <div style="margin-bottom:16px;">
+          <div class="section-label" style="margin-bottom:10px;">Order Items</div>
+          ${itemsHTML}
+          <div class="info-row"><span class="info-key">Subtotal</span><span class="info-val">${subtotal.toFixed(2)} DA</span></div>
+          <div class="info-row"><span class="info-key">Delivery Fee</span><span class="info-val">${deliveryFee.toFixed(2)} DA</span></div>
+          <div class="info-row"><span class="info-key" style="color:var(--text-primary);font-weight:600;">Total</span><span class="info-val" style="color:var(--color-primary);font-family:var(--font-heading);font-size:15px;font-weight:800;">${(subtotal + deliveryFee).toFixed(2)} DA</span></div>
+        </div>
+
+        ${driver ? `<div style="margin-bottom:4px;"><div class="section-label" style="margin-bottom:8px;">Assigned Driver</div>
+          <div style="display:flex;align-items:center;gap:10px;background:var(--bg-surface);padding:12px;border-radius:var(--radius-md);border:1px solid var(--border-color);">
+            <div class="driver-avatar" style="width:36px;height:36px;background:${driver.color}20;color:${driver.color};border:2px solid ${driver.color}40;">${driver.name.charAt(0)}</div>
+            <div style="flex:1;">
+              <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${driver.name}</div>
+              <div style="font-size:11px;color:var(--text-muted);">${driver.vehicle}</div>
+            </div>
+            <div style="font-family:var(--font-heading);font-size:13px;font-weight:700;color:var(--color-primary);">${driver.rating}★</div>
+          </div>
+        </div>` : ''}
+      `;
+
+      // Footer buttons
+      const footerBtns = () => {
+        if (d.status === 'waiting') {
+          return `<button class="btn btn-primary" onclick="advanceStatus('${d.id}')">
+            <i data-lucide="user-check" style="width:14px;height:14px;"></i> Assign & Dispatch
+          </button>`;
+        } else if (d.status === 'assigned') {
+          return `<button class="btn btn-primary" onclick="advanceStatus('${d.id}')">
+            <i data-lucide="navigation" style="width:14px;height:14px;"></i> Mark On the Way
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="cancelDelivery('${d.id}')">Cancel</button>`;
+        } else if (d.status === 'transit') {
+          return `<button class="btn btn-green" onclick="advanceStatus('${d.id}')">
+            <i data-lucide="check-circle" style="width:14px;height:14px;"></i> Mark Delivered
+          </button>`;
+        } else if (d.status === 'delivered') {
+          return `<div style="text-align:center;padding:8px;color:var(--color-accent);font-family:var(--font-heading);font-size:13px;font-weight:700;width:100%;">
+            ✓ Delivery Completed
+          </div>`;
+        }
+        return '';
+      };
+
+      document.getElementById('drawerFooter').innerHTML = `
+        <button class="btn btn-ghost btn-sm" onclick="closeDrawer()">Close</button>
+        ${footerBtns()}
+      `;
+
+      // Open drawer
+      document.getElementById('orderDrawer').classList.add('open');
+      document.getElementById('drawerOverlay').classList.add('visible');
+
+      if (window.lucide) lucide.createIcons();
+    }
+
+    function closeDrawer() {
+      document.getElementById('orderDrawer')?.classList.remove('open');
+      document.getElementById('drawerOverlay')?.classList.remove('visible');
+      selectedId = null;
+      renderQueue();
+    }
+
+    /* =============================================
+       DRIVER SELECTION
+       ============================================= */
+    function selectDriver(driverId, deliveryId) {
+      const d = deliveries.find(x => x.id === deliveryId);
+      if (!d) return;
+      d.driverId = driverId;
+      Storage.set('deliveries', deliveries);
+
+      document.querySelectorAll('.driver-option').forEach(el => el.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+
+      const driver = DRIVERS.find(dr => dr.id === driverId);
+      toast(`${driver?.name} assigned to ${d.orderNum}`, 'info', 'Driver Assigned');
+    }
+
+    /* =============================================
+       ADVANCE STATUS
+       ============================================= */
+    function advanceStatus(id) {
+      const d = deliveries.find(x => x.id === id);
+      if (!d) return;
+      const flow = { waiting:'assigned', assigned:'transit', transit:'delivered' };
+      const next = flow[d.status];
+      if (!next) return;
+
+      if (d.status === 'waiting' && !d.driverId) {
+        toast('Please assign a driver first.', 'warning', 'No Driver');
+        return;
+      }
+
+      d.status = next;
+      if (next === 'assigned') d.assignedAt = new Date().toISOString();
+      if (next === 'transit')  d.mapPos = { x: 45 + Math.random()*20, y: 40 + Math.random()*20 };
+
+      Storage.set('deliveries', deliveries);
+
+      const labels = { assigned:'Driver dispatched', transit:'Order is on the way!', delivered:'Order delivered successfully!' };
+      const types  = { assigned:'info', transit:'info', delivered:'success' };
+      toast(labels[next], types[next] || 'info', `${d.orderNum} Updated`);
+
+      renderQueue();
+      renderMap();
+      updateKPIs();
+      if (selectedId === id) selectDelivery(id);
+    }
+
+    function cancelDelivery(id) {
+      const d = deliveries.find(x => x.id === id);
+      if (!d) return;
+      d.status = 'cancelled';
+      d.mapPos = null;
+      Storage.set('deliveries', deliveries);
+      toast('Delivery cancelled.', 'error', d.orderNum);
+      closeDrawer();
+      renderQueue();
+      renderMap();
+      updateKPIs();
+    }
+
+    /* =============================================
+       ADD TEST DELIVERY
+       ============================================= */
+    const FAKE_NAMES    = ['Noah Perkins','Isabelle Roy','Carlos Mendez','Fatima Al-Amin','Luca Ferrari','Zoe Kim'];
+    const FAKE_STREETS  = ['45 Sunset Ave','12 Lakeview Rd','78 Broadway St','31 Highland Way','9 Elm Blvd','55 Ocean Drive'];
+
+    function addTestDelivery() {
+      const name   = FAKE_NAMES[Math.floor(Math.random() * FAKE_NAMES.length)];
+      const street = FAKE_STREETS[Math.floor(Math.random() * FAKE_STREETS.length)];
+      const num    = 'NVA-' + String(Math.floor(Math.random()*900)+100);
+      const newId  = 'DLV-' + String(deliveries.length + 1).padStart(3,'0');
+      const items  = [{ name:'Wagyu Burger', qty: 1, price: 24 }];
+
+      deliveries.unshift({
+        id: newId, orderNum: num, customer: name, phone: '+1 555 XXX',
+        address: street, notes: '', items,
+        total: 24 + 3.5, status: 'waiting', driverId: null,
+        createdAt: new Date().toISOString(), assignedAt: null, mapPos: null,
+      });
+
+      Storage.set('deliveries', deliveries);
+      renderQueue();
+      updateKPIs();
+      toast(`New delivery order — ${name}`, 'info', `${num} Received`);
+    }
+
+    /* =============================================
+       REFRESH QUEUE
+       ============================================= */
+    function refreshQueue() {
+      renderQueue();
+      renderDrivers();
+      renderMap();
+      updateKPIs();
+      toast('Queue refreshed', 'success', 'Updated');
+    }
+
+    /* =============================================
+       REAL-TIME SIMULATION
+       ============================================= */
+    function startSimulation() {
+      // Move in-transit pins every 5s
+      setInterval(() => {
+        deliveries.forEach(d => {
+          if (d.status === 'transit' && d.mapPos) {
+            const dx = (Math.random() - 0.5) * 8;
+            const dy = (Math.random() - 0.5) * 8;
+            d.mapPos.x = Math.max(10, Math.min(90, d.mapPos.x + dx));
+            d.mapPos.y = Math.max(10, Math.min(90, d.mapPos.y + dy));
+
+            const pin = document.getElementById('pin-' + d.id);
+            if (pin) {
+              pin.style.left = d.mapPos.x + '%';
+              pin.style.top  = d.mapPos.y + '%';
+            }
+          }
+        });
+        Storage.set('deliveries', deliveries);
+        const now = new Date();
+        const ts = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+        const el = document.getElementById('mapUpdateTime');
+        if (el) el.textContent = 'Updated ' + ts;
+      }, 5000);
+
+      // Simulate new order every ~45s
+      let simCount = 0;
+      setInterval(() => {
+        simCount++;
+        if (simCount % 3 === 0) {
+          addTestDelivery();
+        }
+      }, 45000);
+    }
+
+    /* =============================================
+       HELPERS
+       ============================================= */
+    function formatTime(iso) {
+      if (!iso) return '';
+      const d = new Date(iso);
+      return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
+    }
+
+    /* =============================================
+       THEME
+       ============================================= */
+    function toggleTheme() {
+      const cur  = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      Storage.set('themeMode', next);
+      updateThemeIcon(next);
+    }
+    function updateThemeIcon(mode) {
+      const icon = document.getElementById('themeIcon');
+      if (!icon) return;
+      icon.setAttribute('data-lucide', mode === 'dark' ? 'sun' : 'moon');
+      if (window.lucide) lucide.createIcons();
+    }
+
+    /* =============================================
+       TOAST
+       ============================================= */
+    function toast(message, type = 'info', title = '') {
+      const container = document.getElementById('toastContainer');
+      if (!container) return;
+      const icons = { success:'check-circle', error:'x-circle', info:'info', warning:'alert-triangle' };
+      const dur   = 4000;
+      const el    = document.createElement('div');
+      el.className = 'toast ' + type;
+      el.innerHTML = `
+        <div class="toast-icon"><i data-lucide="${icons[type]||'info'}" style="width:16px;height:16px;"></i></div>
+        <div class="toast-content">
+          ${title ? `<div class="toast-title">${title}</div>` : ''}
+          <div class="toast-msg">${message}</div>
+        </div>
+        <button onclick="this.parentElement.remove()" style="color:var(--text-muted);margin-left:8px;flex-shrink:0;">
+          <i data-lucide="x" style="width:13px;height:13px;"></i>
+        </button>
+        <div class="toast-progress" style="animation-duration:${dur}ms;"></div>`;
+      container.appendChild(el);
+      if (window.lucide) lucide.createIcons();
+      setTimeout(() => { el.classList.add('removing'); setTimeout(() => el.remove(), 300); }, dur);
+    }
+
+    /* =============================================
+       KEYBOARD SHORTCUTS
+       ============================================= */
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeDrawer();
+    });
+
+    /* =============================================
+       BOOT
+       ============================================= */
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
