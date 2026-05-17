@@ -3678,5 +3678,64 @@ const App = {
 // Boot
 document.addEventListener('DOMContentLoaded', () => App.init());
 </script>
+
+  <script>
+    /* ── BRANDING: apply saved restaurant name across all elements ── */
+    (function applyBranding() {
+      try {
+        var b = JSON.parse(localStorage.getItem('nova_branding') || 'null')
+             || JSON.parse(localStorage.getItem('nova_site_branding') || 'null');
+        if (!b || !b.name) return;
+        var name = b.name;
+
+        // Update logo / name elements
+        ['.nav-logo', '.footer-logo', '.receipt-logo'].forEach(function(sel) {
+          document.querySelectorAll(sel).forEach(function(el) { el.textContent = name; });
+        });
+
+        // Update page title
+        document.title = document.title.replace('NŌVA', name);
+      } catch(e) {}
+    })();
+  </script>
+
+  <!-- ── NŌVA: Global Theme Sync via Firestore ── -->
+  <script type="module">
+    (async function novaThemeSync() {
+      try {
+        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getFirestore, doc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const cfg = {
+          apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+          authDomain: "protech-6c388.firebaseapp.com",
+          projectId: "protech-6c388",
+          storageBucket: "protech-6c388.firebasestorage.app",
+          messagingSenderId: "987892798162",
+          appId: "1:987892798162:web:2307b1e8773430df1d930b",
+        };
+        const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+        const db  = getFirestore(app);
+        onSnapshot(doc(db, 'settings', 'theme'), snap => {
+          if (!snap.exists()) return;
+          const theme = snap.data();
+          const root  = document.documentElement;
+          if (theme.mode) {
+            root.setAttribute('data-theme', theme.mode);
+            try { localStorage.setItem('nova_themeMode', JSON.stringify(theme.mode)); } catch(e) {}
+          }
+          const cssVars = {};
+          Object.entries(theme).forEach(([k, v]) => {
+            if (!k.startsWith('--')) return;
+            root.style.setProperty(k, v);
+            cssVars[k] = v;
+          });
+          try {
+            localStorage.setItem('nova_admin_theme', JSON.stringify(cssVars));
+            localStorage.setItem('nova_theme',       JSON.stringify(cssVars));
+          } catch(e) {}
+        });
+      } catch(e) { console.warn('[NŌVA] Theme sync error:', e); }
+    })();
+  </script>
 </body>
 </html>

@@ -1565,9 +1565,23 @@
             <div class="page-title">Tables</div>
             <div class="page-subtitle">Manage seating and table availability.</div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="openTableModal()">
-            <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Table
-          </button>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <!-- Tables ON/OFF toggle -->
+            <div style="
+              display:flex;align-items:center;gap:10px;
+              background:var(--bg-card);border:1px solid var(--border-color);
+              border-radius:var(--radius-md);padding:8px 14px;
+            ">
+              <span style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);">Tables</span>
+              <div class="toggle on" id="tablesToggle" onclick="toggleTablesService(this)">
+                <div class="toggle-thumb"></div>
+              </div>
+              <span id="tablesToggleLabel" style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.05em;color:var(--color-accent);">ON</span>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openTableModal()">
+              <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Table
+            </button>
+          </div>
         </div>
 
         <!-- Legend -->
@@ -3643,7 +3657,34 @@
   /* =============================================
      TABLES MANAGEMENT
      ============================================= */
+  /* ── Tables ON/OFF toggle ─────────────────────────────── */
+  function toggleTablesService(el) {
+    el.classList.toggle('on');
+    const isOn = el.classList.contains('on');
+    localStorage.setItem('nova_tables_enabled', isOn ? 'true' : 'false');
+    const labelEl = document.getElementById('tablesToggleLabel');
+    if (labelEl) {
+      labelEl.textContent    = isOn ? 'ON'  : 'OFF';
+      labelEl.style.color    = isOn ? 'var(--color-accent)' : 'var(--color-danger)';
+    }
+    toast(
+      isOn ? 'Tables enabled — dine-in is now available on the main page.'
+           : 'Tables disabled — dine-in option is hidden from the main page.',
+      isOn ? 'success' : 'info',
+      isOn ? 'Tables ON' : 'Tables OFF'
+    );
+  }
+
   function renderTablesGrid() {
+    // ── Restore toggle state ──────────────────────────────
+    const tablesEnabled = localStorage.getItem('nova_tables_enabled') !== 'false';
+    const toggleEl      = document.getElementById('tablesToggle');
+    const labelEl       = document.getElementById('tablesToggleLabel');
+    if (toggleEl) {
+      if (tablesEnabled) { toggleEl.classList.add('on');    if (labelEl) { labelEl.textContent = 'ON';  labelEl.style.color = 'var(--color-accent)';  } }
+      else               { toggleEl.classList.remove('on'); if (labelEl) { labelEl.textContent = 'OFF'; labelEl.style.color = 'var(--color-danger)'; } }
+    }
+
     const tables = getTables();
     document.getElementById('tablesGrid').innerHTML = tables.map(t => `
       <div class="table-tile ${t.status}" onclick="cycleTableStatus(${t.id})">
@@ -4124,12 +4165,33 @@
     StorageManager.set('admin_theme', saved);
   }
 
-  function saveTheme() {
-    // Already auto-saved; just show confirmation
-    // Also push to landing-page key
+  async function saveTheme() {
+    // Push to landing-page localStorage key (same-browser fast-path)
     const saved = StorageManager.get('admin_theme') || {};
     StorageManager.set('theme', saved);
-    toast('Theme saved and applied to all pages', 'success', 'Theme Saved ✓');
+
+    // ── Persist to Firestore so every device & account picks it up ──
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const cfg = {
+        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+        authDomain: "protech-6c388.firebaseapp.com",
+        projectId: "protech-6c388",
+        storageBucket: "protech-6c388.firebasestorage.app",
+        messagingSenderId: "987892798162",
+        appId: "1:987892798162:web:2307b1e8773430df1d930b",
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+      const db  = getFirestore(app);
+      // Include the current light/dark mode in the saved doc
+      const mode = document.documentElement.getAttribute('data-theme') || 'dark';
+      await setDoc(doc(db, 'settings', 'theme'), { ...saved, mode });
+      toast('Theme saved — all devices updated', 'success', 'Theme Saved ✓');
+    } catch(e) {
+      console.warn('Firestore theme save error:', e);
+      toast('Saved locally (Firestore unavailable)', 'warning', 'Theme Saved');
+    }
   }
 
   function resetTheme() {
@@ -4715,6 +4777,48 @@
     setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, 3000);
   }
 
+  </script>
+
+  <!-- ── NŌVA: Global Theme Sync via Firestore ── -->
+  <script type="module">
+    (async function novaThemeSync() {
+      try {
+        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getFirestore, doc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const cfg = {
+          apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+          authDomain: "protech-6c388.firebaseapp.com",
+          projectId: "protech-6c388",
+          storageBucket: "protech-6c388.firebasestorage.app",
+          messagingSenderId: "987892798162",
+          appId: "1:987892798162:web:2307b1e8773430df1d930b",
+        };
+        const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+        const db  = getFirestore(app);
+        onSnapshot(doc(db, 'settings', 'theme'), snap => {
+          if (!snap.exists()) return;
+          const theme = snap.data();
+          const root  = document.documentElement;
+          // Apply mode
+          if (theme.mode) {
+            root.setAttribute('data-theme', theme.mode);
+            try { localStorage.setItem('nova_themeMode', JSON.stringify(theme.mode)); } catch(e) {}
+          }
+          // Apply CSS variables
+          const cssVars = {};
+          Object.entries(theme).forEach(([k, v]) => {
+            if (!k.startsWith('--')) return;
+            root.style.setProperty(k, v);
+            cssVars[k] = v;
+          });
+          // Cache to localStorage so next hard-reload still fast-paints correctly
+          try {
+            localStorage.setItem('nova_admin_theme', JSON.stringify(cssVars));
+            localStorage.setItem('nova_theme',       JSON.stringify(cssVars));
+          } catch(e) {}
+        });
+      } catch(e) { console.warn('[NŌVA] Theme sync error:', e); }
+    })();
   </script>
 </body>
 </html>

@@ -681,6 +681,19 @@
       .order-drawer { width: 100%; right: 0; top: var(--topbar-h); }
     }
   </style>
+  <!-- Leaflet — real map of Oran, Algeria -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    #deliveryLeafletMap { z-index: 0; flex: 1; min-height: 0; }
+    .leaflet-control-attribution { font-size: 9px !important; }
+    /* Dark-mode tile tint */
+    [data-theme="dark"] #deliveryLeafletMap .leaflet-tile-pane {
+      filter: brightness(0.82) saturate(0.65) hue-rotate(185deg);
+    }
+    /* Make map-panel a flex column so leaflet fills remaining height */
+    .map-panel { display: flex; flex-direction: column; }
+  </style>
 </head>
 
 <body>
@@ -832,10 +845,10 @@
       </div>
     </div>
 
-    <!-- MIDDLE: Map Simulation -->
+    <!-- MIDDLE: Real Map — Oran, Algeria -->
     <div class="map-panel">
       <div class="panel-header">
-        <div class="panel-title">Live Tracking Map</div>
+        <div class="panel-title">Live Tracking — Oran, Algeria</div>
         <div class="panel-actions">
           <button class="topbar-btn btn-sm" onclick="addTestDelivery()">
             <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Test Order
@@ -843,43 +856,17 @@
         </div>
       </div>
 
-      <div class="map-container" id="mapContainer">
-        <div class="map-grid-overlay"></div>
-        <div class="map-roads"></div>
-
-        <!-- Restaurant at center -->
-        <div class="map-restaurant">
-          <div class="map-restaurant-dot">
-            <i data-lucide="utensils" style="width:12px;height:12px;"></i>
-          </div>
-        </div>
-
-        <!-- Delivery pins rendered by JS -->
-        <div id="mapPins"></div>
-      </div>
+      <!-- Leaflet map fills the remaining height of the panel -->
+      <div id="deliveryLeafletMap"></div>
 
       <div class="map-info-bar">
         <div class="map-legend">
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#0ea5e9;"></div>
-            <span>Assigned</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#8b5cf6;"></div>
-            <span>In Transit</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#10b981;"></div>
-            <span>Delivered</span>
-          </div>
-          <div class="legend-item">
-            <div class="legend-dot" style="background:#e8a020;"></div>
-            <span>Restaurant</span>
-          </div>
+          <div class="legend-item"><div class="legend-dot" style="background:#e8a020;"></div><span>Restaurant</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9;"></div><span>Assigned</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#8b5cf6;"></div><span>In Transit</span></div>
+          <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div><span>Delivered</span></div>
         </div>
-        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);" id="mapUpdateTime">
-          Simulated positions
-        </div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);" id="mapUpdateTime">Live</div>
       </div>
     </div>
 
@@ -1188,29 +1175,112 @@
     /* =============================================
        MAP RENDER
        ============================================= */
+    /* ── Leaflet map state ────────────────────────────── */
+    const ORAN_CENTER  = [35.6969, -0.6331];
+    let   _lMap        = null;   // Leaflet map instance
+    let   _lMarkers    = {};     // keyed by delivery id
+    let   _restaurantM = null;
+
+    /* Custom dot icon */
+    function _lIcon(color, size = 14) {
+      return L.divIcon({
+        className: '',
+        html: `<div style="
+          width:${size}px;height:${size}px;border-radius:50%;
+          background:${color};border:2.5px solid #fff;
+          box-shadow:0 2px 8px rgba(0,0,0,0.5);
+        "></div>`,
+        iconSize:   [size, size],
+        iconAnchor: [size/2, size/2],
+        popupAnchor:[0, -size],
+      });
+    }
+
+    /* Random lat/lng within Oran city bounds */
+    function _oranRand() {
+      return {
+        lat: ORAN_CENTER[0] + (Math.random() - 0.5) * 0.09,
+        lng: ORAN_CENTER[1] + (Math.random() - 0.5) * 0.10,
+      };
+    }
+
+    /* Initialise Leaflet map once */
+    function _initLeafletMap() {
+      if (_lMap || !window.L) return;
+
+      _lMap = L.map('deliveryLeafletMap', {
+        zoomControl: true,
+        scrollWheelZoom: true,
+      }).setView(ORAN_CENTER, 13);
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 19,
+      }).addTo(_lMap);
+
+      // Restaurant marker (gold, larger)
+      _restaurantM = L.marker(ORAN_CENTER, { icon: _lIcon('#e8a020', 18), title: 'NŌVA Restaurant' })
+        .addTo(_lMap)
+        .bindPopup('<b>🍽 NŌVA Restaurant</b><br><span style="font-size:11px;color:#888;">Oran City Centre</span>');
+
+      setTimeout(() => _lMap && _lMap.invalidateSize(), 150);
+    }
+
     function renderMap() {
-      const pinsEl = document.getElementById('mapPins');
-      const container = document.getElementById('mapContainer');
-      if (!pinsEl || !container) return;
+      _initLeafletMap();
+      if (!_lMap) return;
 
-      const activeDeliveries = deliveries.filter(d => d.mapPos && ['transit','assigned','delivered'].includes(d.status));
-      pinsEl.innerHTML = activeDeliveries.map(d => {
-        const pinClass = d.status === 'transit' ? 'pin-transit' : d.status === 'assigned' ? 'pin-assigned' : 'pin-delivered';
-        const label = d.orderNum;
-        return `
-        <div class="map-pin ${pinClass}" id="pin-${d.id}"
-          style="left:${d.mapPos.x}%;top:${d.mapPos.y}%;transform:translate(-50%,-100%);"
-          onclick="selectDelivery('${d.id}')" title="${d.customer}">
-          <div class="map-pin-pulse"></div>
-          <div class="map-pin-inner">
-            <div class="map-pin-head"><span>${d.id.split('-')[1]}</span></div>
-            <div class="map-pin-label">${label}</div>
-          </div>
-        </div>`;
-      }).join('');
+      const active = deliveries.filter(d => ['transit','assigned','delivered'].includes(d.status));
 
-      document.getElementById('mapUpdateTime').textContent = 'Updated just now';
-      if (window.lucide) lucide.createIcons();
+      // Remove markers for deliveries no longer active
+      Object.keys(_lMarkers).forEach(id => {
+        if (!active.find(d => d.id === id)) {
+          _lMap.removeLayer(_lMarkers[id]);
+          delete _lMarkers[id];
+        }
+      });
+
+      // Add / update markers
+      active.forEach(d => {
+        // Assign a real lat/lng on first render if missing
+        if (!d.mapPos || !d.mapPos.lat) {
+          const pos = _oranRand();
+          d.mapPos = pos;
+        }
+
+        const color  = d.status === 'transit'   ? '#8b5cf6'
+                     : d.status === 'assigned'   ? '#0ea5e9'
+                     : '#10b981';
+
+        const popup = `
+          <div style="font-family:sans-serif;min-width:150px;">
+            <div style="font-weight:700;font-size:13px;margin-bottom:4px;">📦 ${d.orderNum}</div>
+            <div style="font-size:11px;color:#555;margin-bottom:2px;">${d.customer}</div>
+            <div style="font-size:11px;color:#888;">${d.address}</div>
+            <div style="margin-top:6px;font-size:11px;font-weight:600;color:${color};">
+              ${d.status === 'transit' ? '🚗 In Transit' : d.status === 'assigned' ? '✅ Driver Assigned' : '🎉 Delivered'}
+            </div>
+          </div>`;
+
+        if (_lMarkers[d.id]) {
+          _lMarkers[d.id].setLatLng([d.mapPos.lat, d.mapPos.lng]);
+          _lMarkers[d.id].setIcon(_lIcon(color));
+          _lMarkers[d.id].getPopup().setContent(popup);
+        } else {
+          _lMarkers[d.id] = L.marker([d.mapPos.lat, d.mapPos.lng], {
+            icon: _lIcon(color),
+            title: d.orderNum,
+          }).addTo(_lMap).bindPopup(popup);
+
+          _lMarkers[d.id].on('click', () => selectDelivery(d.id));
+        }
+      });
+
+      const now = new Date();
+      const ts = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
+      const el = document.getElementById('mapUpdateTime');
+      if (el) el.textContent = 'Updated ' + ts;
     }
 
     /* =============================================
@@ -1404,7 +1474,10 @@
 
       d.status = next;
       if (next === 'assigned') d.assignedAt = new Date().toISOString();
-      if (next === 'transit')  d.mapPos = { x: 45 + Math.random()*20, y: 40 + Math.random()*20 };
+      if (next === 'transit')  {
+        const pos = _oranRand();
+        d.mapPos = pos; // real lat/lng for Leaflet
+      }
 
       Storage.set('deliveries', deliveries);
 
@@ -1472,23 +1545,21 @@
        REAL-TIME SIMULATION
        ============================================= */
     function startSimulation() {
-      // Move in-transit pins every 5s
+      // Drift in-transit markers slightly every 5 s (simulates movement)
       setInterval(() => {
         deliveries.forEach(d => {
-          if (d.status === 'transit' && d.mapPos) {
-            const dx = (Math.random() - 0.5) * 8;
-            const dy = (Math.random() - 0.5) * 8;
-            d.mapPos.x = Math.max(10, Math.min(90, d.mapPos.x + dx));
-            d.mapPos.y = Math.max(10, Math.min(90, d.mapPos.y + dy));
+          if (d.status === 'transit' && d.mapPos && d.mapPos.lat) {
+            // Drift gradually toward restaurant center
+            d.mapPos.lat += (ORAN_CENTER[0] - d.mapPos.lat) * 0.08 + (Math.random() - 0.5) * 0.003;
+            d.mapPos.lng += (ORAN_CENTER[1] - d.mapPos.lng) * 0.08 + (Math.random() - 0.5) * 0.003;
 
-            const pin = document.getElementById('pin-' + d.id);
-            if (pin) {
-              pin.style.left = d.mapPos.x + '%';
-              pin.style.top  = d.mapPos.y + '%';
+            if (_lMarkers[d.id]) {
+              _lMarkers[d.id].setLatLng([d.mapPos.lat, d.mapPos.lng]);
             }
           }
         });
         Storage.set('deliveries', deliveries);
+
         const now = new Date();
         const ts = now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0') + ':' + String(now.getSeconds()).padStart(2,'0');
         const el = document.getElementById('mapUpdateTime');
@@ -1499,9 +1570,7 @@
       let simCount = 0;
       setInterval(() => {
         simCount++;
-        if (simCount % 3 === 0) {
-          addTestDelivery();
-        }
+        if (simCount % 3 === 0) addTestDelivery();
       }, 45000);
     }
 
@@ -1568,5 +1637,65 @@
        ============================================= */
     document.addEventListener('DOMContentLoaded', init);
   </script>
+
+  <script>
+    /* ── BRANDING: apply saved restaurant name across all elements ── */
+    (function applyBranding() {
+      try {
+        var b = JSON.parse(localStorage.getItem('nova_branding') || 'null')
+             || JSON.parse(localStorage.getItem('nova_site_branding') || 'null');
+        if (!b || !b.name) return;
+        var name = b.name;
+
+        // Update logo / name elements
+        ['.topbar-logo', '.loader-logo'].forEach(function(sel) {
+          document.querySelectorAll(sel).forEach(function(el) { el.textContent = name; });
+        });
+
+        // Update page title
+        document.title = document.title.replace('NŌVA', name);
+      } catch(e) {}
+    })();
+  </script>
+
+  <!-- ── NŌVA: Global Theme Sync via Firestore ── -->
+  <script type="module">
+    (async function novaThemeSync() {
+      try {
+        const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+        const { getFirestore, doc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const cfg = {
+          apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+          authDomain: "protech-6c388.firebaseapp.com",
+          projectId: "protech-6c388",
+          storageBucket: "protech-6c388.firebasestorage.app",
+          messagingSenderId: "987892798162",
+          appId: "1:987892798162:web:2307b1e8773430df1d930b",
+        };
+        const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+        const db  = getFirestore(app);
+        onSnapshot(doc(db, 'settings', 'theme'), snap => {
+          if (!snap.exists()) return;
+          const theme = snap.data();
+          const root  = document.documentElement;
+          if (theme.mode) {
+            root.setAttribute('data-theme', theme.mode);
+            try { localStorage.setItem('nova_themeMode', JSON.stringify(theme.mode)); } catch(e) {}
+          }
+          const cssVars = {};
+          Object.entries(theme).forEach(([k, v]) => {
+            if (!k.startsWith('--')) return;
+            root.style.setProperty(k, v);
+            cssVars[k] = v;
+          });
+          try {
+            localStorage.setItem('nova_admin_theme', JSON.stringify(cssVars));
+            localStorage.setItem('nova_theme',       JSON.stringify(cssVars));
+          } catch(e) {}
+        });
+      } catch(e) { console.warn('[NŌVA] Theme sync error:', e); }
+    })();
+  </script>
+
 </body>
 </html>
