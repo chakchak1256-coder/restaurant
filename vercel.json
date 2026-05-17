@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/waiter",   "destination": "/waiter.html"   },
+    { "source": "/delivery", "destination": "/delivery.html" },
+    { "source": "/kitchen",  "destination": "/kitchen.html"  },
+    { "source": "/admin",    "destination": "/admin.html"    },
+    { "source": "/seed",     "destination": "/seed.html"     }
+  ]
+}
