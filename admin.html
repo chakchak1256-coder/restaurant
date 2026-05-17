@@ -4074,11 +4074,9 @@
       currency: document.getElementById('currency').value,
       logoText: document.getElementById('brandName').value,
     };
-    // Save locally (same-browser fast-path)
     StorageManager.set('branding', b);
     StorageManager.set('site_branding', b);
 
-    // ── Persist to Firestore so every device & account picks it up ──
     try {
       const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
       const { getFirestore, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
@@ -4093,10 +4091,12 @@
       const app = getApps().length ? getApps()[0] : initializeApp(cfg);
       const db  = getFirestore(app);
       await setDoc(doc(db, 'settings', 'branding'), b);
-      toast('Branding saved — all devices updated', 'success', 'Saved ✓');
+      toast('✅ Branding saved globally — all accounts will see this', 'success', 'Saved ✓');
+      novaMarkFirestoreOK();
     } catch(e) {
-      console.warn('Firestore branding save error:', e);
-      toast('Saved locally (Firestore unavailable)', 'warning', 'Saved');
+      console.error('[NŌVA] Firestore branding save FAILED:', e.code, e.message);
+      // Show a hard-to-miss error so the user knows it did NOT save globally
+      novaShowFirestoreError('branding save', e);
     }
   }
 
@@ -4216,8 +4216,23 @@
   }
 
   async function saveTheme() {
-    // Push to landing-page localStorage key (same-browser fast-path)
-    const saved = StorageManager.get('admin_theme') || {};
+    // Read directly from the DOM so onSnapshot can't corrupt the save.
+    const root  = document.documentElement;
+    const style = getComputedStyle(root);
+    const saved = {};
+    [...BRAND_COLORS, ...BG_COLORS, ...TEXT_COLORS].forEach(c => {
+      const v = root.style.getPropertyValue(c.var) || style.getPropertyValue(c.var).trim();
+      if (v) saved[c.var] = v;
+    });
+    SPACING_SLIDERS.forEach(s => {
+      const v = root.style.getPropertyValue(s.var) || style.getPropertyValue(s.var).trim();
+      if (v) saved[s.var] = v;
+    });
+    ['--font-display','--font-body'].forEach(f => {
+      const v = root.style.getPropertyValue(f);
+      if (v) saved[f] = v;
+    });
+    StorageManager.set('admin_theme', saved);
     StorageManager.set('theme', saved);
 
     // ── Persist to Firestore so every device & account picks it up ──
@@ -4237,10 +4252,11 @@
       // Include the current light/dark mode in the saved doc
       const mode = document.documentElement.getAttribute('data-theme') || 'dark';
       await setDoc(doc(db, 'settings', 'theme'), { ...saved, mode });
-      toast('Theme saved — all devices updated', 'success', 'Theme Saved ✓');
+      toast('✅ Theme saved globally — all accounts will see this', 'success', 'Theme Saved ✓');
+      novaMarkFirestoreOK();
     } catch(e) {
-      console.warn('Firestore theme save error:', e);
-      toast('Saved locally (Firestore unavailable)', 'warning', 'Theme Saved');
+      console.error('[NŌVA] Firestore theme save FAILED:', e.code, e.message);
+      novaShowFirestoreError('theme save', e);
     }
   }
 
@@ -4867,6 +4883,39 @@
 
 
 
+
+  <!-- ── NŌVA: Firestore connection status banner ── -->
+  <div id="novaFirestoreBar" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;
+       background:#dc2626;color:#fff;font-family:sans-serif;font-size:13px;font-weight:600;
+       padding:10px 20px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+    ⚠️ Firestore permission denied — settings are NOT saving globally.
+    Fix your Firestore rules, then reload this page.
+    <a href="https://console.firebase.google.com/project/protech-6c388/firestore/rules"
+       target="_blank" style="color:#fde68a;margin-left:12px;text-decoration:underline;">
+      Open Firebase Rules →
+    </a>
+    <button onclick="document.getElementById('novaFirestoreBar').style.display='none'"
+            style="margin-left:16px;background:rgba(255,255,255,0.2);border:none;color:#fff;
+                   padding:2px 10px;border-radius:4px;cursor:pointer;font-size:12px;">✕</button>
+  </div>
+
+  <script>
+    function novaShowFirestoreError(op, err) {
+      // Show the red banner
+      const bar = document.getElementById('novaFirestoreBar');
+      if (bar) bar.style.display = 'block';
+      // Also show a toast
+      if (typeof toast === 'function') {
+        toast('❌ NOT saved globally — Firestore permission denied. Fix your Firebase rules.', 'error', 'Save Failed');
+      }
+      console.error('[NŌVA] Firestore ' + op + ' failed:', err && err.code, err && err.message);
+    }
+    function novaMarkFirestoreOK() {
+      const bar = document.getElementById('novaFirestoreBar');
+      if (bar) bar.style.display = 'none';
+    }
+  </script>
+
   <!-- ── NŌVA: Global Theme + Branding Sync via Firestore ── -->
   <script type="module">
     (async function novaThemeSync() {
@@ -4900,8 +4949,10 @@
             cssVars[k] = v;
           });
           try {
-            localStorage.setItem('nova_admin_theme', JSON.stringify(cssVars));
-            localStorage.setItem('nova_theme',       JSON.stringify(cssVars));
+            // Only update nova_theme (landing page). Never overwrite nova_admin_theme
+            // here — that key is the editor's working copy and clobbering it causes
+            // saveTheme() to re-save stale Firestore data instead of the user's picks.
+            localStorage.setItem('nova_theme', JSON.stringify(cssVars));
           } catch(e) {}
         });
 
@@ -4928,7 +4979,12 @@
           document.title = b.name + ' Admin — Control Center';
         });
 
-      } catch(e) { console.warn('[NŌVA] Sync error:', e); }
+      } catch(e) {
+        console.error('[NŌVA] Sync error:', e && e.code, e && e.message);
+        if (e && (e.code === 'permission-denied' || e.code === 'PERMISSION_DENIED')) {
+          novaShowFirestoreError('sync', e);
+        }
+      }
     })();
   </script>
 </body>
