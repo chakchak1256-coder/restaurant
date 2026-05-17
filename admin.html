@@ -4486,12 +4486,47 @@
       if (!StorageManager.get('staff'))  StorageManager.set('staff',  DEFAULT_STAFF);
       if (!StorageManager.get('admin_notifs')) StorageManager.set('admin_notifs', DEFAULT_NOTIFICATIONS);
 
-      // Load branding sidebar logo
-      const b = getBranding();
-      if (b.name) {
-        const sl = document.getElementById('sidebarLogo');
-        if (sl) sl.textContent = b.name;
-      }
+      // Load branding — Firestore is the source of truth
+      (async () => {
+        const _cfg = {
+          apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+          authDomain: "protech-6c388.firebaseapp.com",
+          projectId: "protech-6c388",
+          storageBucket: "protech-6c388.firebasestorage.app",
+          messagingSenderId: "987892798162",
+          appId: "1:987892798162:web:2307b1e8773430df1d930b",
+        };
+        function _applyName(name) {
+          const sl = document.getElementById('sidebarLogo');
+          if (sl && name) sl.textContent = name;
+          document.title = name + ' Admin — Control Center';
+        }
+        try {
+          const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+          const { getFirestore, doc, getDoc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+          const _app = getApps().length ? getApps()[0] : initializeApp(_cfg);
+          const _db  = getFirestore(_app);
+          const snap = await getDoc(doc(_db, 'settings', 'branding'));
+          if (snap.exists()) {
+            // Firestore has data — apply it everywhere and cache locally
+            const b = snap.data();
+            StorageManager.set('branding', b);
+            StorageManager.set('site_branding', b);
+            _applyName(b.name);
+          } else {
+            // Firestore is empty — migrate from localStorage if available
+            const local = getBranding();
+            if (local && local.name) {
+              await setDoc(doc(_db, 'settings', 'branding'), local);
+              _applyName(local.name);
+            }
+          }
+        } catch(e) {
+          // Firestore unavailable — fall back to localStorage
+          const b = getBranding();
+          if (b && b.name) _applyName(b.name);
+        }
+      })();
 
       // Init icons
       if (window.lucide) lucide.createIcons();
@@ -4830,12 +4865,14 @@
   </script>
 
 
+
+
   <!-- ── NŌVA: Global Theme + Branding Sync via Firestore ── -->
   <script type="module">
     (async function novaThemeSync() {
       try {
         const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-        const { getFirestore, doc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const { getFirestore, doc, getDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
         const cfg = {
           apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
           authDomain: "protech-6c388.firebaseapp.com",
@@ -4868,24 +4905,31 @@
           } catch(e) {}
         });
 
-        // ── Branding listener ───────────────────────────────
+        // ── Branding: getDoc for immediate value ────────────
+        const brandSnap = await getDoc(doc(db, 'settings', 'branding'));
+        if (brandSnap.exists()) {
+          const b = brandSnap.data();
+          try { localStorage.setItem('nova_branding',      JSON.stringify(b)); } catch(e) {}
+          try { localStorage.setItem('nova_site_branding', JSON.stringify(b)); } catch(e) {}
+          const sl = document.getElementById('sidebarLogo');
+          if (sl && b.name) sl.textContent = b.name;
+          document.title = b.name + ' Admin — Control Center';
+        }
+
+        // ── Then keep listening for live updates ────────────
         onSnapshot(doc(db, 'settings', 'branding'), snap => {
           if (!snap.exists()) return;
           const b = snap.data();
           if (!b.name) return;
-          try {
-            localStorage.setItem('nova_branding',     JSON.stringify(b));
-            localStorage.setItem('nova_site_branding', JSON.stringify(b));
-          } catch(e) {}
-          // Update sidebar logo + page title
-          const sidebarLogo = document.getElementById('sidebarLogo');
-          if (sidebarLogo) sidebarLogo.textContent = b.name;
+          try { localStorage.setItem('nova_branding',      JSON.stringify(b)); } catch(e) {}
+          try { localStorage.setItem('nova_site_branding', JSON.stringify(b)); } catch(e) {}
+          const sl = document.getElementById('sidebarLogo');
+          if (sl) sl.textContent = b.name;
           document.title = b.name + ' Admin — Control Center';
         });
 
       } catch(e) { console.warn('[NŌVA] Sync error:', e); }
     })();
   </script>
-
 </body>
 </html>

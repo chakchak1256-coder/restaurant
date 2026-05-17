@@ -1518,12 +1518,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
+
   <!-- ── NŌVA: Global Theme + Branding Sync via Firestore ── -->
   <script type="module">
     (async function novaThemeSync() {
       try {
         const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-        const { getFirestore, doc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+        const { getFirestore, doc, getDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
         const cfg = {
           apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
           authDomain: "protech-6c388.firebaseapp.com",
@@ -1534,6 +1536,25 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const app = getApps().length ? getApps()[0] : initializeApp(cfg);
         const db  = getFirestore(app);
+
+        // ── Apply branding to DOM ───────────────────────────
+        function applyBrandingData(b) {
+          if (!b || !b.name) return;
+          try { localStorage.setItem('nova_branding',      JSON.stringify(b)); } catch(e) {}
+          try { localStorage.setItem('nova_site_branding', JSON.stringify(b)); } catch(e) {}
+          ['.loader-logo'].forEach(function(sel) {
+            document.querySelectorAll(sel).forEach(function(el) { el.textContent = b.name; });
+          });
+          var kpLogo = document.querySelector('.kitchen-pin-logo');
+          if (kpLogo) kpLogo.textContent = b.name + ' KDS';
+          var tbLogo = document.querySelector('.topbar-logo');
+          if (tbLogo) {
+            var badge = tbLogo.querySelector('span');
+            tbLogo.textContent = b.name + ' ';
+            if (badge) tbLogo.appendChild(badge);
+          }
+          document.title = document.title.replace(/NŌVA|NOVA/g, b.name);
+        }
 
         // ── Theme listener ──────────────────────────────────
         onSnapshot(doc(db, 'settings', 'theme'), snap => {
@@ -1556,37 +1577,19 @@ document.addEventListener('DOMContentLoaded', () => {
           } catch(e) {}
         });
 
-        // ── Branding listener ───────────────────────────────
-        onSnapshot(doc(db, 'settings', 'branding'), snap => {
-          if (!snap.exists()) return;
-          const b = snap.data();
-          if (!b.name) return;
-          // Cache to localStorage
-          try {
-            localStorage.setItem('nova_branding',      JSON.stringify(b));
-            localStorage.setItem('nova_site_branding',  JSON.stringify(b));
-          } catch(e) {}
-          // Apply to DOM elements
-          ['.loader-logo'].forEach(function(sel) {
-            document.querySelectorAll(sel).forEach(function(el) { el.textContent = b.name; });
-          });
+        // ── Branding: getDoc first (works even if doc was just created) ──
+        const brandSnap = await getDoc(doc(db, 'settings', 'branding'));
+        if (brandSnap.exists()) {
+          applyBrandingData(brandSnap.data());
+        }
 
-          // Kitchen special: logo with suffixes
-          var kpLogo = document.querySelector('.kitchen-pin-logo');
-          if (kpLogo) kpLogo.textContent = b.name + ' KDS';
-          var tbLogo = document.querySelector('.topbar-logo');
-          if (tbLogo) {
-            var badge = tbLogo.querySelector('span');
-            tbLogo.textContent = b.name + ' ';
-            if (badge) tbLogo.appendChild(badge);
-          }
-          // Page title
-          document.title = document.title.replace(/NŌVA|NOVA/g, b.name);
+        // ── Then keep listening for live updates ────────────
+        onSnapshot(doc(db, 'settings', 'branding'), snap => {
+          if (snap.exists()) applyBrandingData(snap.data());
         });
 
       } catch(e) { console.warn('[NŌVA] Sync error:', e); }
     })();
   </script>
-
 </body>
 </html>
