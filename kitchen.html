@@ -1516,7 +1516,9 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
   </script>
 
-  <!-- ── NŌVA: Global Theme Sync via Firestore ── -->
+
+
+  <!-- ── NŌVA: Global Theme + Branding Sync via Firestore ── -->
   <script type="module">
     (async function novaThemeSync() {
       try {
@@ -1532,6 +1534,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         const app = getApps().length ? getApps()[0] : initializeApp(cfg);
         const db  = getFirestore(app);
+
+        // ── Theme listener ──────────────────────────────────
         onSnapshot(doc(db, 'settings', 'theme'), snap => {
           if (!snap.exists()) return;
           const theme = snap.data();
@@ -1551,7 +1555,36 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('nova_theme',       JSON.stringify(cssVars));
           } catch(e) {}
         });
-      } catch(e) { console.warn('[NŌVA] Theme sync error:', e); }
+
+        // ── Branding listener ───────────────────────────────
+        onSnapshot(doc(db, 'settings', 'branding'), snap => {
+          if (!snap.exists()) return;
+          const b = snap.data();
+          if (!b.name) return;
+          // Cache to localStorage
+          try {
+            localStorage.setItem('nova_branding',      JSON.stringify(b));
+            localStorage.setItem('nova_site_branding',  JSON.stringify(b));
+          } catch(e) {}
+          // Apply to DOM elements
+          ['.loader-logo'].forEach(function(sel) {
+            document.querySelectorAll(sel).forEach(function(el) { el.textContent = b.name; });
+          });
+
+          // Kitchen special: logo with suffixes
+          var kpLogo = document.querySelector('.kitchen-pin-logo');
+          if (kpLogo) kpLogo.textContent = b.name + ' KDS';
+          var tbLogo = document.querySelector('.topbar-logo');
+          if (tbLogo) {
+            var badge = tbLogo.querySelector('span');
+            tbLogo.textContent = b.name + ' ';
+            if (badge) tbLogo.appendChild(badge);
+          }
+          // Page title
+          document.title = document.title.replace(/NŌVA|NOVA/g, b.name);
+        });
+
+      } catch(e) { console.warn('[NŌVA] Sync error:', e); }
     })();
   </script>
 

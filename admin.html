@@ -3985,8 +3985,8 @@
   /* =============================================
      BRANDING
      ============================================= */
-  function loadBranding() {
-    const b = getBranding();
+  function _applyBrandingToFields(b) {
+    if (!b) return;
     if (b.name)     document.getElementById('brandName').value    = b.name;
     if (b.tagline)  document.getElementById('brandTagline').value = b.tagline;
     if (b.desc)     document.getElementById('brandDesc').value    = b.desc;
@@ -3999,11 +3999,41 @@
     if (b.freeDeliveryThreshold) document.getElementById('freeDeliveryThreshold').value = b.freeDeliveryThreshold;
     if (b.taxRate)  document.getElementById('taxRate').value      = b.taxRate;
     if (b.currency) document.getElementById('currency').value     = b.currency;
-    if (b.logoText) {
-      document.getElementById('logoPreview').textContent = b.logoText;
-      document.getElementById('sidebarLogo').textContent  = b.logoText;
+    if (b.logoText || b.name) {
+      const logo = b.logoText || b.name;
+      document.getElementById('logoPreview').textContent = logo;
+      document.getElementById('sidebarLogo').textContent  = logo;
     }
     updateBrandPreview();
+  }
+
+  async function loadBranding() {
+    // 1. Apply localStorage immediately (instant paint)
+    _applyBrandingToFields(getBranding());
+
+    // 2. Fetch Firestore for the authoritative global value
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const cfg = {
+        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+        authDomain: "protech-6c388.firebaseapp.com",
+        projectId: "protech-6c388",
+        storageBucket: "protech-6c388.firebasestorage.app",
+        messagingSenderId: "987892798162",
+        appId: "1:987892798162:web:2307b1e8773430df1d930b",
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+      const db  = getFirestore(app);
+      const snap = await getDoc(doc(db, 'settings', 'branding'));
+      if (snap.exists()) {
+        const b = snap.data();
+        // Update localStorage cache
+        StorageManager.set('branding', b);
+        StorageManager.set('site_branding', b);
+        _applyBrandingToFields(b);
+      }
+    } catch(e) { console.warn('Firestore branding load error:', e); }
   }
 
   function updateBrandPreview() {
@@ -4028,7 +4058,7 @@
     if (window.lucide) lucide.createIcons();
   }
 
-  function saveBranding() {
+  async function saveBranding() {
     const b = {
       name:     document.getElementById('brandName').value,
       tagline:  document.getElementById('brandTagline').value,
@@ -4044,10 +4074,30 @@
       currency: document.getElementById('currency').value,
       logoText: document.getElementById('brandName').value,
     };
+    // Save locally (same-browser fast-path)
     StorageManager.set('branding', b);
-    // Also save to a key the landing page reads
     StorageManager.set('site_branding', b);
-    toast('Branding saved successfully', 'success', 'Saved ✓');
+
+    // ── Persist to Firestore so every device & account picks it up ──
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const cfg = {
+        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+        authDomain: "protech-6c388.firebaseapp.com",
+        projectId: "protech-6c388",
+        storageBucket: "protech-6c388.firebasestorage.app",
+        messagingSenderId: "987892798162",
+        appId: "1:987892798162:web:2307b1e8773430df1d930b",
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+      const db  = getFirestore(app);
+      await setDoc(doc(db, 'settings', 'branding'), b);
+      toast('Branding saved — all devices updated', 'success', 'Saved ✓');
+    } catch(e) {
+      console.warn('Firestore branding save error:', e);
+      toast('Saved locally (Firestore unavailable)', 'warning', 'Saved');
+    }
   }
 
   function handleLogoUpload(e) {
@@ -4779,7 +4829,8 @@
 
   </script>
 
-  <!-- ── NŌVA: Global Theme Sync via Firestore ── -->
+
+  <!-- ── NŌVA: Global Theme + Branding Sync via Firestore ── -->
   <script type="module">
     (async function novaThemeSync() {
       try {
@@ -4795,30 +4846,46 @@
         };
         const app = getApps().length ? getApps()[0] : initializeApp(cfg);
         const db  = getFirestore(app);
+
+        // ── Theme listener ──────────────────────────────────
         onSnapshot(doc(db, 'settings', 'theme'), snap => {
           if (!snap.exists()) return;
           const theme = snap.data();
           const root  = document.documentElement;
-          // Apply mode
           if (theme.mode) {
             root.setAttribute('data-theme', theme.mode);
             try { localStorage.setItem('nova_themeMode', JSON.stringify(theme.mode)); } catch(e) {}
           }
-          // Apply CSS variables
           const cssVars = {};
           Object.entries(theme).forEach(([k, v]) => {
             if (!k.startsWith('--')) return;
             root.style.setProperty(k, v);
             cssVars[k] = v;
           });
-          // Cache to localStorage so next hard-reload still fast-paints correctly
           try {
             localStorage.setItem('nova_admin_theme', JSON.stringify(cssVars));
             localStorage.setItem('nova_theme',       JSON.stringify(cssVars));
           } catch(e) {}
         });
-      } catch(e) { console.warn('[NŌVA] Theme sync error:', e); }
+
+        // ── Branding listener ───────────────────────────────
+        onSnapshot(doc(db, 'settings', 'branding'), snap => {
+          if (!snap.exists()) return;
+          const b = snap.data();
+          if (!b.name) return;
+          try {
+            localStorage.setItem('nova_branding',     JSON.stringify(b));
+            localStorage.setItem('nova_site_branding', JSON.stringify(b));
+          } catch(e) {}
+          // Update sidebar logo + page title
+          const sidebarLogo = document.getElementById('sidebarLogo');
+          if (sidebarLogo) sidebarLogo.textContent = b.name;
+          document.title = b.name + ' Admin — Control Center';
+        });
+
+      } catch(e) { console.warn('[NŌVA] Sync error:', e); }
     })();
   </script>
+
 </body>
 </html>
