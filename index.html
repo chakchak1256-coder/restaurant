@@ -2411,40 +2411,97 @@ const CartManager = {
    ============================================= */
 const AuthManager = {
   user: null,
+  _auth: null,
+  _db:   null,
 
-  init() {
-    this.user = StorageManager.get('user');
-    this.updateUI();
+  async _getFirebase() {
+    if (this._auth && this._db) return;
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getAuth }                = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+    const { getFirestore }           = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const cfg = {
+      apiKey:            "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+      authDomain:        "protech-6c388.firebaseapp.com",
+      projectId:         "protech-6c388",
+      storageBucket:     "protech-6c388.firebasestorage.app",
+      messagingSenderId: "987892798162",
+      appId:             "1:987892798162:web:2307b1e8773430df1d930b",
+    };
+    const app  = getApps().length ? getApps()[0] : initializeApp(cfg);
+    this._auth = getAuth(app);
+    this._db   = getFirestore(app);
   },
 
-  login(email, password) {
-    // Simulated login — Future: signInWithEmailAndPassword(auth, email, password)
+  async init() {
+    await this._getFirebase();
+    const { onAuthStateChanged }     = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+    const { doc, getDoc }            = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    onAuthStateChanged(this._auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+          const snap = await getDoc(doc(this._db, 'users', firebaseUser.uid));
+          const data = snap.exists() ? snap.data() : {};
+          const name = data.name || firebaseUser.displayName || firebaseUser.email.split('@')[0];
+          this.user  = {
+            uid:      firebaseUser.uid,
+            email:    firebaseUser.email,
+            name,
+            initials: name[0].toUpperCase(),
+            loggedIn: true,
+          };
+        } catch(e) {
+          // Firestore read failed — fall back to email-derived name
+          const name = firebaseUser.email.split('@')[0];
+          this.user  = { uid: firebaseUser.uid, email: firebaseUser.email, name, initials: name[0].toUpperCase(), loggedIn: true };
+        }
+      } else {
+        this.user = null;
+      }
+      this.updateUI();
+    });
+  },
+
+  async login(email, password) {
     if (!email || !password) { UIManager.toast('Please fill all fields', 'error'); return; }
-    const user = { email, name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1), initials: email[0].toUpperCase(), loggedIn: true };
-    this.user = user;
-    StorageManager.set('user', user);
-    this.updateUI();
-    closeModal('authOverlay');
-    UIManager.toast(`Welcome back, ${user.name}!`, 'success', 'Signed In');
+    try {
+      await this._getFirebase();
+      const { signInWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+      await signInWithEmailAndPassword(this._auth, email, password);
+      closeModal('authOverlay');
+      // updateUI is triggered automatically by onAuthStateChanged
+    } catch(e) {
+      const msg = e.code === 'auth/invalid-credential' ? 'Incorrect email or password' : e.message;
+      UIManager.toast(msg, 'error');
+    }
   },
 
-  register(name, email, password) {
-    // Future: createUserWithEmailAndPassword(auth, email, password)
+  async register(name, email, password) {
     if (!name || !email || !password) { UIManager.toast('Please fill all fields', 'error'); return; }
-    const user = { email, name, initials: name[0].toUpperCase(), loggedIn: true };
-    this.user = user;
-    StorageManager.set('user', user);
-    this.updateUI();
-    closeModal('authOverlay');
-    UIManager.toast(`Welcome to NŌVA, ${name}!`, 'success', '🎉 Account Created!');
+    try {
+      await this._getFirebase();
+      const { createUserWithEmailAndPassword } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+      const { doc, setDoc }                    = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const cred = await createUserWithEmailAndPassword(this._auth, email, password);
+      // Save the custom name to Firestore so it persists across every device and account switch
+      await setDoc(doc(this._db, 'users', cred.user.uid), { name, email });
+      closeModal('authOverlay');
+      UIManager.toast(`Welcome to NŌVA, ${name}!`, 'success', '🎉 Account Created!');
+    } catch(e) {
+      const msg = e.code === 'auth/email-already-in-use' ? 'An account with this email already exists' : e.message;
+      UIManager.toast(msg, 'error');
+    }
   },
 
-  logout() {
-    this.user = null;
-    StorageManager.remove('user');
-    this.updateUI();
-    UIManager.toast('Signed out successfully', 'info', 'Goodbye!');
-    closeProfileDropdown();
+  async logout() {
+    try {
+      await this._getFirebase();
+      const { signOut } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
+      await signOut(this._auth);
+      UIManager.toast('Signed out successfully', 'info', 'Goodbye!');
+      closeProfileDropdown();
+    } catch(e) {
+      UIManager.toast('Sign out failed', 'error');
+    }
   },
 
   updateUI() {
@@ -2454,13 +2511,13 @@ const AuthManager = {
     const dropEmail = document.getElementById('dropdownEmail');
 
     if (this.user) {
-      if (loginBtn) loginBtn.style.display = 'none';
-      if (avatar)   avatar.textContent = this.user.initials;
+      if (loginBtn)  loginBtn.style.display = 'none';
+      if (avatar)    avatar.textContent = this.user.initials;
       if (dropName)  dropName.textContent = this.user.name;
       if (dropEmail) dropEmail.textContent = this.user.email;
     } else {
-      if (loginBtn) loginBtn.style.display = '';
-      if (avatar)   avatar.textContent = 'G';
+      if (loginBtn)  loginBtn.style.display = '';
+      if (avatar)    avatar.textContent = 'G';
       if (dropName)  dropName.textContent = 'Guest';
       if (dropEmail) dropEmail.textContent = 'Sign in to access your account';
     }
