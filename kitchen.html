@@ -2,6 +2,17 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function(){
+      try {
+        var m = JSON.parse(localStorage.getItem("nova_themeMode") || '"dark"');
+        document.documentElement.setAttribute("data-theme", m);
+        var t = JSON.parse(localStorage.getItem("nova_admin_theme") || "null")
+             || JSON.parse(localStorage.getItem("nova_theme") || "null");
+        if (t) Object.entries(t).forEach(function(e){ document.documentElement.style.setProperty(e[0],e[1]); });
+      } catch(e){}
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NŌVA Kitchen Display System</title>
 

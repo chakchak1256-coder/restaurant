@@ -2,6 +2,17 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function(){
+      try {
+        var m = JSON.parse(localStorage.getItem("nova_themeMode") || '"dark"');
+        document.documentElement.setAttribute("data-theme", m);
+        var t = JSON.parse(localStorage.getItem("nova_admin_theme") || "null")
+             || JSON.parse(localStorage.getItem("nova_theme") || "null");
+        if (t) Object.entries(t).forEach(function(e){ document.documentElement.style.setProperty(e[0],e[1]); });
+      } catch(e){}
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="NŌVA — A cinematic dining experience. Order online, dine in style." />
   <title>NŌVA — Premium Dining Experience</title>
@@ -1393,18 +1404,9 @@
 </head>
 <body>
 
-<!-- Page Loader -->
-<div class="page-loader" id="pageLoader">
-  <div class="loader-logo">NŌVA</div>
-</div>
-
 <!-- Offline Banner -->
 <div class="offline-banner" id="offlineBanner">⚡ You're offline — Showing cached content</div>
 
-<!-- Announcement Bar -->
-<div class="announcement-bar">
-  🎉 Free delivery on orders over 35 DA — Use code <strong>NOVA20</strong> for 20% off your first order
-</div>
 
 <!-- Mobile Nav Drawer -->
 <nav class="mobile-nav" id="mobileNav">
@@ -1670,40 +1672,7 @@
   </div>
 </section>
 
-<!-- =============================================
-     FEATURED DISH
-     ============================================= -->
-<section class="featured-section">
-  <div class="container">
-    <div class="section-header reveal">
-      <div>
-        <div class="section-eyebrow">Chef's Pick</div>
-        <h2 class="section-title">Featured Dish</h2>
-      </div>
-    </div>
-    <div class="featured-card reveal" id="featuredCard"></div>
-  </div>
-</section>
 
-<!-- =============================================
-     PROMO BANNER
-     ============================================= -->
-<section class="promo-section">
-  <div class="container">
-    <div class="promo-card reveal">
-      <div class="promo-content">
-        <div class="promo-eyebrow">Limited Time Offer</div>
-        <div class="promo-title">20% off your<br>first online order</div>
-        <div class="promo-desc">Use code <strong>NOVA20</strong> at checkout. Valid on dine-in, pickup, and delivery.</div>
-        <button class="btn-primary" style="margin-top:28px;" onclick="applyPromo('NOVA20')">
-          Claim Offer
-          <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
-        </button>
-      </div>
-      <div class="promo-emoji">🍽️</div>
-    </div>
-  </div>
-</section>
 
 <!-- =============================================
      ABOUT SECTION
@@ -1757,19 +1726,106 @@
 </section>
 
 <!-- =============================================
-     TESTIMONIALS
+     TESTIMONIALS — Real Firebase Reviews
      ============================================= -->
-<section class="testimonials-section">
+<section class="testimonials-section" id="reviews">
   <div class="container">
     <div class="section-header reveal">
       <div>
-        <div class="section-eyebrow">Reviews</div>
-        <h2 class="section-title">What Guests Say</h2>
+        <div class="section-eyebrow">Guest Reviews</div>
+        <h2 class="section-title">What Our Guests Say</h2>
       </div>
+      <button class="btn-primary" onclick="openReviewModal()" style="flex-shrink:0;">
+        <i data-lucide="pen-line" style="width:15px;height:15px;"></i>
+        Write a Review
+      </button>
     </div>
-    <div class="testimonials-grid" id="testimonialsGrid"></div>
+
+    <!-- Loading state -->
+    <div id="testimonialsLoading" style="text-align:center;padding:60px 20px;color:var(--text-muted);">
+      <div style="font-size:32px;margin-bottom:12px;">⭐</div>
+      <div style="font-size:14px;">Loading reviews…</div>
+    </div>
+
+    <!-- Empty state -->
+    <div id="testimonialsEmpty" style="display:none;text-align:center;padding:60px 20px;">
+      <div style="font-size:48px;margin-bottom:16px;opacity:0.5;">💬</div>
+      <div style="font-family:var(--font-heading);font-size:20px;font-weight:700;margin-bottom:8px;">No reviews yet</div>
+      <div style="font-size:14px;color:var(--text-muted);">Be the first to share your experience!</div>
+    </div>
+
+    <div class="testimonials-grid" id="testimonialsGrid" style="display:none;"></div>
+
+    <!-- Load More -->
+    <div id="reviewsLoadMoreWrap" style="text-align:center;margin-top:32px;display:none;">
+      <button class="btn-outline" id="reviewsLoadMoreBtn" onclick="loadMoreReviews()" style="padding:12px 32px;border:1px solid var(--border-color);border-radius:var(--radius-md);color:var(--text-secondary);font-family:var(--font-heading);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:all var(--transition-fast);">
+        Load More Reviews
+      </button>
+    </div>
   </div>
 </section>
+
+<!-- =============================================
+     REVIEW MODAL
+     ============================================= -->
+<div class="modal-overlay" id="reviewModal" onclick="if(event.target===this)closeReviewModal()">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Share Your Experience</h3>
+      <button class="modal-close" onclick="closeReviewModal()">
+        <i data-lucide="x" style="width:16px;height:16px;"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div id="reviewFormWrap">
+        <!-- Rating -->
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:10px;">Your Rating</label>
+          <div id="starRating" style="display:flex;gap:8px;">
+            <span class="review-star" data-val="1" onclick="setReviewRating(1)" style="font-size:32px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+            <span class="review-star" data-val="2" onclick="setReviewRating(2)" style="font-size:32px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+            <span class="review-star" data-val="3" onclick="setReviewRating(3)" style="font-size:32px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+            <span class="review-star" data-val="4" onclick="setReviewRating(4)" style="font-size:32px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+            <span class="review-star" data-val="5" onclick="setReviewRating(5)" style="font-size:32px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+          </div>
+          <input type="hidden" id="reviewRatingVal" value="0" />
+        </div>
+
+        <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:6px;">Your Name</label>
+            <input type="text" id="reviewName" class="form-input" placeholder="e.g. Sarah M." style="width:100%;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);color:var(--text-primary);font-size:14px;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--border-active)'" onblur="this.style.borderColor='var(--border-color)'" />
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:6px;">Your Role / Occasion</label>
+            <input type="text" id="reviewRole" class="form-input" placeholder="e.g. Regular Guest" style="width:100%;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);color:var(--text-primary);font-size:14px;outline:none;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--border-active)'" onblur="this.style.borderColor='var(--border-color)'" />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px;">
+          <label class="form-label" style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);display:block;margin-bottom:6px;">Your Review</label>
+          <textarea id="reviewText" class="form-textarea" placeholder="Tell us about your experience at NŌVA…" style="width:100%;padding:12px 14px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);color:var(--text-primary);font-size:14px;outline:none;resize:vertical;min-height:120px;transition:border-color 0.2s;" onfocus="this.style.borderColor='var(--border-active)'" onblur="this.style.borderColor='var(--border-color)'"></textarea>
+          <div style="text-align:right;font-size:11px;color:var(--text-muted);margin-top:4px;"><span id="reviewCharCount">0</span>/400</div>
+        </div>
+
+        <div id="reviewError" style="display:none;padding:10px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);border-radius:var(--radius-md);color:var(--color-danger);font-size:13px;margin-bottom:16px;"></div>
+
+        <button class="btn-primary" onclick="submitReview()" id="reviewSubmitBtn" style="width:100%;padding:14px;border-radius:var(--radius-md);background:var(--color-primary);color:var(--text-inverse);font-family:var(--font-heading);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;transition:all var(--transition-fast);">
+          <i data-lucide="send" style="width:15px;height:15px;"></i>
+          Submit Review
+        </button>
+      </div>
+
+      <!-- Success state -->
+      <div id="reviewSuccessWrap" style="display:none;text-align:center;padding:20px 0;">
+        <div style="font-size:52px;margin-bottom:16px;">🎉</div>
+        <div style="font-family:var(--font-heading);font-size:20px;font-weight:700;margin-bottom:8px;">Thank You!</div>
+        <div style="font-size:14px;color:var(--text-secondary);line-height:1.6;">Your review has been submitted and will appear once approved by our team.</div>
+        <button class="btn-primary" onclick="closeReviewModal()" style="margin-top:24px;padding:12px 32px;border-radius:var(--radius-md);background:var(--color-primary);color:var(--text-inverse);font-family:var(--font-heading);font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- =============================================
      CONTACT SECTION
@@ -1882,7 +1938,7 @@
       </div>
     </div>
     <div class="footer-bottom">
-      <div class="footer-copy">© 2025 NŌVA Restaurant. All rights reserved.</div>
+      <div class="footer-copy">© 2026 NŌVA Restaurant. All rights reserved.</div>
       <div class="footer-legal">
         <a href="#">Privacy</a>
         <a href="#">Terms</a>
@@ -1916,7 +1972,6 @@
     <div class="cart-totals">
       <div class="cart-total-row"><span>Subtotal</span><span id="cartSubtotal">0.00 DA</span></div>
       <div class="cart-total-row"><span>Delivery fee</span><span id="cartDelivery">0.00 DA</span></div>
-      <div class="cart-total-row"><span>Tax (8%)</span><span id="cartTax">0.00 DA</span></div>
       <div class="cart-total-row grand"><span>Total</span><span class="amount" id="cartGrand">0.00 DA</span></div>
     </div>
     <button class="cart-checkout-btn" onclick="proceedCheckout()">
@@ -2261,8 +2316,7 @@ const CartManager = {
     if (type === 'delivery') return this.getSubtotal() >= 35 ? 0 : 4.99;
     return 0;
   },
-  getTax()      { return this.getSubtotal() * 0.08; },
-  getTotal()    { return this.getSubtotal() + this.getDeliveryFee() + this.getTax() - this.promoDiscount; },
+  getTotal()    { return this.getSubtotal() + this.getDeliveryFee() - this.promoDiscount; },
   getCount()    { return this.items.reduce((s, i) => s + i.quantity, 0); },
 
   applyPromo(code) {
@@ -2283,7 +2337,6 @@ const CartManager = {
     const count   = this.getCount();
     const sub     = this.getSubtotal();
     const del     = this.getDeliveryFee();
-    const tax     = this.getTax();
     const grand   = this.getTotal();
 
     // Navbar badge
@@ -2301,7 +2354,6 @@ const CartManager = {
     const el = id => document.getElementById(id);
     if (el('cartSubtotal')) el('cartSubtotal').textContent = fmt(sub);
     if (el('cartDelivery')) el('cartDelivery').textContent = del === 0 && App.orderType === 'delivery' && sub >= 35 ? 'FREE' : fmt(del);
-    if (el('cartTax'))      el('cartTax').textContent      = fmt(tax);
     if (el('cartGrand'))    el('cartGrand').textContent    = fmt(grand);
 
     // Items list
@@ -2462,7 +2514,6 @@ const OrderManager = {
       items: [...CartManager.items],
       subtotal: CartManager.getSubtotal(),
       delivery: CartManager.getDeliveryFee(),
-      tax: CartManager.getTax(),
       total: CartManager.getTotal(),
       notes: document.getElementById('cartNotes')?.value || '',
       status: 'confirmed',
@@ -2513,7 +2564,6 @@ const OrderManager = {
         <hr class="receipt-divider">
         <div class="receipt-total-row"><span>Subtotal</span><span>${order.subtotal.toFixed(2)} DA</span></div>
         <div class="receipt-total-row"><span>Delivery</span><span>${order.delivery === 0 ? 'FREE' : order.delivery.toFixed(2) + ' DA'}</span></div>
-        <div class="receipt-total-row"><span>Tax</span><span>${order.tax.toFixed(2)} DA</span></div>
         <div class="receipt-total-row grand"><span>Total</span><span>${order.total.toFixed(2)} DA</span></div>
         ${order.notes ? `<hr class="receipt-divider"><div style="font-size:13px;color:var(--text-muted);text-align:left;">📝 ${order.notes}</div>` : ''}
         <div class="receipt-tracking">
@@ -2808,30 +2858,229 @@ const FoodRenderer = {
   },
 
   renderTestimonials() {
+    // Reviews now loaded from Firebase — see ReviewsManager below
+    ReviewsManager.loadReviews();
+  },
+};
+
+/* =============================================
+   REVIEWS MANAGER — Firebase Firestore
+   ============================================= */
+const ReviewsManager = {
+  _reviews: [],
+  _lastDoc: null,
+  _perPage: 6,
+  _db: null,
+
+  async _getDb() {
+    if (this._db) return this._db;
+    const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+    const { getFirestore, collection, query, where, orderBy, limit, startAfter, addDoc, serverTimestamp, getDocs }
+      = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+    const cfg = {
+      apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+      authDomain: "protech-6c388.firebaseapp.com",
+      projectId: "protech-6c388",
+      storageBucket: "protech-6c388.firebasestorage.app",
+      messagingSenderId: "987892798162",
+      appId: "1:987892798162:web:2307b1e8773430df1d930b",
+    };
+    const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+    this._db = { db: getFirestore(app), collection, query, where, orderBy, limit, startAfter, addDoc, serverTimestamp, getDocs };
+    return this._db;
+  },
+
+  async loadReviews(append = false) {
+    const loading  = document.getElementById('testimonialsLoading');
+    const empty    = document.getElementById('testimonialsEmpty');
+    const grid     = document.getElementById('testimonialsGrid');
+    const loadMore = document.getElementById('reviewsLoadMoreWrap');
+
+    if (!append) {
+      this._reviews = [];
+      this._lastDoc = null;
+      if (loading) loading.style.display = '';
+      if (grid)    grid.style.display    = 'none';
+      if (empty)   empty.style.display   = 'none';
+      if (loadMore) loadMore.style.display = 'none';
+    }
+
+    try {
+      const { db, collection, query, where, orderBy, limit, startAfter, getDocs } = await this._getDb();
+      // NOTE: Using only where() without orderBy() to avoid requiring a Firestore
+      // composite index on (approved, createdAt). We sort client-side instead.
+      let q = query(
+        collection(db, 'reviews'),
+        where('approved', '==', true),
+        limit(this._perPage * 3)   // fetch a wider batch so client-side sort is meaningful
+      );
+      if (append && this._lastDoc) q = query(
+        collection(db, 'reviews'),
+        where('approved', '==', true),
+        startAfter(this._lastDoc),
+        limit(this._perPage * 3)
+      );
+
+      const snap = await getDocs(q);
+      // Sort by createdAt descending client-side
+      let newDocs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      newDocs.sort((a, b) => {
+        const aTime = a.createdAt?.toMillis ? a.createdAt.toMillis() : (a.createdAt || 0);
+        const bTime = b.createdAt?.toMillis ? b.createdAt.toMillis() : (b.createdAt || 0);
+        return bTime - aTime;
+      });
+      // Slice to perPage after sorting
+      const page = newDocs.slice(0, this._perPage);
+      this._lastDoc = snap.docs[snap.docs.length - 1] || null;
+      this._reviews = append ? [...this._reviews, ...page] : page;
+      const newDocsCount = page.length;
+
+      if (loading) loading.style.display = 'none';
+
+      if (this._reviews.length === 0) {
+        if (empty) empty.style.display = '';
+        if (grid)  grid.style.display  = 'none';
+      } else {
+        if (empty) empty.style.display = 'none';
+        if (grid)  { grid.style.display = ''; this._renderGrid(); }
+      }
+
+      // Show load more if full page returned
+      if (loadMore) loadMore.style.display = (newDocsCount === this._perPage) ? '' : 'none';
+    } catch (err) {
+      console.error('Reviews load error:', err);
+      if (loading) loading.style.display = 'none';
+      if (empty)   { empty.style.display = ''; empty.innerHTML = '<div style="font-size:48px;margin-bottom:16px;opacity:0.5;">⚠️</div><div style="font-size:14px;color:var(--text-muted);">Could not load reviews. Please try again later.</div>'; }
+    }
+  },
+
+  _renderGrid() {
     const grid = document.getElementById('testimonialsGrid');
     if (!grid) return;
-    const testimonials = [
-      { text: "The wagyu burger is an absolute game-changer. The truffle aioli alone is worth the visit. NŌVA has raised the bar for fine dining in this city.", name: "Alexandra Chen", role: "Food Critic, The City Times", avatar: "https://i.pravatar.cc/100?img=47", rating: 5 },
-      { text: "I've been to restaurants across the globe, and NŌVA stands shoulder to shoulder with the best. The attention to detail in every plate is remarkable.", name: "Marcus Reynolds", role: "Chef & Restaurant Consultant", avatar: "https://i.pravatar.cc/100?img=12", rating: 5 },
-      { text: "Ordering online was seamless. The food arrived hot, beautifully packaged, and tasted exactly as good as eating in. Exceptional every time.", name: "Sophie Laurent", role: "Regular Guest", avatar: "https://i.pravatar.cc/100?img=32", rating: 5 },
-    ];
-    grid.innerHTML = testimonials.map((t, i) => `
-      <div class="testimonial-card reveal reveal-delay-${i+1}">
+    grid.innerHTML = this._reviews.map((t, i) => `
+      <div class="testimonial-card reveal reveal-delay-${(i % 3) + 1}">
         <div class="testimonial-quote">"</div>
-        <p class="testimonial-text">${t.text}</p>
+        <div style="display:flex;gap:2px;margin-bottom:12px;">
+          ${Array.from({length:5}).map((_,s) => `<span style="color:${s < (t.rating||5) ? 'var(--color-primary)' : 'var(--text-muted)'};font-size:14px;">★</span>`).join('')}
+        </div>
+        <p class="testimonial-text">${this._escHtml(t.text)}</p>
         <div class="testimonial-author">
-          <div class="testimonial-avatar">
-            <img src="${t.avatar}" alt="${t.name}" loading="lazy" />
+          <div class="testimonial-avatar" style="background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:16px;font-weight:700;color:#fff;">
+            ${this._escHtml(t.name.charAt(0).toUpperCase())}
           </div>
           <div>
-            <div class="testimonial-name">${t.name}</div>
-            <div class="testimonial-role">${t.role}</div>
+            <div class="testimonial-name">${this._escHtml(t.name)}</div>
+            <div class="testimonial-role">${this._escHtml(t.role || 'Guest')}</div>
           </div>
+          <div style="margin-left:auto;font-size:11px;color:var(--text-muted);">${this._timeAgo(t.createdAt)}</div>
         </div>
       </div>
     `).join('');
+    if (window.lucide) lucide.createIcons();
+    // Trigger reveal for newly added cards
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+    }, { threshold: 0.1 });
+    grid.querySelectorAll('.testimonial-card.reveal:not(.visible)').forEach(el => obs.observe(el));
+  },
+
+  _escHtml(str) {
+    return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  },
+
+  _timeAgo(ts) {
+    if (!ts) return '';
+    const d = ts.toDate ? ts.toDate() : new Date(ts);
+    const diff = Date.now() - d.getTime();
+    if (diff < 86400000) return 'Today';
+    if (diff < 604800000) return Math.floor(diff/86400000) + 'd ago';
+    if (diff < 2592000000) return Math.floor(diff/604800000) + 'w ago';
+    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  },
+
+  async submitReview(data) {
+    const { db, collection, addDoc, serverTimestamp } = await this._getDb();
+    await addDoc(collection(db, 'reviews'), {
+      ...data,
+      approved: false,
+      createdAt: serverTimestamp(),
+    });
   },
 };
+
+/* Review Modal helpers */
+let _reviewRating = 0;
+
+function openReviewModal() {
+  _reviewRating = 0;
+  document.getElementById('reviewRatingVal').value = 0;
+  document.getElementById('reviewName').value = '';
+  document.getElementById('reviewRole').value = '';
+  document.getElementById('reviewText').value = '';
+  document.getElementById('reviewCharCount').textContent = '0';
+  document.getElementById('reviewError').style.display = 'none';
+  document.getElementById('reviewFormWrap').style.display = '';
+  document.getElementById('reviewSuccessWrap').style.display = 'none';
+  document.querySelectorAll('.review-star').forEach(s => s.style.color = 'var(--text-muted)');
+  openModal('reviewModal');
+}
+
+function closeReviewModal() { closeModal('reviewModal'); }
+
+function setReviewRating(val) {
+  _reviewRating = val;
+  document.getElementById('reviewRatingVal').value = val;
+  document.querySelectorAll('.review-star').forEach(s => {
+    s.style.color = parseInt(s.dataset.val) <= val ? 'var(--color-primary)' : 'var(--text-muted)';
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const ta = document.getElementById('reviewText');
+  if (ta) ta.addEventListener('input', () => {
+    const len = ta.value.length;
+    document.getElementById('reviewCharCount').textContent = len;
+    if (len > 400) ta.value = ta.value.slice(0, 400);
+  });
+});
+
+async function submitReview() {
+  const name   = (document.getElementById('reviewName').value || '').trim();
+  const role   = (document.getElementById('reviewRole').value || '').trim();
+  const text   = (document.getElementById('reviewText').value || '').trim();
+  const rating = _reviewRating;
+  const errEl  = document.getElementById('reviewError');
+
+  errEl.style.display = 'none';
+
+  if (!rating) { errEl.textContent = 'Please select a star rating.'; errEl.style.display = ''; return; }
+  if (!name)   { errEl.textContent = 'Please enter your name.'; errEl.style.display = ''; return; }
+  if (text.length < 20) { errEl.textContent = 'Please write at least 20 characters.'; errEl.style.display = ''; return; }
+
+  const btn = document.getElementById('reviewSubmitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  try {
+    await ReviewsManager.submitReview({ name, role: role || 'Guest', text, rating });
+    document.getElementById('reviewFormWrap').style.display = 'none';
+    document.getElementById('reviewSuccessWrap').style.display = '';
+  } catch (err) {
+    console.error(err);
+    errEl.textContent = 'Something went wrong. Please try again.';
+    errEl.style.display = '';
+    btn.disabled = false;
+    btn.innerHTML = '<i data-lucide="send" style="width:15px;height:15px;"></i> Submit Review';
+    if (window.lucide) lucide.createIcons();
+  }
+}
+
+async function loadMoreReviews() {
+  const btn = document.getElementById('reviewsLoadMoreBtn');
+  if (btn) { btn.textContent = 'Loading…'; btn.disabled = true; }
+  await ReviewsManager.loadReviews(true);
+  if (btn) { btn.textContent = 'Load More Reviews'; btn.disabled = false; }
+}
 
 /* =============================================
    CHECKOUT FLOW
@@ -2872,7 +3121,9 @@ function proceedCheckout() {
           </div>
           <div class="form-group">
             <label class="form-label">Phone</label>
-            <input type="tel" class="form-input" id="delPhone" placeholder="+1 (555) 000-0000" />
+            <input type="tel" class="form-input" id="delPhone" placeholder="07XXXXXXXX" inputmode="numeric"
+              oninput="enforceAlgerianPhone(this)"
+              onkeypress="return /[0-9]/.test(event.key)" />
           </div>
         </div>
         <div class="form-group">
@@ -2901,7 +3152,9 @@ function proceedCheckout() {
         </div>
         <div class="form-group">
           <label class="form-label">Phone</label>
-          <input type="tel" class="form-input" id="delPhone" placeholder="+1 (555) 000-0000" />
+          <input type="tel" class="form-input" id="delPhone" placeholder="07XXXXXXXX" inputmode="numeric"
+            oninput="enforceAlgerianPhone(this)"
+            onkeypress="return /[0-9]/.test(event.key)" />
         </div>
         <div style="padding:16px;background:rgba(14,165,233,0.08);border:1px solid rgba(14,165,233,0.2);border-radius:var(--radius-md);font-size:13px;color:var(--text-secondary);">
           📍 <strong>Pickup Location:</strong> 42 Culinary Lane, NY 10001<br>Ready in approximately 15–20 minutes.
@@ -2924,6 +3177,35 @@ function proceedCheckout() {
   if (window.lucide) lucide.createIcons();
 }
 
+function enforceAlgerianPhone(input) {
+  let val = input.value.replace(/\D/g, '');
+
+  // Only allow starting digits: 0, 5, 6, 7
+  if (val.length > 0 && !['0','5','6','7'].includes(val[0])) {
+    input.value = '';
+    return;
+  }
+  // If starts with 0, second digit must be 5, 6, or 7
+  if (val.length >= 2 && val[0] === '0' && !['5','6','7'].includes(val[1])) {
+    val = val[0];
+    input.value = val;
+    return;
+  }
+
+  // Max length: 10 digits if starts with 0, 9 digits if starts with 5/6/7
+  const maxLen = val[0] === '0' ? 10 : 9;
+  if (val.length > maxLen) val = val.slice(0, maxLen);
+
+  input.value = val;
+}
+
+function validateAlgerianPhone(val) {
+  if (!val) return false;
+  const digits = val.replace(/\D/g, '');
+  if (digits[0] === '0') return digits.length === 10 && ['5','6','7'].includes(digits[1]);
+  return ['5','6','7'].includes(digits[0]) && digits.length === 9;
+}
+
 function placeOrder() {
   const nameEl = document.getElementById('delName');
   const phoneEl = document.getElementById('delPhone');
@@ -2931,6 +3213,10 @@ function placeOrder() {
 
   if (App.orderType === 'delivery' && (!nameEl?.value || !phoneEl?.value || !addrEl?.value)) {
     UIManager.toast('Please fill in your delivery details', 'error', 'Missing Info');
+    return;
+  }
+  if ((App.orderType === 'delivery' || App.orderType === 'pickup') && phoneEl?.value && !validateAlgerianPhone(phoneEl.value)) {
+    UIManager.toast('Enter a valid phone number (e.g. 0712345678 or 712345678)', 'error', 'Invalid Phone');
     return;
   }
   if (App.orderType === 'pickup' && (!nameEl?.value || !phoneEl?.value)) {
@@ -3211,6 +3497,39 @@ function initTables() {
 }
 
 /* =============================================
+   FEATURE FLAGS — set by Admin panel via localStorage
+   ============================================= */
+function applyFeatureFlags() {
+  const tablesEnabled   = localStorage.getItem('nova_tables_enabled')   !== 'false';
+  const deliveryEnabled = localStorage.getItem('nova_delivery_enabled') !== 'false';
+
+  const dineInBtn         = document.querySelector('.order-type-btn[data-type="dine-in"]');
+  const tableSelectorWrap = document.getElementById('tableSelectorWrap');
+
+  if (!tablesEnabled) {
+    if (dineInBtn) dineInBtn.style.display = 'none';
+    if (App.orderType === 'dine-in') {
+      const pickupBtn = document.querySelector('.order-type-btn[data-type="pickup"]');
+      setOrderType('pickup', pickupBtn);
+    }
+    if (tableSelectorWrap) tableSelectorWrap.style.display = 'none';
+  } else {
+    if (dineInBtn) dineInBtn.style.display = '';
+  }
+
+  const deliveryBtn = document.querySelector('.order-type-btn[data-type="delivery"]');
+  if (!deliveryEnabled) {
+    if (deliveryBtn) deliveryBtn.style.display = 'none';
+    if (App.orderType === 'delivery') {
+      const pickupBtn = document.querySelector('.order-type-btn[data-type="pickup"]');
+      setOrderType('pickup', pickupBtn);
+    }
+  } else {
+    if (deliveryBtn) deliveryBtn.style.display = '';
+  }
+}
+
+/* =============================================
    SCROLL BEHAVIORS
    ============================================= */
 function initScrollBehaviors() {
@@ -3314,6 +3633,7 @@ const App = {
     // UI init
     initSearch();
     initTables();
+    applyFeatureFlags();
     initScrollBehaviors();
     initKeyboardShortcuts();
     initLiveCount();
@@ -3337,11 +3657,6 @@ const App = {
 
     // Auth: default tab
     switchAuthTab('login');
-
-    // Hide page loader
-    setTimeout(() => {
-      document.getElementById('pageLoader')?.classList.add('hidden');
-    }, 800);
 
     // Show order history dot if there are orders
     if (OrderManager.orders.length) {

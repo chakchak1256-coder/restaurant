@@ -2,6 +2,17 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function(){
+      try {
+        var m = JSON.parse(localStorage.getItem("nova_themeMode") || '"dark"');
+        document.documentElement.setAttribute("data-theme", m);
+        var t = JSON.parse(localStorage.getItem("nova_admin_theme") || "null")
+             || JSON.parse(localStorage.getItem("nova_theme") || "null");
+        if (t) Object.entries(t).forEach(function(e){ document.documentElement.style.setProperty(e[0],e[1]); });
+      } catch(e){}
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NŌVA — Delivery Command Center</title>
 
@@ -680,6 +691,33 @@
     <div class="loader-label">Loading Delivery Center</div>
   </div>
 
+  <!-- Delivery Disabled Overlay -->
+  <div id="deliveryDisabledOverlay" style="
+    display:none;position:fixed;inset:0;z-index:9000;
+    background:var(--bg-base);
+    display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+    font-family:var(--font-body, 'DM Sans', sans-serif);
+  ">
+    <div style="font-size:64px;">🚚</div>
+    <div style="
+      background:#161619;border:1px solid rgba(239,68,68,0.3);
+      border-radius:20px;padding:40px 48px;text-align:center;max-width:420px;
+      box-shadow:0 12px 48px rgba(0,0,0,0.7);
+    ">
+      <div style="font-size:2rem;font-weight:700;color:#ef4444;margin-bottom:8px;letter-spacing:0.03em;">Delivery Disabled</div>
+      <div style="font-size:14px;color:#a09a90;line-height:1.7;margin-bottom:28px;">
+        The delivery feature has been turned off by the admin.<br>
+        Delivery orders will not be accepted until it is re-enabled.
+      </div>
+      <a href="admin.html" style="
+        display:inline-flex;align-items:center;gap:8px;
+        background:#e8a020;color:#000;font-weight:700;font-size:13px;
+        border-radius:10px;padding:10px 22px;text-decoration:none;
+        transition:background 0.2s;
+      ">← Back to Admin</a>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div id="toastContainer"></div>
 
@@ -922,10 +960,23 @@
        INIT
        ============================================= */
     function init() {
+      // ── Delivery feature flag ─────────────────────
+      const deliveryEnabled = localStorage.getItem('nova_delivery_enabled') !== 'false';
+      if (!deliveryEnabled) {
+        document.getElementById('deliveryDisabledOverlay').style.display = 'flex';
+        document.getElementById('pageLoader')?.classList.add('hidden');
+        if (window.lucide) lucide.createIcons();
+        return; // Stop rendering the rest of the page
+      }
+
       // Load theme
       const mode = Storage.get('themeMode') || 'dark';
       document.documentElement.setAttribute('data-theme', mode);
       updateThemeIcon(mode);
+
+      // Apply admin custom theme vars
+      const themeVars = Storage.get('admin_theme') || Storage.get('theme');
+      if (themeVars) Object.entries(themeVars).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
 
       // Load or seed deliveries
       const saved = Storage.get('deliveries');

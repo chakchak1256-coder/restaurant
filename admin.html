@@ -2,13 +2,24 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
+  <script>
+    (function(){
+      try {
+        var m = JSON.parse(localStorage.getItem("nova_themeMode") || '"dark"');
+        document.documentElement.setAttribute("data-theme", m);
+        var t = JSON.parse(localStorage.getItem("nova_admin_theme") || "null")
+             || JSON.parse(localStorage.getItem("nova_theme") || "null");
+        if (t) Object.entries(t).forEach(function(e){ document.documentElement.style.setProperty(e[0],e[1]); });
+      } catch(e){}
+    })();
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>NŌVA Admin — Control Center</title>
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Serif+Display:ital@0;1&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet" />
 
   <!-- Icons & Charts -->
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
@@ -145,30 +156,6 @@
     .admin-pin-key.enter:hover { background: var(--color-primary-light, #f5be52); }
     .admin-pin-error { color: var(--color-danger, #ef4444); font-size: 0.8rem; margin-top: 10px; min-height: 20px; }
     @keyframes adminShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
-
-    /* =============================================
-       PAGE LOADER
-       ============================================= */
-    #pageLoader {
-      position: fixed; inset: 0; z-index: 9999;
-      background: var(--bg-base);
-      display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 16px;
-      transition: opacity 0.4s ease, visibility 0.4s ease;
-    }
-    #pageLoader.hidden { opacity: 0; visibility: hidden; }
-    .loader-logo {
-      font-family: var(--font-display); font-size: 36px; font-weight: 600;
-      letter-spacing: 0.05em; color: var(--color-primary);
-    }
-    .loader-bar {
-      width: 120px; height: 2px; background: var(--border-color); border-radius: 2px; overflow: hidden;
-    }
-    .loader-bar-fill {
-      height: 100%; width: 0; background: var(--color-primary);
-      border-radius: 2px; animation: loadFill 1s var(--ease-out) forwards;
-    }
-    @keyframes loadFill { to { width: 100%; } }
 
     /* =============================================
        LAYOUT: SIDEBAR + MAIN
@@ -734,16 +721,62 @@
       border-radius: var(--radius-md); padding: 14px;
     }
 
-    /* Font selector */
+    /* ── Preset Theme Cards ─── */
+    .presets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(115px, 1fr));
+      gap: 12px;
+    }
+    .preset-card {
+      border: 2px solid var(--border-color); border-radius: var(--radius-lg);
+      padding: 14px 12px; cursor: pointer;
+      transition: all 0.2s var(--ease-out); position: relative; overflow: hidden;
+      text-align: center;
+    }
+    .preset-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .preset-card.active { border-color: var(--color-primary); box-shadow: 0 0 0 1px var(--color-primary); }
+    .preset-swatch {
+      display: flex; gap: 4px; justify-content: center; margin-bottom: 10px;
+    }
+    .preset-dot {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 1.5px solid rgba(255,255,255,0.15);
+    }
+    .preset-name {
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.05em; color: var(--text-primary); margin-bottom: 2px;
+    }
+    .preset-desc { font-size: 10px; color: var(--text-muted); }
+    .preset-active-badge {
+      position: absolute; top: 6px; right: 6px;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--color-primary);
+      display: none; align-items: center; justify-content: center;
+    }
+    .preset-card.active .preset-active-badge { display: flex; }
+
+    /* ── Font Picker ─── */
     .font-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
     .font-option {
-      padding: 12px; background: var(--bg-surface);
-      border: 1px solid var(--border-color); border-radius: var(--radius-md);
+      padding: 14px 10px; background: var(--bg-surface);
+      border: 1.5px solid var(--border-color); border-radius: var(--radius-md);
       cursor: pointer; text-align: center; transition: all 0.2s ease;
+      position: relative;
     }
-    .font-option.selected { border-color: var(--border-active); background: rgba(232,160,32,0.05); }
-    .font-option:hover { border-color: rgba(232,160,32,0.2); }
-    .font-option-name { font-size: 11px; color: var(--text-muted); }
+    .font-option.selected {
+      border-color: var(--color-primary);
+      background: rgba(232,160,32,0.07);
+      box-shadow: 0 0 0 1px var(--color-primary);
+    }
+    .font-option:hover { border-color: rgba(232,160,32,0.3); }
+    .font-option-preview { font-size: 20px; font-weight: 600; line-height: 1.2; margin-bottom: 4px; }
+    .font-option-name { font-size: 10px; color: var(--text-muted); font-family: var(--font-body); }
+    .font-option-tag {
+      position: absolute; top: 5px; right: 5px;
+      font-size: 9px; font-weight: 700; letter-spacing: 0.05em;
+      background: rgba(232,160,32,0.15); color: var(--color-primary);
+      border-radius: 4px; padding: 1px 5px;
+    }
 
     /* =============================================
        TABLE MANAGEMENT
@@ -1107,11 +1140,6 @@
     </div>
   </div>
 
-  <div id="pageLoader">
-    <div class="loader-logo">NŌVA</div>
-    <div class="loader-bar"><div class="loader-bar-fill"></div></div>
-  </div>
-
   <!-- Sidebar Overlay (mobile) -->
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
@@ -1161,6 +1189,10 @@
         </div>
         <div class="nav-item" onclick="navigateTo('delivery', this)" data-page="delivery">
           <i data-lucide="truck" class="nav-icon"></i> Delivery
+        </div>
+        <div class="nav-item" onclick="navigateTo('reviews', this)" data-page="reviews">
+          <i data-lucide="star" class="nav-icon"></i> Reviews
+          <span class="nav-badge" id="reviewsPendingBadge" style="display:none;">0</span>
         </div>
 
         <!-- Settings -->
@@ -1836,6 +1868,19 @@
           </div>
         </div>
 
+        <!-- ── Preset Themes ─────────────────────────────── -->
+        <div class="card" style="margin-bottom:24px;">
+          <div class="card-header">
+            <div class="card-title">Preset Themes</div>
+            <span style="font-size:12px;color:var(--text-muted);">One click to apply across all pages</span>
+          </div>
+          <div class="card-body">
+            <div class="presets-grid" id="presetsGrid">
+              <!-- Rendered by JS -->
+            </div>
+          </div>
+        </div>
+
         <div class="grid-2">
           <!-- Left: Controls -->
           <div style="display:flex;flex-direction:column;gap:20px;">
@@ -2011,12 +2056,134 @@
         </div>
       </section>
 
+      <!-- =============================================
+           PAGE: REVIEWS
+           ============================================= -->
+      <section class="page" id="page-reviews">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Reviews</div>
+            <div class="page-subtitle">Moderate and manage guest reviews shown on the website.</div>
+          </div>
+          <div class="flex gap-2">
+            <div class="tab-bar" id="reviewsTabBar">
+              <div class="tab-btn active" onclick="setReviewsFilter('pending', this)">Pending <span id="pendingCount" style="margin-left:4px;background:var(--color-warning);color:#000;border-radius:var(--radius-full);padding:0 6px;font-size:10px;font-weight:700;">0</span></div>
+              <div class="tab-btn" onclick="setReviewsFilter('approved', this)">Approved</div>
+              <div class="tab-btn" onclick="setReviewsFilter('all', this)">All</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openAddReviewModal()">
+              <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Review
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats bar -->
+        <div class="stats-grid mb-6" style="grid-template-columns:repeat(4,1fr);">
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon gold"><i data-lucide="star" style="width:18px;height:18px;"></i></div></div>
+            <div class="stat-value" id="rvStatTotal">—</div>
+            <div class="stat-label">Total Reviews</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon green"><i data-lucide="check-circle" style="width:18px;height:18px;"></i></div></div>
+            <div class="stat-value" id="rvStatApproved">—</div>
+            <div class="stat-label">Published</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon" style="background:rgba(245,158,11,0.1);color:var(--color-warning);"><i data-lucide="clock" style="width:18px;height:18px;"></i></div></div>
+            <div class="stat-value" id="rvStatPending">—</div>
+            <div class="stat-label">Awaiting Approval</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon gold"><i data-lucide="bar-chart-2" style="width:18px;height:18px;"></i></div></div>
+            <div class="stat-value" id="rvStatAvg">—</div>
+            <div class="stat-label">Average Rating</div>
+          </div>
+        </div>
+
+        <!-- Reviews list -->
+        <div id="reviewsLoadingState" style="text-align:center;padding:60px;color:var(--text-muted);">
+          <div style="font-size:32px;margin-bottom:12px;">⏳</div>
+          <div>Loading reviews from Firebase…</div>
+        </div>
+        <div id="reviewsEmptyState" style="display:none;" class="empty-state">
+          <div class="empty-icon">💬</div>
+          <div class="empty-title">No reviews here</div>
+          <div class="empty-desc">Reviews submitted from the website will appear here.</div>
+        </div>
+        <div id="reviewsGrid" style="display:none;display:flex;flex-direction:column;gap:12px;"></div>
+
+        <!-- Pagination -->
+        <div id="reviewsPaginationWrap" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:24px;display:none;">
+          <button class="btn btn-ghost btn-sm" id="rvPrevBtn" onclick="loadReviewsPage(-1)">
+            <i data-lucide="chevron-left" style="width:14px;height:14px;"></i> Prev
+          </button>
+          <span id="rvPageLabel" style="font-size:13px;color:var(--text-muted);"></span>
+          <button class="btn btn-ghost btn-sm" id="rvNextBtn" onclick="loadReviewsPage(1)">
+            Next <i data-lucide="chevron-right" style="width:14px;height:14px;"></i>
+          </button>
+        </div>
+      </section>
+
     </main>
   </div>
 
   <!-- =============================================
-       MODAL: FOOD EDIT / ADD
+       MODAL: REVIEW ADD / EDIT
        ============================================= -->
+  <div class="modal-overlay" id="reviewModal">
+    <div class="modal" style="max-width:540px;">
+      <div class="modal-header">
+        <div class="modal-title" id="reviewModalTitle">Add Review</div>
+        <button class="modal-close" onclick="closeModal('reviewModal')">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="reviewEditId" value="" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Guest Name *</label>
+            <input type="text" class="form-control" id="rvName" placeholder="e.g. Sophie L." />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Role / Occasion</label>
+            <input type="text" class="form-control" id="rvRole" placeholder="e.g. Regular Guest" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Rating *</label>
+          <div id="rvModalStars" style="display:flex;gap:8px;margin-bottom:4px;">
+            <span class="rv-modal-star" data-val="1" onclick="setModalRating(1)" style="font-size:26px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+            <span class="rv-modal-star" data-val="2" onclick="setModalRating(2)" style="font-size:26px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+            <span class="rv-modal-star" data-val="3" onclick="setModalRating(3)" style="font-size:26px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+            <span class="rv-modal-star" data-val="4" onclick="setModalRating(4)" style="font-size:26px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+            <span class="rv-modal-star" data-val="5" onclick="setModalRating(5)" style="font-size:26px;cursor:pointer;color:var(--text-muted);transition:color 0.15s;">★</span>
+          </div>
+          <input type="hidden" id="rvRatingVal" value="5" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Review Text *</label>
+          <textarea class="form-control" id="rvText" rows="4" placeholder="The guest's review…"></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <div class="toggle-wrap">
+            <div class="toggle on" id="rvApprovedToggle" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+            <span class="text-sm text-muted">Approved (visible on website)</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('reviewModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveReview()">
+          <i data-lucide="save" style="width:14px;height:14px;"></i> Save Review
+        </button>
+      </div>
+    </div>
+  </div>
+
+
   <div class="modal-overlay" id="foodModal">
     <div class="modal modal-lg">
       <div class="modal-header">
@@ -2241,9 +2408,9 @@
      Future: replace with Firestore SDK calls
      ============================================= */
   const StorageManager = {
-    get: (key)          => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } },
-    set: (key, val)     => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} },
-    remove: (key)       => { localStorage.removeItem(key); },
+    get: (key)          => { try { return JSON.parse(localStorage.getItem('nova_' + key)); } catch { return null; } },
+    set: (key, val)     => { try { localStorage.setItem('nova_' + key, JSON.stringify(val)); } catch {} },
+    remove: (key)       => { localStorage.removeItem('nova_' + key); },
   };
 
   /* =============================================
@@ -2307,6 +2474,346 @@
     { label:'Border Radius (lg)', var:'--radius-lg', min:0, max:40, step:1, unit:'px', default:20 },
     { label:'Font Size Scale',    var:'--font-scale', min:0.85, max:1.2, step:0.05, unit:'', default:1 },
   ];
+
+  /* =============================================
+     THEME PRESETS
+     ============================================= */
+  const THEME_PRESETS = [
+    {
+      id: 'nova-gold',
+      name: 'NŌVA Gold',
+      desc: 'Default',
+      emoji: '✦',
+      vars: {
+        '--color-primary':       '#e8a020',
+        '--color-primary-light': '#f5be52',
+        '--color-primary-dark':  '#b8780e',
+        '--color-secondary':     '#0ea5e9',
+        '--color-accent':        '#10b981',
+        '--color-danger':        '#ef4444',
+        '--color-warning':       '#f59e0b',
+        '--color-purple':        '#8b5cf6',
+        '--bg-base':             '#080809',
+        '--bg-surface':          '#0f0f12',
+        '--bg-card':             '#161619',
+        '--bg-card-hover':       '#1e1e23',
+        '--text-primary':        '#f0ede8',
+        '--text-secondary':      '#a09a90',
+        '--text-muted':          '#5a5650',
+        '--border-color':        'rgba(240,237,232,0.07)',
+        '--shadow-md':           '0 4px 20px rgba(0,0,0,0.6)',
+        '--font-display':        "'Cormorant Garamond', Georgia, serif",
+        '--font-body':           "'DM Sans', sans-serif",
+        '--radius-md':           '12px',
+        '--radius-lg':           '20px',
+      },
+      swatches: ['#e8a020','#080809','#161619'],
+    },
+    {
+      id: 'midnight-ember',
+      name: 'Midnight Ember',
+      desc: 'Dark Crimson',
+      emoji: '🔥',
+      vars: {
+        '--color-primary':       '#e53e3e',
+        '--color-primary-light': '#fc8181',
+        '--color-primary-dark':  '#9b2c2c',
+        '--color-secondary':     '#f6ad55',
+        '--color-accent':        '#48bb78',
+        '--color-danger':        '#fc4d4d',
+        '--color-warning':       '#ed8936',
+        '--color-purple':        '#9f7aea',
+        '--bg-base':             '#0a0405',
+        '--bg-surface':          '#120708',
+        '--bg-card':             '#1a0b0d',
+        '--bg-card-hover':       '#221014',
+        '--text-primary':        '#fff5f5',
+        '--text-secondary':      '#a09090',
+        '--text-muted':          '#6b5050',
+        '--border-color':        'rgba(255,245,245,0.07)',
+        '--shadow-md':           '0 4px 20px rgba(80,0,0,0.5)',
+        '--font-display':        "'Playfair Display', Georgia, serif",
+        '--font-body':           "'DM Sans', sans-serif",
+        '--radius-md':           '10px',
+        '--radius-lg':           '18px',
+      },
+      swatches: ['#e53e3e','#0a0405','#1a0b0d'],
+    },
+    {
+      id: 'ocean-noir',
+      name: 'Ocean Noir',
+      desc: 'Dark Electric Blue',
+      emoji: '🌊',
+      vars: {
+        '--color-primary':       '#00b4d8',
+        '--color-primary-light': '#48cae4',
+        '--color-primary-dark':  '#0077b6',
+        '--color-secondary':     '#90e0ef',
+        '--color-accent':        '#2dd4bf',
+        '--color-danger':        '#ef4444',
+        '--color-warning':       '#f59e0b',
+        '--color-purple':        '#818cf8',
+        '--bg-base':             '#020b18',
+        '--bg-surface':          '#051422',
+        '--bg-card':             '#091e32',
+        '--bg-card-hover':       '#0d2840',
+        '--text-primary':        '#e0f4ff',
+        '--text-secondary':      '#7ba3bf',
+        '--text-muted':          '#3a5f7a',
+        '--border-color':        'rgba(0,180,216,0.1)',
+        '--shadow-md':           '0 4px 20px rgba(0,30,60,0.7)',
+        '--font-display':        "'DM Serif Display', Georgia, serif",
+        '--font-body':           "'Inter', sans-serif",
+        '--radius-md':           '12px',
+        '--radius-lg':           '20px',
+      },
+      swatches: ['#00b4d8','#020b18','#091e32'],
+    },
+    {
+      id: 'forest-dark',
+      name: 'Forest Dark',
+      desc: 'Emerald & Moss',
+      emoji: '🌿',
+      vars: {
+        '--color-primary':       '#22c55e',
+        '--color-primary-light': '#4ade80',
+        '--color-primary-dark':  '#16a34a',
+        '--color-secondary':     '#84cc16',
+        '--color-accent':        '#2dd4bf',
+        '--color-danger':        '#f87171',
+        '--color-warning':       '#fbbf24',
+        '--color-purple':        '#a78bfa',
+        '--bg-base':             '#020d06',
+        '--bg-surface':          '#05140a',
+        '--bg-card':             '#091a0f',
+        '--bg-card-hover':       '#0e2416',
+        '--text-primary':        '#ecfdf5',
+        '--text-secondary':      '#86b898',
+        '--text-muted':          '#3d6b50',
+        '--border-color':        'rgba(34,197,94,0.09)',
+        '--shadow-md':           '0 4px 20px rgba(0,40,15,0.6)',
+        '--font-display':        "'Lora', Georgia, serif",
+        '--font-body':           "'Plus Jakarta Sans', sans-serif",
+        '--radius-md':           '14px',
+        '--radius-lg':           '22px',
+      },
+      swatches: ['#22c55e','#020d06','#091a0f'],
+    },
+    {
+      id: 'royal-dusk',
+      name: 'Royal Dusk',
+      desc: 'Dark Violet',
+      emoji: '👑',
+      vars: {
+        '--color-primary':       '#a855f7',
+        '--color-primary-light': '#c084fc',
+        '--color-primary-dark':  '#7e22ce',
+        '--color-secondary':     '#f472b6',
+        '--color-accent':        '#34d399',
+        '--color-danger':        '#f87171',
+        '--color-warning':       '#fbbf24',
+        '--color-purple':        '#818cf8',
+        '--bg-base':             '#07030f',
+        '--bg-surface':          '#0e0619',
+        '--bg-card':             '#150a24',
+        '--bg-card-hover':       '#1d0f30',
+        '--text-primary':        '#f3e8ff',
+        '--text-secondary':      '#9a80b0',
+        '--text-muted':          '#5a4070',
+        '--border-color':        'rgba(168,85,247,0.1)',
+        '--shadow-md':           '0 4px 24px rgba(60,0,100,0.5)',
+        '--font-display':        "'Cormorant Garamond', Georgia, serif",
+        '--font-body':           "'DM Sans', sans-serif",
+        '--radius-md':           '12px',
+        '--radius-lg':           '22px',
+      },
+      swatches: ['#a855f7','#07030f','#150a24'],
+    },
+    {
+      id: 'ivory-light',
+      name: 'Ivory Light',
+      desc: 'Warm & Minimal',
+      emoji: '☀️',
+      vars: {
+        '--color-primary':       '#d97706',
+        '--color-primary-light': '#fbbf24',
+        '--color-primary-dark':  '#b45309',
+        '--color-secondary':     '#0ea5e9',
+        '--color-accent':        '#10b981',
+        '--color-danger':        '#ef4444',
+        '--color-warning':       '#f59e0b',
+        '--color-purple':        '#8b5cf6',
+        '--bg-base':             '#fdfaf5',
+        '--bg-surface':          '#ffffff',
+        '--bg-card':             '#ffffff',
+        '--bg-card-hover':       '#fef9f0',
+        '--text-primary':        '#1c1209',
+        '--text-secondary':      '#6b5c45',
+        '--text-muted':          '#a8947a',
+        '--border-color':        'rgba(28,18,9,0.09)',
+        '--shadow-md':           '0 4px 20px rgba(0,0,0,0.08)',
+        '--font-display':        "'Playfair Display', Georgia, serif",
+        '--font-body':           "'DM Sans', sans-serif",
+        '--radius-md':           '12px',
+        '--radius-lg':           '20px',
+      },
+      swatches: ['#d97706','#fdfaf5','#ffffff'],
+      light: true,
+    },
+    {
+      id: 'arctic-light',
+      name: 'Arctic Light',
+      desc: 'Clean Blue & White',
+      emoji: '❄️',
+      vars: {
+        '--color-primary':       '#2563eb',
+        '--color-primary-light': '#60a5fa',
+        '--color-primary-dark':  '#1d4ed8',
+        '--color-secondary':     '#0ea5e9',
+        '--color-accent':        '#10b981',
+        '--color-danger':        '#ef4444',
+        '--color-warning':       '#f59e0b',
+        '--color-purple':        '#8b5cf6',
+        '--bg-base':             '#f0f4ff',
+        '--bg-surface':          '#ffffff',
+        '--bg-card':             '#ffffff',
+        '--bg-card-hover':       '#f5f8ff',
+        '--text-primary':        '#0f1729',
+        '--text-secondary':      '#4a5580',
+        '--text-muted':          '#8a95b0',
+        '--border-color':        'rgba(15,23,41,0.08)',
+        '--shadow-md':           '0 4px 20px rgba(37,99,235,0.1)',
+        '--font-display':        "'Syne', sans-serif",
+        '--font-body':           "'Inter', sans-serif",
+        '--radius-md':           '10px',
+        '--radius-lg':           '18px',
+      },
+      swatches: ['#2563eb','#f0f4ff','#ffffff'],
+      light: true,
+    },
+    {
+      id: 'rose-dusk',
+      name: 'Rose Dusk',
+      desc: 'Dark Rose & Blush',
+      emoji: '🌹',
+      vars: {
+        '--color-primary':       '#f43f5e',
+        '--color-primary-light': '#fb7185',
+        '--color-primary-dark':  '#be123c',
+        '--color-secondary':     '#f97316',
+        '--color-accent':        '#34d399',
+        '--color-danger':        '#f87171',
+        '--color-warning':       '#fbbf24',
+        '--color-purple':        '#c084fc',
+        '--bg-base':             '#0d0308',
+        '--bg-surface':          '#16050e',
+        '--bg-card':             '#1e0714',
+        '--bg-card-hover':       '#280a1c',
+        '--text-primary':        '#fff0f5',
+        '--text-secondary':      '#b07090',
+        '--text-muted':          '#6b3050',
+        '--border-color':        'rgba(244,63,94,0.1)',
+        '--shadow-md':           '0 4px 24px rgba(100,0,40,0.5)',
+        '--font-display':        "'Libre Baskerville', Georgia, serif",
+        '--font-body':           "'Nunito', sans-serif",
+        '--radius-md':           '16px',
+        '--radius-lg':           '26px',
+      },
+      swatches: ['#f43f5e','#0d0308','#1e0714'],
+    },
+    {
+      id: 'slate-mono',
+      name: 'Slate Mono',
+      desc: 'Neutral Minimal',
+      emoji: '🪨',
+      vars: {
+        '--color-primary':       '#94a3b8',
+        '--color-primary-light': '#cbd5e1',
+        '--color-primary-dark':  '#64748b',
+        '--color-secondary':     '#38bdf8',
+        '--color-accent':        '#34d399',
+        '--color-danger':        '#f87171',
+        '--color-warning':       '#fbbf24',
+        '--color-purple':        '#a78bfa',
+        '--bg-base':             '#070a0f',
+        '--bg-surface':          '#0d1117',
+        '--bg-card':             '#161b22',
+        '--bg-card-hover':       '#1c242e',
+        '--text-primary':        '#e6edf3',
+        '--text-secondary':      '#8b949e',
+        '--text-muted':          '#484f58',
+        '--border-color':        'rgba(230,237,243,0.08)',
+        '--shadow-md':           '0 4px 20px rgba(0,0,0,0.5)',
+        '--font-display':        "'Syne', sans-serif",
+        '--font-body':           "'Space Grotesk', sans-serif",
+        '--radius-md':           '8px',
+        '--radius-lg':           '14px',
+      },
+      swatches: ['#94a3b8','#070a0f','#161b22'],
+    },
+  ];
+
+  /* Current active preset id (persisted) */
+  let _activePresetId = StorageManager.get('active_preset_id') || 'nova-gold';
+
+  function renderPresetGrid() {
+    const grid = document.getElementById('presetsGrid');
+    if (!grid) return;
+    grid.innerHTML = THEME_PRESETS.map(p => `
+      <div class="preset-card ${_activePresetId === p.id ? 'active' : ''}"
+           id="preset-card-${p.id}"
+           onclick="applyPreset('${p.id}')"
+           style="background:${p.vars['--bg-card']};border-color:${_activePresetId===p.id?p.vars['--color-primary']:'rgba(255,255,255,0.07)'};">
+        <div class="preset-active-badge">
+          <i data-lucide="check" style="width:10px;height:10px;color:#000;"></i>
+        </div>
+        <div style="font-size:20px;margin-bottom:8px;">${p.emoji}</div>
+        <div class="preset-swatch">
+          ${p.swatches.map(s=>`<div class="preset-dot" style="background:${s};border-color:rgba(255,255,255,0.2);"></div>`).join('')}
+        </div>
+        <div class="preset-name" style="color:${p.vars['--text-primary']}">${p.name}</div>
+        <div class="preset-desc">${p.desc}</div>
+      </div>
+    `).join('');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function applyPreset(id) {
+    const preset = THEME_PRESETS.find(p => p.id === id);
+    if (!preset) return;
+    _activePresetId = id;
+    StorageManager.set('active_preset_id', id);
+
+    const root = document.documentElement;
+
+    // Apply all CSS vars live
+    Object.entries(preset.vars).forEach(([k, v]) => {
+      root.style.setProperty(k, v);
+    });
+
+    // Also set light/dark mode
+    const mode = preset.light ? 'light' : 'dark';
+    root.setAttribute('data-theme', mode);
+    StorageManager.set('themeMode', mode);
+
+    // Persist as both keys so all pages pick it up
+    StorageManager.set('admin_theme', preset.vars);
+    StorageManager.set('theme', preset.vars);
+
+    // Refresh color pickers & sliders in editor
+    initThemeEditor();
+
+    // Re-render preset grid to reflect new active
+    renderPresetGrid();
+
+    // Update topbar theme icon
+    const sun  = document.getElementById('themeIconSun');
+    const moon = document.getElementById('themeIconMoon');
+    if (sun)  sun.style.display  = mode === 'light' ? '' : 'none';
+    if (moon) moon.style.display = mode === 'dark'  ? '' : 'none';
+
+    toast(`"${preset.name}" theme applied to all pages`, 'success', 'Theme Applied ✓');
+  }
 
   /* =============================================
      TOAST SYSTEM
@@ -3518,6 +4025,9 @@
      THEME EDITOR
      ============================================= */
   function initThemeEditor() {
+    // Preset themes
+    renderPresetGrid();
+
     // Brand colors
     renderColorGroup('brandColorsGrid', BRAND_COLORS);
     renderColorGroup('bgColorsGrid',    BG_COLORS);
@@ -3763,6 +4273,7 @@
       else if (q.includes('order')) navigateTo('orders', document.querySelector('[data-page=orders]'));
       else if (q.includes('table')) navigateTo('tables', document.querySelector('[data-page=tables]'));
       else if (q.includes('staff') || q.includes('team')) navigateTo('staff', document.querySelector('[data-page=staff]'));
+      else if (q.includes('review') || q.includes('testimonial')) navigateTo('reviews', document.querySelector('[data-page=reviews]'));
       else if (q.includes('theme') || q.includes('color')) navigateTo('theme', document.querySelector('[data-page=theme]'));
     });
 
@@ -3872,11 +4383,6 @@
 
       // Init icons
       if (window.lucide) lucide.createIcons();
-
-      // Hide loader
-      setTimeout(() => {
-        document.getElementById('pageLoader')?.classList.add('hidden');
-      }, 900);
     },
   };
 
@@ -3888,6 +4394,327 @@
     }
     // Otherwise the PIN overlay stays visible — user must authenticate
   });
+  /* =============================================
+     ADMIN REVIEWS MANAGER — Firebase Firestore
+     ============================================= */
+  const AdminReviewsManager = {
+    _db: null,
+    _filter: 'pending',
+    _cached: null,
+    _page: 0,
+    _perPage: 8,
+
+    async _getDb() {
+      if (this._db) return this._db;
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const mod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const cfg = {
+        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+        authDomain: "protech-6c388.firebaseapp.com",
+        projectId: "protech-6c388",
+        storageBucket: "protech-6c388.firebasestorage.app",
+        messagingSenderId: "987892798162",
+        appId: "1:987892798162:web:2307b1e8773430df1d930b",
+      };
+      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+      this._db = { db: mod.getFirestore(app), ...mod };
+      return this._db;
+    },
+
+    // All docs cached after first fetch — avoids composite index requirement.
+    // Firestore only auto-indexes single fields; where+orderBy on different
+    // fields needs a manual composite index, so we fetch all ordered by
+    // createdAt (single-field = auto-indexed) and filter/paginate client-side.
+    _cached: null,
+
+    async _fetchAll() {
+      const { db, collection, query, orderBy, getDocs } = await this._getDb();
+      const snap = await getDocs(query(collection(db, 'reviews'), orderBy('createdAt', 'desc')));
+      this._cached = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      return this._cached;
+    },
+
+    async loadPage(dir = 0) {
+      this._page = Math.max(0, this._page + dir);
+
+      const loadEl  = document.getElementById('reviewsLoadingState');
+      const emptyEl = document.getElementById('reviewsEmptyState');
+      const gridEl  = document.getElementById('reviewsGrid');
+      const paginEl = document.getElementById('reviewsPaginationWrap');
+
+      if (loadEl)  { loadEl.style.display = ''; loadEl.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-muted);"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div>Loading reviews…</div></div>'; }
+      if (emptyEl) emptyEl.style.display = 'none';
+      if (gridEl)  gridEl.style.display  = 'none';
+      if (paginEl) paginEl.style.display = 'none';
+
+      try {
+        // Always re-fetch to get fresh data
+        const all = await this._fetchAll();
+
+        // Client-side filter
+        const filtered = this._filter === 'pending'
+          ? all.filter(d => !d.approved)
+          : this._filter === 'approved'
+            ? all.filter(d =>  d.approved)
+            : all;
+
+        // Client-side pagination
+        const start = this._page * this._perPage;
+        const docs  = filtered.slice(start, start + this._perPage);
+        const totalPages = Math.ceil(filtered.length / this._perPage);
+
+        // Clamp page
+        if (this._page >= totalPages && totalPages > 0) {
+          this._page = totalPages - 1;
+          return this.loadPage(0);
+        }
+
+        // Update stats from cached data
+        this._updateStatsFromCache(all);
+
+        if (loadEl) loadEl.style.display = 'none';
+
+        if (docs.length === 0) {
+          if (emptyEl) emptyEl.style.display = '';
+        } else {
+          if (gridEl) { gridEl.style.display = 'flex'; this._renderGrid(docs, gridEl); }
+          if (paginEl && totalPages > 1) {
+            paginEl.style.display = 'flex';
+            document.getElementById('rvPageLabel').textContent = `Page ${this._page + 1} of ${totalPages}`;
+            document.getElementById('rvPrevBtn').disabled = this._page === 0;
+            document.getElementById('rvNextBtn').disabled = this._page >= totalPages - 1;
+          }
+        }
+
+        if (window.lucide) lucide.createIcons();
+      } catch (err) {
+        console.error('Reviews admin error:', err);
+        if (loadEl) loadEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--color-danger);">⚠️ Failed to load: ${err.message}</div>`;
+      }
+    },
+
+    _updateStatsFromCache(all) {
+      const approved = all.filter(d =>  d.approved).length;
+      const pending  = all.filter(d => !d.approved).length;
+      const total    = all.length;
+
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      set('rvStatTotal',    total);
+      set('rvStatApproved', approved);
+      set('rvStatPending',  pending);
+
+      const badge = document.getElementById('reviewsPendingBadge');
+      if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? '' : 'none'; }
+      const pendingCountEl = document.getElementById('pendingCount');
+      if (pendingCountEl) pendingCountEl.textContent = pending;
+
+      // Average rating from approved
+      const approvedDocs = all.filter(d => d.approved);
+      if (approvedDocs.length) {
+        const avg = approvedDocs.reduce((s, d) => s + (d.rating || 5), 0) / approvedDocs.length;
+        set('rvStatAvg', avg.toFixed(1) + ' ★');
+      } else {
+        set('rvStatAvg', '—');
+      }
+    },
+
+    _renderGrid(docs, gridEl) {
+      gridEl.innerHTML = docs.map(rv => `
+        <div class="card" style="padding:0;overflow:hidden;" id="rv-card-${rv.id}">
+          <div style="display:grid;grid-template-columns:1fr auto;align-items:start;padding:20px 24px;gap:16px;">
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <!-- Header row -->
+              <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">
+                  ${this._esc((rv.name||'?').charAt(0).toUpperCase())}
+                </div>
+                <div>
+                  <div style="font-family:var(--font-heading);font-size:14px;font-weight:700;color:var(--text-primary);">${this._esc(rv.name||'Anonymous')}</div>
+                  <div style="font-size:12px;color:var(--text-muted);">${this._esc(rv.role||'Guest')}</div>
+                </div>
+                <div style="display:flex;gap:2px;">
+                  ${Array.from({length:5}).map((_,i)=>`<span style="color:${i<(rv.rating||5)?'var(--color-primary)':'var(--text-muted)'};font-size:13px;">★</span>`).join('')}
+                </div>
+                <span class="badge ${rv.approved ? 'badge-green' : 'badge-gold'}">${rv.approved ? 'Published' : 'Pending'}</span>
+                <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">${this._timeAgo(rv.createdAt)}</span>
+              </div>
+              <!-- Review text -->
+              <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;padding-left:50px;">"${this._esc(rv.text)}"</div>
+            </div>
+            <!-- Actions -->
+            <div style="display:flex;gap:6px;flex-shrink:0;padding-top:4px;">
+              ${rv.approved
+                ? `<button class="btn btn-ghost btn-sm" onclick="AdminReviewsManager.toggleApproval('${rv.id}', false)" title="Unpublish">
+                     <i data-lucide="eye-off" style="width:13px;height:13px;"></i>
+                   </button>`
+                : `<button class="btn btn-primary btn-sm" onclick="AdminReviewsManager.toggleApproval('${rv.id}', true)" title="Approve & Publish">
+                     <i data-lucide="check" style="width:13px;height:13px;"></i> Approve
+                   </button>`
+              }
+              <button class="btn btn-ghost btn-sm" onclick="openEditReviewModal('${rv.id}','${this._esc(rv.name)}','${this._esc(rv.role)}',${rv.rating||5},'${this._esc(rv.text)}',${rv.approved})" title="Edit">
+                <i data-lucide="pencil" style="width:13px;height:13px;"></i>
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="AdminReviewsManager.deleteReview('${rv.id}')" title="Delete">
+                <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    },
+
+    async toggleApproval(id, approved) {
+      try {
+        const { db, doc, updateDoc } = await this._getDb();
+        await updateDoc(doc(db, 'reviews', id), { approved });
+        this._cached = null; // invalidate cache
+        showAdminToast(approved ? 'Review published!' : 'Review unpublished.', approved ? 'success' : 'info');
+        await this.loadPage(0);
+      } catch(e) { showAdminToast('Error: ' + e.message, 'error'); }
+    },
+
+    async deleteReview(id) {
+      openConfirm('Delete Review?', 'This review will be permanently removed.', async () => {
+        try {
+          const { db, doc, deleteDoc } = await this._getDb();
+          await deleteDoc(doc(db, 'reviews', id));
+          this._cached = null; // invalidate cache
+          showAdminToast('Review deleted.', 'success');
+          this._page = 0;
+          await this.loadPage(0);
+        } catch(e) { showAdminToast('Error: ' + e.message, 'error'); }
+      });
+    },
+
+    async saveReview(id, data) {
+      try {
+        const { db, doc, setDoc, addDoc, collection, serverTimestamp } = await this._getDb();
+        if (id) {
+          await setDoc(doc(db, 'reviews', id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
+          showAdminToast('Review updated.', 'success');
+        } else {
+          await addDoc(collection(db, 'reviews'), { ...data, createdAt: serverTimestamp() });
+          showAdminToast('Review added.', 'success');
+        }
+        this._cached = null; // invalidate cache
+        this._page = 0;
+        await this.loadPage(0);
+      } catch(e) { showAdminToast('Error: ' + e.message, 'error'); }
+    },
+
+    _esc(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); },
+    _timeAgo(ts) {
+      if (!ts) return '—';
+      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      const diff = Date.now() - d.getTime();
+      if (diff < 86400000) return 'Today';
+      if (diff < 604800000) return Math.floor(diff/86400000) + 'd ago';
+      if (diff < 2592000000) return Math.floor(diff/604800000) + 'w ago';
+      return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    },
+  };
+
+  /* Reviews page helpers */
+  let _rvModalRating = 5;
+
+  function setReviewsFilter(filter, el) {
+    AdminReviewsManager._filter = filter;
+    AdminReviewsManager._page   = 0;
+    document.querySelectorAll('#reviewsTabBar .tab-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    AdminReviewsManager.loadPage(0);
+  }
+
+  function loadReviewsPage(dir) {
+    AdminReviewsManager.loadPage(dir);
+  }
+
+  function setModalRating(val) {
+    _rvModalRating = val;
+    document.getElementById('rvRatingVal').value = val;
+    document.querySelectorAll('.rv-modal-star').forEach(s => {
+      s.style.color = parseInt(s.dataset.val) <= val ? 'var(--color-primary)' : 'var(--text-muted)';
+    });
+  }
+
+  function openAddReviewModal() {
+    _rvModalRating = 5;
+    document.getElementById('reviewEditId').value = '';
+    document.getElementById('rvName').value = '';
+    document.getElementById('rvRole').value = '';
+    document.getElementById('rvText').value = '';
+    document.getElementById('rvRatingVal').value = 5;
+    document.getElementById('reviewModalTitle').textContent = 'Add Review';
+    document.getElementById('rvApprovedToggle').classList.add('on');
+    setModalRating(5);
+    openModal('reviewModal');
+  }
+
+  function openEditReviewModal(id, name, role, rating, text, approved) {
+    document.getElementById('reviewEditId').value = id;
+    document.getElementById('rvName').value = name;
+    document.getElementById('rvRole').value = role;
+    document.getElementById('rvText').value = text;
+    document.getElementById('reviewModalTitle').textContent = 'Edit Review';
+    if (approved) document.getElementById('rvApprovedToggle').classList.add('on');
+    else document.getElementById('rvApprovedToggle').classList.remove('on');
+    _rvModalRating = rating || 5;
+    document.getElementById('rvRatingVal').value = _rvModalRating;
+    setModalRating(_rvModalRating);
+    openModal('reviewModal');
+  }
+
+  function saveReview() {
+    const id       = document.getElementById('reviewEditId').value;
+    const name     = document.getElementById('rvName').value.trim();
+    const role     = document.getElementById('rvRole').value.trim() || 'Guest';
+    const text     = document.getElementById('rvText').value.trim();
+    const rating   = parseInt(document.getElementById('rvRatingVal').value) || 5;
+    const approved = document.getElementById('rvApprovedToggle').classList.contains('on');
+
+    if (!name || !text) { showAdminToast('Name and review text are required.', 'error'); return; }
+
+    closeModal('reviewModal');
+    AdminReviewsManager.saveReview(id || null, { name, role, text, rating, approved });
+  }
+
+  /* Intercept navigateTo for reviews page to trigger load */
+  const _origNavigateTo = typeof navigateTo === 'function' ? navigateTo : null;
+
+  // Hook into the page render — patch after DOMContentLoaded
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+      // patch navigateTo to auto-load reviews
+      const origFn = window.navigateTo;
+      window.navigateTo = function(page, el) {
+        origFn(page, el);
+        if (page === 'reviews') {
+          AdminReviewsManager._page   = 0;
+          AdminReviewsManager._cached = null;
+          AdminReviewsManager.loadPage(0);
+        }
+      };
+    }, 200);
+  });
+
+  function showAdminToast(msg, type = 'info') {
+    // Use existing toast system if available
+    if (typeof AdminToast !== 'undefined') { AdminToast.show(msg, type); return; }
+    const icons = { success: 'check-circle', error: 'x-circle', info: 'info', warning: 'alert-triangle' };
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `
+      <div class="toast-icon"><i data-lucide="${icons[type]||'info'}" style="width:16px;height:16px;"></i></div>
+      <div class="toast-content"><div class="toast-msg">${msg}</div></div>
+      <div class="toast-progress" style="animation-duration:3s;"></div>
+    `;
+    container.appendChild(t);
+    if (window.lucide) lucide.createIcons();
+    setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, 3000);
+  }
+
   </script>
 </body>
 </html>
