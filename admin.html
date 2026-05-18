@@ -1106,9 +1106,53 @@
     .activity-text strong { color: var(--text-primary); }
     .activity-time { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
   </style>
+
+  <!-- ── NŌVA: Loading Overlay (prevents theme/branding flash) ── -->
+  <style>
+    #nova-loading-overlay {
+      position: fixed; inset: 0; z-index: 999999;
+      background: var(--bg-base, #080809);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      transition: opacity 0.35s ease;
+    }
+    #nova-loading-overlay.nova-fade-out { opacity: 0; pointer-events: none; }
+    .nova-loader-logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 2rem; font-weight: 600; letter-spacing: 0.12em;
+      color: var(--color-primary, #e8a020);
+    }
+    .nova-loader-spinner {
+      width: 26px; height: 26px;
+      border: 2px solid rgba(232,160,32,0.15);
+      border-top-color: var(--color-primary, #e8a020);
+      border-radius: 50%;
+      animation: nova-spin 0.75s linear infinite;
+    }
+    @keyframes nova-spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 
 <body>
+  <!-- ── NŌVA: Loading Overlay ── -->
+  <div id="nova-loading-overlay">
+    <div class="nova-loader-logo" id="nova-loader-name">N&#332;VA</div>
+    <div class="nova-loader-spinner"></div>
+  </div>
+  <script>
+    /* Set the correct name in the overlay instantly from localStorage cache */
+    (function(){
+      try {
+        var b = JSON.parse(localStorage.getItem('nova_branding') || 'null')
+             || JSON.parse(localStorage.getItem('nova_site_branding') || 'null');
+        if (b && b.name) {
+          var el = document.getElementById('nova-loader-name');
+          if (el) el.textContent = b.name;
+        }
+      } catch(e) {}
+    })();
+  </script>
+
   <!-- Page Loader -->
   <!-- ============================================================
        ADMIN PIN LOGIN OVERLAY
@@ -1745,7 +1789,7 @@
                 </div>
                 <div class="form-group">
                   <label class="form-label">Description</label>
-                  <textarea class="form-control" id="brandDesc" rows="3">A cinematic dining experience. Order online, dine in style.</textarea>
+                  <textarea class="form-control" id="brandDesc" rows="3" oninput="updateBrandPreview()">A cinematic dining experience. Order online, dine in style.</textarea>
                 </div>
               </div>
             </div>
@@ -1756,26 +1800,26 @@
               <div class="card-body">
                 <div class="form-group">
                   <label class="form-label">Address</label>
-                  <input type="text" class="form-control" id="brandAddress" value="123 Gourmet Avenue, New York, NY 10001" />
+                  <input type="text" class="form-control" id="brandAddress" value="123 Gourmet Avenue, New York, NY 10001" oninput="updateBrandPreview()" />
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Phone</label>
-                    <input type="text" class="form-control" id="brandPhone" value="+1 (555) 234-5678" />
+                    <input type="text" class="form-control" id="brandPhone" value="+1 (555) 234-5678" oninput="updateBrandPreview()" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Email</label>
-                    <input type="text" class="form-control" id="brandEmail" value="hello@nova-dining.com" />
+                    <input type="text" class="form-control" id="brandEmail" value="hello@nova-dining.com" oninput="updateBrandPreview()" />
                   </div>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Opening Time</label>
-                    <input type="time" class="form-control" id="brandOpen" value="11:00" />
+                    <input type="time" class="form-control" id="brandOpen" value="11:00" oninput="updateBrandPreview()" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Closing Time</label>
-                    <input type="time" class="form-control" id="brandClose" value="23:00" />
+                    <input type="time" class="form-control" id="brandClose" value="23:00" oninput="updateBrandPreview()" />
                   </div>
                 </div>
               </div>
@@ -1788,21 +1832,21 @@
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Delivery Fee (DA)</label>
-                    <input type="number" class="form-control" id="deliveryFee" value="4.99" step="0.01" />
+                    <input type="number" class="form-control" id="deliveryFee" value="4.99" step="0.01" oninput="updateBrandPreview()" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Free Delivery Over (DA)</label>
-                    <input type="number" class="form-control" id="freeDeliveryThreshold" value="35" />
+                    <input type="number" class="form-control" id="freeDeliveryThreshold" value="35" oninput="updateBrandPreview()" />
                   </div>
                 </div>
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Tax Rate (%)</label>
-                    <input type="number" class="form-control" id="taxRate" value="8" step="0.1" />
+                    <input type="number" class="form-control" id="taxRate" value="8" step="0.1" oninput="updateBrandPreview()" />
                   </div>
                   <div class="form-group">
                     <label class="form-label">Currency Symbol</label>
-                    <input type="text" class="form-control" id="currency" value="DA" />
+                    <input type="text" class="form-control" id="currency" value="DA" oninput="updateBrandPreview()" />
                   </div>
                 </div>
                 <div class="toggle-wrap">
@@ -4007,9 +4051,19 @@
     updateBrandPreview();
   }
 
+  // Tracks whether we've already done the initial Firestore fetch for branding.
+  // After the first fetch the localStorage copy is authoritative (it's kept in
+  // sync by updateBrandPreview on every keystroke), so re-fetching on every
+  // navigation to the Branding page would wipe unsaved edits.
+  let _brandingFetched = false;
+
   async function loadBranding() {
-    // 1. Apply localStorage immediately (instant paint)
+    // Always restore from localStorage first (instant paint + preserves edits)
     _applyBrandingToFields(getBranding());
+
+    // Only hit Firestore on the first visit — subsequent calls just use localStorage
+    if (_brandingFetched) return;
+    _brandingFetched = true;
 
     // 2. Fetch Firestore for the authoritative global value
     try {
@@ -4028,7 +4082,7 @@
       const snap = await getDoc(doc(db, 'settings', 'branding'));
       if (snap.exists()) {
         const b = snap.data();
-        // Update localStorage cache
+        // Update localStorage cache AND the form (first load only)
         StorageManager.set('branding', b);
         StorageManager.set('site_branding', b);
         _applyBrandingToFields(b);
@@ -4055,6 +4109,26 @@
 
     // Update page title
     document.title = `${name} Admin — Control Center`;
+
+    // ── Persist to localStorage so navigating away and back within the admin
+    // panel never wipes the user's unsaved edits. ───────────────────────────
+    const snapshot = {
+      name,
+      tagline,
+      desc:                  document.getElementById('brandDesc')?.value                  || '',
+      address:               addr,
+      phone,
+      email:                 document.getElementById('brandEmail')?.value                 || '',
+      open,
+      close,
+      deliveryFee:           document.getElementById('deliveryFee')?.value                || '',
+      freeDeliveryThreshold: document.getElementById('freeDeliveryThreshold')?.value      || '',
+      taxRate:               document.getElementById('taxRate')?.value                    || '',
+      currency:              document.getElementById('currency')?.value                   || '',
+      logoText:              name,
+    };
+    StorageManager.set('branding', snapshot);
+
     if (window.lucide) lucide.createIcons();
   }
 
@@ -4091,6 +4165,10 @@
       const app = getApps().length ? getApps()[0] : initializeApp(cfg);
       const db  = getFirestore(app);
       await setDoc(doc(db, 'settings', 'branding'), b);
+      // Mark that we have a fresh copy — next navigation to Branding page
+      // will use localStorage (which is now in sync with Firestore) instead
+      // of re-fetching and potentially overwriting further edits.
+      _brandingFetched = true;
       toast('✅ Branding saved globally — all accounts will see this', 'success', 'Saved ✓');
       novaMarkFirestoreOK();
     } catch(e) {
@@ -4216,22 +4294,34 @@
   }
 
   async function saveTheme() {
-    // Read directly from the DOM so onSnapshot can't corrupt the save.
+    // ── Use admin_theme (localStorage) as the primary source of truth. ──────
+    // The onSnapshot listener in novaThemeSync writes only to nova_theme (not
+    // nova_admin_theme), so admin_theme is immune to Firestore clobbering.
+    // Reading from DOM inline styles first was the old approach — it caused
+    // onSnapshot to silently overwrite the user's preset before the save ran.
+    const localSaved = StorageManager.get('admin_theme') || {};
     const root  = document.documentElement;
     const style = getComputedStyle(root);
     const saved = {};
     [...BRAND_COLORS, ...BG_COLORS, ...TEXT_COLORS].forEach(c => {
-      const v = root.style.getPropertyValue(c.var) || style.getPropertyValue(c.var).trim();
+      const v = localSaved[c.var]
+             || root.style.getPropertyValue(c.var)
+             || style.getPropertyValue(c.var).trim();
       if (v) saved[c.var] = v;
     });
     SPACING_SLIDERS.forEach(s => {
-      const v = root.style.getPropertyValue(s.var) || style.getPropertyValue(s.var).trim();
+      const v = localSaved[s.var]
+             || root.style.getPropertyValue(s.var)
+             || style.getPropertyValue(s.var).trim();
       if (v) saved[s.var] = v;
     });
     ['--font-display','--font-body'].forEach(f => {
-      const v = root.style.getPropertyValue(f);
+      const v = localSaved[f] || root.style.getPropertyValue(f);
       if (v) saved[f] = v;
     });
+
+    // Re-apply so the DOM reflects exactly what we're about to save
+    Object.entries(saved).forEach(([k, v]) => root.style.setProperty(k, v));
     StorageManager.set('admin_theme', saved);
     StorageManager.set('theme', saved);
 
@@ -4916,74 +5006,87 @@
     }
   </script>
 
-  <!-- ── NŌVA: Global Theme + Branding Sync via Firestore ── -->
+    <!-- ── NŌVA: Global Theme + Branding Sync via Firestore ── -->
   <script type="module">
     (async function novaThemeSync() {
+      /* ── Overlay helpers ─────────────────────────────────────────── */
+      const _overlay = document.getElementById('nova-loading-overlay');
+      function _removeOverlay() {
+        if (!_overlay) return;
+        _overlay.classList.add('nova-fade-out');
+        setTimeout(() => { try { _overlay.remove(); } catch(e) {} }, 380);
+      }
+
+      const _FB_CFG = {
+        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+        authDomain: "protech-6c388.firebaseapp.com",
+        projectId: "protech-6c388",
+        storageBucket: "protech-6c388.firebasestorage.app",
+        messagingSenderId: "987892798162",
+        appId: "1:987892798162:web:2307b1e8773430df1d930b",
+      };
+
+      /* ── Apply theme vars to DOM + cache ─────────────────────────── */
+      function _applyTheme(data) {
+        if (!data) return;
+        const root = document.documentElement;
+        if (data.mode) {
+          root.setAttribute('data-theme', data.mode);
+          try { localStorage.setItem('nova_themeMode', JSON.stringify(data.mode)); } catch(e) {}
+        }
+        const cssVars = {};
+        Object.entries(data).forEach(([k, v]) => {
+          if (!k.startsWith('--')) return;
+          root.style.setProperty(k, v);
+          cssVars[k] = v;
+        });
+        try {
+          localStorage.setItem('nova_admin_theme', JSON.stringify(cssVars));
+          localStorage.setItem('nova_theme',       JSON.stringify(cssVars));
+        } catch(e) {}
+      }
+
+      /* ── Apply branding to DOM + cache ───────────────────────────── */
+      function applyBrandingData(b) {
+        if (!b || !b.name) return;
+        try { localStorage.setItem('nova_branding',      JSON.stringify(b)); } catch(e) {}
+        try { localStorage.setItem('nova_site_branding', JSON.stringify(b)); } catch(e) {}
+        var sl = document.getElementById('sidebarLogo');
+        if (sl && b.name) sl.textContent = b.name;
+        document.title = b.name + ' Admin — Control Center';
+        var loaderEl = document.getElementById('nova-loader-name');
+        if (loaderEl) loaderEl.textContent = b.name;
+      }
+
       try {
         const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
         const { getFirestore, doc, getDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        const cfg = {
-          apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
-          authDomain: "protech-6c388.firebaseapp.com",
-          projectId: "protech-6c388",
-          storageBucket: "protech-6c388.firebasestorage.app",
-          messagingSenderId: "987892798162",
-          appId: "1:987892798162:web:2307b1e8773430df1d930b",
-        };
-        const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+        const app = getApps().length ? getApps()[0] : initializeApp(_FB_CFG);
         const db  = getFirestore(app);
 
-        // ── Theme listener ──────────────────────────────────
+        /* ── Fetch theme + branding in parallel (one round-trip) ───── */
+        const [themeSnap, brandSnap] = await Promise.all([
+          getDoc(doc(db, 'settings', 'theme')),
+          getDoc(doc(db, 'settings', 'branding')),
+        ]);
+
+        if (themeSnap.exists()) _applyTheme(themeSnap.data());
+        if (brandSnap.exists()) applyBrandingData(brandSnap.data());
+
+        /* ── Data applied — remove overlay ──────────────────────────── */
+        _removeOverlay();
+
+        /* ── Live listeners for real-time updates ───────────────────── */
         onSnapshot(doc(db, 'settings', 'theme'), snap => {
-          if (!snap.exists()) return;
-          const theme = snap.data();
-          const root  = document.documentElement;
-          if (theme.mode) {
-            root.setAttribute('data-theme', theme.mode);
-            try { localStorage.setItem('nova_themeMode', JSON.stringify(theme.mode)); } catch(e) {}
-          }
-          const cssVars = {};
-          Object.entries(theme).forEach(([k, v]) => {
-            if (!k.startsWith('--')) return;
-            root.style.setProperty(k, v);
-            cssVars[k] = v;
-          });
-          try {
-            // Only update nova_theme (landing page). Never overwrite nova_admin_theme
-            // here — that key is the editor's working copy and clobbering it causes
-            // saveTheme() to re-save stale Firestore data instead of the user's picks.
-            localStorage.setItem('nova_theme', JSON.stringify(cssVars));
-          } catch(e) {}
+          if (snap.exists()) _applyTheme(snap.data());
         });
-
-        // ── Branding: getDoc for immediate value ────────────
-        const brandSnap = await getDoc(doc(db, 'settings', 'branding'));
-        if (brandSnap.exists()) {
-          const b = brandSnap.data();
-          try { localStorage.setItem('nova_branding',      JSON.stringify(b)); } catch(e) {}
-          try { localStorage.setItem('nova_site_branding', JSON.stringify(b)); } catch(e) {}
-          const sl = document.getElementById('sidebarLogo');
-          if (sl && b.name) sl.textContent = b.name;
-          document.title = b.name + ' Admin — Control Center';
-        }
-
-        // ── Then keep listening for live updates ────────────
         onSnapshot(doc(db, 'settings', 'branding'), snap => {
-          if (!snap.exists()) return;
-          const b = snap.data();
-          if (!b.name) return;
-          try { localStorage.setItem('nova_branding',      JSON.stringify(b)); } catch(e) {}
-          try { localStorage.setItem('nova_site_branding', JSON.stringify(b)); } catch(e) {}
-          const sl = document.getElementById('sidebarLogo');
-          if (sl) sl.textContent = b.name;
-          document.title = b.name + ' Admin — Control Center';
+          if (snap.exists()) applyBrandingData(snap.data());
         });
 
       } catch(e) {
-        console.error('[NŌVA] Sync error:', e && e.code, e && e.message);
-        if (e && (e.code === 'permission-denied' || e.code === 'PERMISSION_DENIED')) {
-          novaShowFirestoreError('sync', e);
-        }
+        console.warn('[NŌVA] Sync error:', e && e.code, e && e.message);
+        _removeOverlay(); // always remove overlay even on error
       }
     })();
   </script>

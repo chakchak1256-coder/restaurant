@@ -821,8 +821,52 @@
     .mt-8           { margin-top: 8px; }
     .w-full         { width: 100%; }
   </style>
+
+  <!-- ── NŌVA: Loading Overlay (prevents theme/branding flash) ── -->
+  <style>
+    #nova-loading-overlay {
+      position: fixed; inset: 0; z-index: 999999;
+      background: var(--bg-base, #080809);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 14px;
+      transition: opacity 0.35s ease;
+    }
+    #nova-loading-overlay.nova-fade-out { opacity: 0; pointer-events: none; }
+    .nova-loader-logo {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 2rem; font-weight: 600; letter-spacing: 0.12em;
+      color: var(--color-primary, #e8a020);
+    }
+    .nova-loader-spinner {
+      width: 26px; height: 26px;
+      border: 2px solid rgba(232,160,32,0.15);
+      border-top-color: var(--color-primary, #e8a020);
+      border-radius: 50%;
+      animation: nova-spin 0.75s linear infinite;
+    }
+    @keyframes nova-spin { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
+  <!-- ── NŌVA: Loading Overlay ── -->
+  <div id="nova-loading-overlay">
+    <div class="nova-loader-logo" id="nova-loader-name">N&#332;VA</div>
+    <div class="nova-loader-spinner"></div>
+  </div>
+  <script>
+    /* Set the correct name in the overlay instantly from localStorage cache */
+    (function(){
+      try {
+        var b = JSON.parse(localStorage.getItem('nova_branding') || 'null')
+             || JSON.parse(localStorage.getItem('nova_site_branding') || 'null');
+        if (b && b.name) {
+          var el = document.getElementById('nova-loader-name');
+          if (el) el.textContent = b.name;
+        }
+      } catch(e) {}
+    })();
+  </script>
+
 
 <!-- ============================================================
      PAGE LOADER
@@ -2098,67 +2142,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-  <!-- ── NŌVA: Global Theme + Branding Sync via Firestore ── -->
+    <!-- ── NŌVA: Global Theme + Branding Sync via Firestore ── -->
   <script type="module">
     (async function novaThemeSync() {
+      /* ── Overlay helpers ─────────────────────────────────────────── */
+      const _overlay = document.getElementById('nova-loading-overlay');
+      function _removeOverlay() {
+        if (!_overlay) return;
+        _overlay.classList.add('nova-fade-out');
+        setTimeout(() => { try { _overlay.remove(); } catch(e) {} }, 380);
+      }
+
+      const _FB_CFG = {
+        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+        authDomain: "protech-6c388.firebaseapp.com",
+        projectId: "protech-6c388",
+        storageBucket: "protech-6c388.firebasestorage.app",
+        messagingSenderId: "987892798162",
+        appId: "1:987892798162:web:2307b1e8773430df1d930b",
+      };
+
+      /* ── Apply theme vars to DOM + cache ─────────────────────────── */
+      function _applyTheme(data) {
+        if (!data) return;
+        const root = document.documentElement;
+        if (data.mode) {
+          root.setAttribute('data-theme', data.mode);
+          try { localStorage.setItem('nova_themeMode', JSON.stringify(data.mode)); } catch(e) {}
+        }
+        const cssVars = {};
+        Object.entries(data).forEach(([k, v]) => {
+          if (!k.startsWith('--')) return;
+          root.style.setProperty(k, v);
+          cssVars[k] = v;
+        });
+        try {
+          localStorage.setItem('nova_admin_theme', JSON.stringify(cssVars));
+          localStorage.setItem('nova_theme',       JSON.stringify(cssVars));
+        } catch(e) {}
+      }
+
+      /* ── Apply branding to DOM + cache ───────────────────────────── */
+      function applyBrandingData(b) {
+        if (!b || !b.name) return;
+        try { localStorage.setItem('nova_branding',      JSON.stringify(b)); } catch(e) {}
+        try { localStorage.setItem('nova_site_branding', JSON.stringify(b)); } catch(e) {}
+        ['.topbar-logo', '.pin-logo', '.loader-logo', '.receipt-title'].forEach(function(sel) {
+          document.querySelectorAll(sel).forEach(function(el) { el.textContent = b.name; });
+        });
+        document.title = document.title.replace(/NŌVA|NOVA/g, b.name);
+        var loaderEl = document.getElementById('nova-loader-name');
+        if (loaderEl) loaderEl.textContent = b.name;
+      }
+
       try {
         const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
         const { getFirestore, doc, getDoc, onSnapshot } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-        const cfg = {
-          apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
-          authDomain: "protech-6c388.firebaseapp.com",
-          projectId: "protech-6c388",
-          storageBucket: "protech-6c388.firebasestorage.app",
-          messagingSenderId: "987892798162",
-          appId: "1:987892798162:web:2307b1e8773430df1d930b",
-        };
-        const app = getApps().length ? getApps()[0] : initializeApp(cfg);
+        const app = getApps().length ? getApps()[0] : initializeApp(_FB_CFG);
         const db  = getFirestore(app);
 
-        // ── Apply branding to DOM ───────────────────────────
-        function applyBrandingData(b) {
-          if (!b || !b.name) return;
-          try { localStorage.setItem('nova_branding',      JSON.stringify(b)); } catch(e) {}
-          try { localStorage.setItem('nova_site_branding', JSON.stringify(b)); } catch(e) {}
-          ['.topbar-logo', '.pin-logo', '.loader-logo', '.receipt-title'].forEach(function(sel) {
-            document.querySelectorAll(sel).forEach(function(el) { el.textContent = b.name; });
-          });
-          document.title = document.title.replace(/NŌVA|NOVA/g, b.name);
-        }
+        /* ── Fetch theme + branding in parallel (one round-trip) ───── */
+        const [themeSnap, brandSnap] = await Promise.all([
+          getDoc(doc(db, 'settings', 'theme')),
+          getDoc(doc(db, 'settings', 'branding')),
+        ]);
 
-        // ── Theme listener ──────────────────────────────────
+        if (themeSnap.exists()) _applyTheme(themeSnap.data());
+        if (brandSnap.exists()) applyBrandingData(brandSnap.data());
+
+        /* ── Data applied — remove overlay ──────────────────────────── */
+        _removeOverlay();
+
+        /* ── Live listeners for real-time updates ───────────────────── */
         onSnapshot(doc(db, 'settings', 'theme'), snap => {
-          if (!snap.exists()) return;
-          const theme = snap.data();
-          const root  = document.documentElement;
-          if (theme.mode) {
-            root.setAttribute('data-theme', theme.mode);
-            try { localStorage.setItem('nova_themeMode', JSON.stringify(theme.mode)); } catch(e) {}
-          }
-          const cssVars = {};
-          Object.entries(theme).forEach(([k, v]) => {
-            if (!k.startsWith('--')) return;
-            root.style.setProperty(k, v);
-            cssVars[k] = v;
-          });
-          try {
-            localStorage.setItem('nova_admin_theme', JSON.stringify(cssVars));
-            localStorage.setItem('nova_theme',       JSON.stringify(cssVars));
-          } catch(e) {}
+          if (snap.exists()) _applyTheme(snap.data());
         });
-
-        // ── Branding: getDoc first (works even if doc was just created) ──
-        const brandSnap = await getDoc(doc(db, 'settings', 'branding'));
-        if (brandSnap.exists()) {
-          applyBrandingData(brandSnap.data());
-        }
-
-        // ── Then keep listening for live updates ────────────
         onSnapshot(doc(db, 'settings', 'branding'), snap => {
           if (snap.exists()) applyBrandingData(snap.data());
         });
 
-      } catch(e) { console.warn('[NŌVA] Sync error:', e); }
+      } catch(e) {
+        console.warn('[NŌVA] Sync error:', e && e.code, e && e.message);
+        _removeOverlay(); // always remove overlay even on error
+      }
     })();
   </script>
 </body>
