@@ -1576,6 +1576,9 @@
           <i data-lucide="star" class="nav-icon"></i> Reviews
           <span class="nav-badge" id="reviewsPendingBadge" style="display:none;">0</span>
         </div>
+        <div class="nav-item" onclick="navigateTo('bestsellers', this)" data-page="bestsellers">
+          <i data-lucide="trending-up" class="nav-icon"></i> Best Sellers
+        </div>
 
       </div>
 
@@ -2164,6 +2167,78 @@
           <button class="btn btn-ghost btn-sm" id="rvNextBtn" onclick="loadReviewsPage(1)">
             Next <i data-lucide="chevron-right" style="width:14px;height:14px;"></i>
           </button>
+        </div>
+      </section>
+
+      <!-- =============================================
+           PAGE: BEST SELLERS
+           ============================================= -->
+      <section class="page" id="page-bestsellers">
+        <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:32px;">
+          <div>
+            <div style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--color-primary);margin-bottom:6px;">Homepage Section</div>
+            <h1 style="font-family:var(--font-display);font-size:clamp(24px,3vw,36px);font-weight:700;color:var(--text-primary);line-height:1.1;">Best Sellers</h1>
+            <p style="font-size:13px;color:var(--text-muted);margin-top:6px;">Control which items appear in the Best Sellers section on the website.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <div id="bsSectionStatusBadge" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius-full);font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.06em;"></div>
+            <button class="btn btn-danger" id="bsDisableSectionBtn" onclick="BestSellersAdmin.toggleSection()">
+              <i data-lucide="eye-off" style="width:15px;height:15px;" id="bsToggleSectionIcon"></i>
+              <span id="bsDisableSectionBtnLabel">Disable Section</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats bar -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:28px;">
+          <div class="stat-card" style="padding:18px 20px;">
+            <div style="font-size:11px;font-family:var(--font-heading);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Total Items</div>
+            <div id="bsStatTotal" style="font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--text-primary);">0</div>
+          </div>
+          <div class="stat-card" style="padding:18px 20px;">
+            <div style="font-size:11px;font-family:var(--font-heading);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Enabled</div>
+            <div id="bsStatEnabled" style="font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--color-accent);">0</div>
+          </div>
+          <div class="stat-card" style="padding:18px 20px;">
+            <div style="font-size:11px;font-family:var(--font-heading);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Disabled</div>
+            <div id="bsStatDisabled" style="font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--color-danger);">0</div>
+          </div>
+          <div class="stat-card" style="padding:18px 20px;">
+            <div style="font-size:11px;font-family:var(--font-heading);font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px;">Section Status</div>
+            <div id="bsStatSection" style="font-family:var(--font-display);font-size:22px;font-weight:700;">—</div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
+          <div style="position:relative;flex:1;min-width:200px;">
+            <i data-lucide="search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--text-muted);pointer-events:none;"></i>
+            <input type="text" id="bsSearchInput" placeholder="Search menu items…" oninput="BestSellersAdmin.filter()"
+              style="width:100%;padding:10px 12px 10px 36px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);color:var(--text-primary);font-size:13px;outline:none;transition:border-color 0.2s;"
+              onfocus="this.style.borderColor='var(--border-active)'" onblur="this.style.borderColor='var(--border-color)'" />
+          </div>
+          <select id="bsFilterSelect" onchange="BestSellersAdmin.filter()"
+            style="padding:10px 14px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);color:var(--text-primary);font-size:13px;outline:none;cursor:pointer;">
+            <option value="all">All Items</option>
+            <option value="enabled">Enabled Only</option>
+            <option value="disabled">Disabled Only</option>
+          </select>
+          <button class="btn btn-ghost btn-sm" onclick="BestSellersAdmin.enableAll()">
+            <i data-lucide="check-circle-2" style="width:14px;height:14px;"></i> Enable All
+          </button>
+          <button class="btn btn-ghost btn-sm" onclick="BestSellersAdmin.disableAll()">
+            <i data-lucide="x-circle" style="width:14px;height:14px;"></i> Disable All
+          </button>
+        </div>
+
+        <!-- Items grid -->
+        <div id="bsItemsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px;"></div>
+
+        <!-- Empty state -->
+        <div id="bsEmptyState" style="display:none;text-align:center;padding:60px 20px;color:var(--text-muted);">
+          <i data-lucide="package-open" style="width:48px;height:48px;margin:0 auto 16px;display:block;opacity:0.4;"></i>
+          <div style="font-family:var(--font-heading);font-size:16px;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">No items found</div>
+          <div style="font-size:13px;">Try adjusting your search or filter.</div>
         </div>
       </section>
 
@@ -3768,12 +3843,13 @@
     dashboard: 'Dashboard', analytics: 'Analytics', orders: 'Orders',
     foods: 'Menu & Foods', tables: 'Tables', staff: 'Staff',
     delivery: 'Delivery', notifications: 'Notifications', reviews: 'Reviews',
+    bestsellers: 'Best Sellers',
   };
 
   const MOBILE_TAB_HOME = ['dashboard'];
   const MOBILE_TAB_ORDERS = ['orders'];
   const MOBILE_TAB_MENU = ['foods'];
-  const MOBILE_TAB_MORE = ['analytics', 'tables', 'staff', 'delivery', 'reviews', 'notifications'];
+  const MOBILE_TAB_MORE = ['analytics', 'tables', 'staff', 'delivery', 'reviews', 'notifications', 'bestsellers'];
 
   function getMobileTabForPage(pageId) {
     if (MOBILE_TAB_HOME.includes(pageId)) return 'home';
@@ -3827,6 +3903,7 @@
     if (pageId === 'delivery')   { renderDelivery(); }
     if (pageId === 'notifications') { renderNotifications(); }
     if (pageId === 'reviews')    { if (typeof loadReviews === 'function') loadReviews(); }
+    if (pageId === 'bestsellers') { BestSellersAdmin.render(); }
 
     syncMobileNav(pageId);
 
@@ -5549,6 +5626,238 @@
     if (window.lucide) lucide.createIcons();
     setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, 3000);
   }
+
+  /* =============================================
+     BEST SELLERS ADMIN
+     ============================================= */
+  const BestSellersAdmin = {
+
+    getCfg() {
+      try { return JSON.parse(localStorage.getItem('nova_bestsellers_config') || '{}'); } catch { return {}; }
+    },
+
+    saveCfg(cfg) {
+      localStorage.setItem('nova_bestsellers_config', JSON.stringify(cfg));
+      // Also sync to Firestore if available
+      try {
+        if (window._bsFirestoreDb) {
+          const { doc, setDoc } = window._bsFirestoreRefs;
+          setDoc(doc(window._bsFirestoreDb, 'settings', 'bestsellers'), cfg, { merge: true }).catch(() => {});
+        }
+      } catch(e) {}
+    },
+
+    getFoods() {
+      try { return JSON.parse(localStorage.getItem('nova_foods') || '[]'); } catch { return []; }
+    },
+
+    isEnabled(food, cfg) {
+      // A food is "enabled as bestseller" if it's marked bestseller or featured
+      // Admin can override individual items via cfg.overrides = { [id]: true/false }
+      const overrides = cfg.overrides || {};
+      if (food.id in overrides) return overrides[food.id];
+      return !!(food.bestseller || food.featured);
+    },
+
+    setItemEnabled(foodId, enabled) {
+      const cfg = this.getCfg();
+      if (!cfg.overrides) cfg.overrides = {};
+      cfg.overrides[foodId] = enabled;
+      this.saveCfg(cfg);
+
+      // Also update the food record itself
+      let foods = this.getFoods();
+      foods = foods.map(f => f.id == foodId ? { ...f, bestseller: enabled } : f);
+      localStorage.setItem('nova_foods', JSON.stringify(foods));
+
+      this.render();
+      toast(enabled ? '✓ Added to Best Sellers' : '✓ Removed from Best Sellers', 'success');
+    },
+
+    toggleSection() {
+      const cfg = this.getCfg();
+      const current = cfg.enabled !== false; // default true
+      cfg.enabled = !current;
+      this.saveCfg(cfg);
+      this.render();
+      toast(cfg.enabled ? '✓ Best Sellers section is now visible' : '✓ Best Sellers section hidden from website', cfg.enabled ? 'success' : 'warning');
+    },
+
+    enableAll() {
+      const cfg = this.getCfg();
+      const foods = this.getFoods();
+      cfg.overrides = {};
+      foods.forEach(f => { cfg.overrides[f.id] = true; });
+      this.saveCfg(cfg);
+
+      // Update all food records
+      const updated = foods.map(f => ({ ...f, bestseller: true }));
+      localStorage.setItem('nova_foods', JSON.stringify(updated));
+
+      this.render();
+      toast('✓ All items enabled as Best Sellers', 'success');
+    },
+
+    disableAll() {
+      const cfg = this.getCfg();
+      const foods = this.getFoods();
+      cfg.overrides = {};
+      foods.forEach(f => { cfg.overrides[f.id] = false; });
+      this.saveCfg(cfg);
+
+      // Update all food records
+      const updated = foods.map(f => ({ ...f, bestseller: false, featured: false }));
+      localStorage.setItem('nova_foods', JSON.stringify(updated));
+
+      this.render();
+      toast('✓ All items disabled from Best Sellers', 'info');
+    },
+
+    filter() {
+      this.render();
+    },
+
+    render() {
+      const cfg = this.getCfg();
+      const sectionEnabled = cfg.enabled !== false;
+      const foods = this.getFoods();
+
+      // Update status badge
+      const badge = document.getElementById('bsSectionStatusBadge');
+      const btn = document.getElementById('bsDisableSectionBtn');
+      const btnLabel = document.getElementById('bsDisableSectionBtnLabel');
+      const btnIcon = document.getElementById('bsToggleSectionIcon');
+      const statSection = document.getElementById('bsStatSection');
+
+      if (badge) {
+        badge.textContent = sectionEnabled ? '● SECTION LIVE' : '○ SECTION HIDDEN';
+        badge.style.background = sectionEnabled ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.10)';
+        badge.style.color = sectionEnabled ? 'var(--color-accent)' : 'var(--color-danger)';
+        badge.style.border = sectionEnabled ? '1px solid rgba(16,185,129,0.25)' : '1px solid rgba(239,68,68,0.22)';
+      }
+      if (btn) {
+        btn.style.background = sectionEnabled ? 'var(--color-danger)' : 'var(--color-accent)';
+        btn.style.borderColor = sectionEnabled ? 'var(--color-danger)' : 'var(--color-accent)';
+      }
+      if (btnLabel) btnLabel.textContent = sectionEnabled ? 'Disable Section' : 'Enable Section';
+      if (btnIcon) btnIcon.setAttribute('data-lucide', sectionEnabled ? 'eye-off' : 'eye');
+      if (statSection) {
+        statSection.textContent = sectionEnabled ? 'Live' : 'Hidden';
+        statSection.style.color = sectionEnabled ? 'var(--color-accent)' : 'var(--color-danger)';
+      }
+
+      // Stats
+      const enabledItems = foods.filter(f => this.isEnabled(f, cfg));
+      const disabledItems = foods.filter(f => !this.isEnabled(f, cfg));
+      const statTotal = document.getElementById('bsStatTotal');
+      const statEnabled = document.getElementById('bsStatEnabled');
+      const statDisabled = document.getElementById('bsStatDisabled');
+      if (statTotal) statTotal.textContent = foods.length;
+      if (statEnabled) statEnabled.textContent = enabledItems.length;
+      if (statDisabled) statDisabled.textContent = disabledItems.length;
+
+      // Filter + search
+      const q = (document.getElementById('bsSearchInput')?.value || '').toLowerCase();
+      const filterVal = document.getElementById('bsFilterSelect')?.value || 'all';
+
+      let filtered = foods.filter(f => {
+        if (q && !f.name.toLowerCase().includes(q) && !(f.category||'').toLowerCase().includes(q)) return false;
+        const en = this.isEnabled(f, cfg);
+        if (filterVal === 'enabled' && !en) return false;
+        if (filterVal === 'disabled' && en) return false;
+        return true;
+      });
+
+      // Sort: enabled first, then by orders desc
+      filtered.sort((a, b) => {
+        const ae = this.isEnabled(a, cfg), be = this.isEnabled(b, cfg);
+        if (ae !== be) return ae ? -1 : 1;
+        return (b.orders || 0) - (a.orders || 0);
+      });
+
+      const grid = document.getElementById('bsItemsGrid');
+      const empty = document.getElementById('bsEmptyState');
+      if (!grid) return;
+
+      if (!filtered.length) {
+        grid.innerHTML = '';
+        if (empty) empty.style.display = 'block';
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
+      if (empty) empty.style.display = 'none';
+
+      grid.innerHTML = filtered.map(f => {
+        const en = this.isEnabled(f, cfg);
+        return `
+        <div style="
+          background:var(--bg-card);border:1px solid ${en ? 'rgba(16,185,129,0.22)' : 'var(--border-color)'};
+          border-radius:var(--radius-lg);overflow:hidden;
+          transition:box-shadow 0.2s,border-color 0.2s;
+          ${en ? 'box-shadow:0 0 0 1px rgba(16,185,129,0.08);' : 'opacity:0.75;'}
+        ">
+          <!-- Image -->
+          <div style="position:relative;height:160px;overflow:hidden;background:var(--bg-base);">
+            <img src="${f.image||''}" alt="${f.name}" loading="lazy"
+              style="width:100%;height:100%;object-fit:cover;display:block;transition:transform 0.4s;"
+              onerror="this.style.display='none'" />
+            <!-- Status pill -->
+            <div style="
+              position:absolute;top:10px;left:10px;
+              display:inline-flex;align-items:center;gap:5px;
+              padding:4px 10px;border-radius:999px;
+              font-family:var(--font-heading);font-size:10px;font-weight:700;letter-spacing:0.08em;
+              background:${en ? 'rgba(16,185,129,0.9)' : 'rgba(239,68,68,0.85)'};
+              color:#fff;backdrop-filter:blur(6px);
+            ">
+              ${en ? '● ENABLED' : '○ DISABLED'}
+            </div>
+            <!-- Orders badge -->
+            <div style="
+              position:absolute;bottom:10px;right:10px;
+              display:inline-flex;align-items:center;gap:4px;
+              padding:4px 10px;border-radius:999px;
+              font-family:var(--font-heading);font-size:10px;font-weight:700;
+              background:rgba(0,0,0,0.6);color:#fff;backdrop-filter:blur(6px);
+            ">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              ${(f.orders||0).toLocaleString()} orders
+            </div>
+          </div>
+          <!-- Body -->
+          <div style="padding:14px 16px 16px;">
+            <div style="font-family:var(--font-heading);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--color-primary);margin-bottom:4px;">${f.category||''}</div>
+            <div style="font-family:var(--font-heading);font-size:15px;font-weight:700;color:var(--text-primary);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${f.name}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${f.description||''}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+              <div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--color-primary);">${(f.price||0).toFixed(2)} DA</div>
+              <button onclick="BestSellersAdmin.setItemEnabled(${f.id}, ${!en})"
+                style="
+                  display:inline-flex;align-items:center;gap:6px;
+                  padding:8px 16px;border-radius:var(--radius-md);border:none;cursor:pointer;
+                  font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.05em;
+                  transition:all 0.15s;
+                  background:${en ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)'};
+                  color:${en ? 'var(--color-danger)' : 'var(--color-accent)'};
+                  border:1px solid ${en ? 'rgba(239,68,68,0.25)' : 'rgba(16,185,129,0.25)'};
+                "
+                onmouseover="this.style.opacity='0.8'" onmouseout="this.style.opacity='1'"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  ${en
+                    ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'
+                    : '<polyline points="20 6 9 17 4 12"/>'}
+                </svg>
+                ${en ? 'Remove' : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      if (window.lucide) lucide.createIcons();
+    },
+  };
 
   </script>
 
