@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
@@ -14,6 +14,9 @@
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#e8a020" />
+  <script src="js/nova-sync.js"></script>
   <title>NŌVA Admin — Control Center</title>
 
   <!-- Fonts -->
@@ -660,7 +663,8 @@
     .food-admin-card:hover .food-admin-img img { transform: scale(1.05); }
     .food-admin-img-overlay {
       position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
-      display: flex; align-items: flex-start; justify-content: space-between; padding: 10px;
+      display: flex; align-items: flex-start; justify-content: flex-start; flex-wrap: wrap; gap: 4px;
+      padding: 10px; align-content: flex-start;
     }
     .food-admin-body { padding: 14px; }
     .food-admin-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
@@ -671,6 +675,87 @@
       color: var(--color-primary);
     }
     .food-admin-actions { display: flex; gap: 6px; margin-top: 12px; }
+
+    .food-ai-panel {
+      margin-bottom: 16px; padding: 14px 16px;
+      background: linear-gradient(135deg, rgba(232,160,32,0.08), rgba(14,165,233,0.06));
+      border: 1px solid rgba(232,160,32,0.25); border-radius: var(--radius-md);
+      display: none;
+    }
+    .food-ai-panel.visible { display: block; animation: fadeInUp 0.3s var(--ease-out); }
+    .food-ai-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-primary);
+    }
+    .food-ai-msg { font-size: 13px; color: var(--text-secondary); line-height: 1.5; margin-bottom: 12px; white-space: pre-wrap; }
+    .food-ai-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+    .food-ai-btn {
+      padding: 6px 14px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border-color); background: var(--bg-surface); color: var(--text-primary);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .food-ai-btn.primary { background: var(--color-primary); color: #000; border-color: var(--color-primary); }
+    .food-ai-btn:hover { border-color: var(--border-active); }
+    .food-img-upload {
+      border: 2px dashed var(--border-color); border-radius: var(--radius-md);
+      padding: 16px; text-align: center; cursor: pointer; margin-bottom: 12px;
+      background: var(--bg-surface); transition: border-color 0.2s;
+    }
+    .food-img-upload:hover { border-color: var(--border-active); }
+    .food-name-ai-row { display: flex; gap: 8px; }
+    .food-name-ai-row .form-control { flex: 1; }
+    .food-ai-trigger {
+      flex-shrink: 0; width: 42px; height: 42px; padding: 0;
+      border-radius: var(--radius-md); border: 1px solid rgba(232,160,32,0.35);
+      background: linear-gradient(135deg, rgba(232,160,32,0.15), rgba(14,165,233,0.1));
+      color: var(--color-primary); cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.2s, transform 0.15s;
+    }
+    .food-ai-trigger:hover { border-color: var(--color-primary); transform: scale(1.04); }
+    .food-img-preview-wrap { margin-bottom: 16px; }
+    .food-img-preview-box {
+      position: relative; display: inline-block; border-radius: var(--radius-md);
+      overflow: hidden; border: 1px solid var(--border-color); cursor: pointer;
+    }
+    .food-img-preview-box img { height: 140px; width: auto; max-width: 100%; display: block; object-fit: cover; }
+    .food-img-preview-hint {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.45); opacity: 0; transition: opacity 0.2s;
+      font-size: 12px; font-weight: 600; color: #fff; text-align: center; padding: 8px;
+    }
+    .food-img-preview-box:hover .food-img-preview-hint { opacity: 1; }
+    .food-img-tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+    .food-google-cse-setup {
+      margin-bottom: 14px; padding: 10px 12px;
+      background: var(--bg-surface); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); font-size: 12px;
+    }
+    .food-google-cse-setup summary { cursor: pointer; color: var(--text-muted); font-weight: 600; }
+    .food-google-cse-setup[open] summary { margin-bottom: 10px; color: var(--text-secondary); }
+    .food-badge-chips { display: flex; flex-wrap: wrap; gap: 6px; min-height: 28px; margin-bottom: 8px; }
+    .food-badge-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: var(--radius-full);
+      background: rgba(232,160,32,0.12); border: 1px solid rgba(232,160,32,0.3);
+      font-size: 11px; font-weight: 600; color: var(--color-primary);
+    }
+    .food-badge-chip button {
+      border: none; background: none; color: var(--text-muted); cursor: pointer;
+      font-size: 14px; line-height: 1; padding: 0 2px;
+    }
+    .food-badge-chip button:hover { color: var(--color-danger); }
+    .food-badge-add-row { display: flex; gap: 8px; }
+    .food-badge-add-row .form-control { flex: 1; }
+    .food-badge-suggestions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+    .food-badge-suggestion {
+      padding: 3px 10px; border-radius: var(--radius-full); font-size: 11px;
+      border: 1px dashed var(--border-color); background: var(--bg-surface);
+      color: var(--text-secondary); cursor: pointer;
+    }
+    .food-badge-suggestion:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .category-add-row { display: flex; gap: 8px; margin-top: 8px; }
+    .category-add-row .form-control { flex: 1; }
 
     /* =============================================
        THEME EDITOR
@@ -995,32 +1080,285 @@
     .empty-desc  { font-size: 13px; color: var(--text-muted); }
 
     /* =============================================
-       RESPONSIVE
+       MOBILE APP SHELL (phone layout)
        ============================================= */
+    .mobile-tabbar,
+    .mobile-more-backdrop,
+    .mobile-more-sheet { display: none; }
+
     @media (max-width: 1024px) {
       .analytics-grid { grid-template-columns: 1fr; }
       .grid-2 { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 768px) {
-      :root { --sidebar-w: 240px; }
-      .sidebar { transform: translateX(-100%); }
-      .sidebar.mobile-open { transform: translateX(0); }
-      .sidebar-overlay { display: block; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
-      .sidebar-overlay.visible { opacity: 1; pointer-events: all; }
-      .main-content { margin-left: 0 !important; }
-      .page { padding: 16px; }
-      .grid-3, .form-row-3 { grid-template-columns: 1fr; }
-      .form-row { grid-template-columns: 1fr; }
-      .stats-grid { grid-template-columns: 1fr 1fr; }
-      .topbar-search { display: none; }
-      .page-title { font-size: 24px; }
-      .font-grid { grid-template-columns: 1fr; }
+      :root {
+        --topbar-h: 56px;
+        --mobile-tab-h: 64px;
+        --radius-lg: 16px;
+        --radius-md: 12px;
+      }
+
+      html { font-size: 15px; }
+
+      /* Hide desktop sidebar entirely on phone */
+      .sidebar,
+      .sidebar-overlay,
+      .topbar-toggle,
+      .topbar-search { display: none !important; }
+
+      .admin-layout { display: block; min-height: 100dvh; }
+
+      .main-content {
+        margin-left: 0 !important;
+        min-height: 100dvh;
+        padding-bottom: calc(var(--mobile-tab-h) + env(safe-area-inset-bottom, 0px) + 12px);
+      }
+
+      /* Compact mobile header */
+      .topbar {
+        height: var(--topbar-h);
+        padding: 0 16px;
+        padding-top: env(safe-area-inset-top, 0px);
+        background: var(--bg-base);
+        border-bottom: none;
+        box-shadow: 0 1px 0 var(--border-color);
+      }
+      .topbar-title {
+        font-family: var(--font-body);
+        font-size: 17px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+      }
+      .topbar-actions { gap: 4px; }
+      .topbar-btn {
+        width: 44px; height: 44px;
+        border-radius: var(--radius-full);
+        background: var(--bg-card);
+      }
+
+      .page {
+        padding: 12px 16px 20px;
+        animation: none;
+      }
+      .page.active { animation: mobileFade 0.25s ease; }
+      @keyframes mobileFade {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 16px;
+        gap: 12px;
+      }
+      .page-title {
+        font-family: var(--font-body);
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+      }
+      .page-subtitle { font-size: 13px; }
+
+      /* KPI: horizontal scroll cards */
+      .stats-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        margin-bottom: 16px;
+        padding-bottom: 4px;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .stats-grid::-webkit-scrollbar { display: none; }
+      .stat-card {
+        flex: 0 0 min(78vw, 280px);
+        scroll-snap-align: start;
+        padding: 16px;
+        border-radius: var(--radius-lg);
+      }
+      .stat-value { font-size: 22px; }
+
+      .card {
+        border-radius: var(--radius-lg);
+        margin-bottom: 12px;
+      }
+      .card-header { padding: 14px 16px; }
+      .card-body { padding: 14px 16px; }
+
+      .grid-2, .grid-3, .form-row, .form-row-3 { grid-template-columns: 1fr; }
+      .food-grid { grid-template-columns: 1fr; gap: 12px; }
+      .tables-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+      .btn { min-height: 44px; padding: 10px 16px; }
+      .btn-sm { min-height: 40px; }
+
+      .page-header .flex { width: 100%; }
+      .page-header .btn { flex: 1; justify-content: center; }
+
+      /* Full-screen modals on phone */
+      .modal-overlay {
+        align-items: flex-end;
+        padding: 0;
+      }
+      .modal {
+        width: 100%;
+        max-width: 100%;
+        max-height: 92dvh;
+        margin: 0;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+        border-bottom: none;
+      }
+      .modal-lg { max-width: 100%; }
+      .modal-body { max-height: calc(92dvh - 120px); overflow-y: auto; }
+
+      .data-table { font-size: 12px; }
+      .data-table td, .data-table th { padding: 10px 12px; }
+
+      .order-flow { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 8px; }
+      .chart-container { height: 200px !important; }
+
+      /* Bottom tab bar */
+      .mobile-tabbar {
+        display: flex;
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        z-index: 500;
+        height: calc(var(--mobile-tab-h) + env(safe-area-inset-bottom, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px);
+        background: var(--bg-surface);
+        border-top: 1px solid var(--border-color);
+        box-shadow: 0 -8px 32px rgba(0,0,0,0.35);
+      }
+      .mobile-tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 8px 4px;
+        color: var(--text-muted);
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        transition: color 0.2s;
+        position: relative;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .mobile-tab i, .mobile-tab svg { width: 22px; height: 22px; }
+      .mobile-tab.active { color: var(--color-primary); }
+      .mobile-tab.active::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 50%;
+        transform: translateX(-50%);
+        width: 28px; height: 3px;
+        background: var(--color-primary);
+        border-radius: 0 0 4px 4px;
+      }
+      .mobile-tab-badge {
+        position: absolute;
+        top: 4px; right: calc(50% - 22px);
+        min-width: 16px; height: 16px;
+        padding: 0 4px;
+        border-radius: var(--radius-full);
+        background: var(--color-danger);
+        color: #fff;
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 16px;
+        text-align: center;
+      }
+
+      /* More menu sheet */
+      .mobile-more-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 600;
+        background: rgba(0,0,0,0.55);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      .mobile-more-backdrop.open {
+        opacity: 1;
+        pointer-events: all;
+      }
+      .mobile-more-sheet {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        left: 0; right: 0; bottom: 0;
+        z-index: 601;
+        max-height: 75dvh;
+        background: var(--bg-card);
+        border-radius: 20px 20px 0 0;
+        transform: translateY(100%);
+        transition: transform 0.35s var(--ease-out);
+        padding-bottom: env(safe-area-inset-bottom, 12px);
+      }
+      .mobile-more-sheet.open { transform: translateY(0); }
+      .mobile-more-handle {
+        width: 40px; height: 4px;
+        background: var(--border-color);
+        border-radius: var(--radius-full);
+        margin: 10px auto 8px;
+      }
+      .mobile-more-title {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        padding: 0 20px 12px;
+      }
+      .mobile-more-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        padding: 0 16px 16px;
+        overflow-y: auto;
+      }
+      .mobile-more-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        padding: 16px 8px;
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-align: center;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .mobile-more-item:active { background: var(--bg-card-hover); }
+      .mobile-more-item i, .mobile-more-item svg { width: 22px; height: 22px; color: var(--color-primary); }
+
+      #toastContainer {
+        bottom: calc(var(--mobile-tab-h) + env(safe-area-inset-bottom, 0px) + 12px);
+        right: 12px; left: 12px;
+      }
+      #toastContainer .toast { min-width: 0; width: 100%; }
+
+      #adminPinLogin { padding: 16px; }
+      .admin-pin-card {
+        max-width: 100%;
+        padding: 28px 20px;
+        border-radius: 20px;
+      }
+      .admin-pin-key { padding: 16px; font-size: 1.2rem; }
     }
 
     @media (max-width: 480px) {
-      .stats-grid { grid-template-columns: 1fr; }
-      .food-grid { grid-template-columns: 1fr; }
+      .tables-grid { grid-template-columns: 1fr 1fr; }
+      .mobile-more-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
     /* =============================================
@@ -1239,17 +1577,6 @@
           <span class="nav-badge" id="reviewsPendingBadge" style="display:none;">0</span>
         </div>
 
-        <!-- Settings -->
-        <div class="sidebar-section-label">Settings</div>
-        <div class="nav-item" onclick="navigateTo('branding', this)" data-page="branding">
-          <i data-lucide="brush" class="nav-icon"></i> Branding
-        </div>
-        <div class="nav-item" onclick="navigateTo('theme', this)" data-page="theme">
-          <i data-lucide="palette" class="nav-icon"></i> Theme Editor
-        </div>
-        <div class="nav-item" onclick="navigateTo('ai', this)" data-page="ai">
-          <i data-lucide="sparkles" class="nav-icon"></i> AI Assistant
-        </div>
       </div>
 
       <div class="sidebar-footer">
@@ -1259,9 +1586,6 @@
             <div class="admin-name" id="adminName">Admin User</div>
             <div class="admin-role">Super Admin</div>
           </div>
-          <button onclick="navigateTo('branding', document.querySelector('[data-page=branding]'))" style="color:var(--text-muted);">
-            <i data-lucide="settings" style="width:16px;height:16px;"></i>
-          </button>
         </div>
       </div>
     </aside>
@@ -1292,7 +1616,7 @@
             <i data-lucide="sun" id="themeIconSun" style="width:18px;height:18px;display:none;"></i>
             <i data-lucide="moon" id="themeIconMoon" style="width:18px;height:18px;"></i>
           </button>
-          <button class="topbar-btn" onclick="window.open('../index.html','_blank')" title="View Live Site">
+          <button class="topbar-btn" onclick="window.open('index.html','_blank')" title="View Live Site">
             <i data-lucide="external-link" style="width:18px;height:18px;"></i>
           </button>
         </div>
@@ -1584,6 +1908,9 @@
             <select class="form-control" id="foodCatFilter" onchange="renderFoodGrid()" style="min-width:140px;height:38px;padding:0 12px;">
               <option value="all">All Categories</option>
             </select>
+            <button class="btn btn-ghost btn-sm" onclick="openBulkFoodModal()">
+              <i data-lucide="layers" style="width:14px;height:14px;"></i> Import IA
+            </button>
             <button class="btn btn-primary btn-sm" onclick="openFoodModal()">
               <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Food
             </button>
@@ -1751,285 +2078,6 @@
       </section>
 
       <!-- =============================================
-           PAGE: BRANDING
-           ============================================= -->
-      <section class="page" id="page-branding">
-        <div class="page-header">
-          <div>
-            <div class="page-title">Branding</div>
-            <div class="page-subtitle">Customize your restaurant's identity across all pages.</div>
-          </div>
-          <button class="btn btn-primary" onclick="saveBranding()">
-            <i data-lucide="save" style="width:14px;height:14px;"></i> Save Changes
-          </button>
-        </div>
-
-        <div class="grid-2">
-          <!-- Left: Form -->
-          <div style="display:flex;flex-direction:column;gap:20px;">
-            <!-- Logo & Name -->
-            <div class="card">
-              <div class="card-header"><div class="card-title">Identity</div></div>
-              <div class="card-body">
-                <!-- Logo Upload -->
-                <div class="logo-upload-area" onclick="document.getElementById('logoFileInput').click()">
-                  <div class="logo-preview" id="logoPreview">NŌVA</div>
-                  <div style="font-size:13px;color:var(--text-muted);">Click to upload logo image</div>
-                  <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">PNG, JPG up to 2MB</div>
-                  <input type="file" id="logoFileInput" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)" />
-                </div>
-
-                <div class="form-group mt-4" style="margin-top:16px;">
-                  <label class="form-label">Restaurant Name</label>
-                  <input type="text" class="form-control" id="brandName" value="NŌVA" oninput="updateBrandPreview()" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Tagline</label>
-                  <input type="text" class="form-control" id="brandTagline" value="Premium Dining Experience" oninput="updateBrandPreview()" />
-                </div>
-                <div class="form-group">
-                  <label class="form-label">Description</label>
-                  <textarea class="form-control" id="brandDesc" rows="3" oninput="updateBrandPreview()">A cinematic dining experience. Order online, dine in style.</textarea>
-                </div>
-              </div>
-            </div>
-
-            <!-- Contact & Location -->
-            <div class="card">
-              <div class="card-header"><div class="card-title">Contact & Location</div></div>
-              <div class="card-body">
-                <div class="form-group">
-                  <label class="form-label">Address</label>
-                  <input type="text" class="form-control" id="brandAddress" value="123 Gourmet Avenue, New York, NY 10001" oninput="updateBrandPreview()" />
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Phone</label>
-                    <input type="text" class="form-control" id="brandPhone" value="+1 (555) 234-5678" oninput="updateBrandPreview()" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Email</label>
-                    <input type="text" class="form-control" id="brandEmail" value="hello@nova-dining.com" oninput="updateBrandPreview()" />
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Opening Time</label>
-                    <input type="time" class="form-control" id="brandOpen" value="11:00" oninput="updateBrandPreview()" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Closing Time</label>
-                    <input type="time" class="form-control" id="brandClose" value="23:00" oninput="updateBrandPreview()" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Delivery Settings -->
-            <div class="card">
-              <div class="card-header"><div class="card-title">Delivery Settings</div></div>
-              <div class="card-body">
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Delivery Fee (DA)</label>
-                    <input type="number" class="form-control" id="deliveryFee" value="4.99" step="0.01" oninput="updateBrandPreview()" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Free Delivery Over (DA)</label>
-                    <input type="number" class="form-control" id="freeDeliveryThreshold" value="35" oninput="updateBrandPreview()" />
-                  </div>
-                </div>
-                <div class="form-row">
-                  <div class="form-group">
-                    <label class="form-label">Tax Rate (%)</label>
-                    <input type="number" class="form-control" id="taxRate" value="8" step="0.1" oninput="updateBrandPreview()" />
-                  </div>
-                  <div class="form-group">
-                    <label class="form-label">Currency Symbol</label>
-                    <input type="text" class="form-control" id="currency" value="DA" oninput="updateBrandPreview()" />
-                  </div>
-                </div>
-                <div class="toggle-wrap">
-                  <div class="toggle on" id="deliveryToggle" onclick="this.classList.toggle('on')">
-                    <div class="toggle-thumb"></div>
-                  </div>
-                  <span style="font-size:13px;color:var(--text-secondary);">Delivery available</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: Preview -->
-          <div style="display:flex;flex-direction:column;gap:20px;">
-            <div class="card" style="position:sticky;top:80px;">
-              <div class="card-header"><div class="card-title">Live Preview</div></div>
-              <div class="card-body">
-                <div class="theme-preview-box">
-                  <!-- Mini site preview -->
-                  <div style="background:var(--bg-base);border-radius:var(--radius-md);padding:20px;text-align:center;">
-                    <div id="previewLogo" style="font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--color-primary);letter-spacing:0.05em;margin-bottom:6px;">NŌVA</div>
-                    <div id="previewTagline" style="font-size:12px;color:var(--text-muted);margin-bottom:16px;">Premium Dining Experience</div>
-                    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
-                      <button class="btn btn-primary btn-sm">Order Now</button>
-                      <button class="btn btn-ghost btn-sm">View Menu</button>
-                    </div>
-                    <!-- Preview food card -->
-                    <div class="preview-card" style="text-align:left;">
-                      <div style="height:80px;background:linear-gradient(135deg,var(--bg-surface),var(--bg-card));border-radius:var(--radius-sm);margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-size:28px;">🍔</div>
-                      <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Signature Burger</div>
-                      <div style="font-size:12px;color:var(--text-muted);">Premium wagyu beef patty</div>
-                      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
-                        <span style="font-family:var(--font-heading);font-weight:800;color:var(--color-primary);">24.00 DA</span>
-                        <button class="btn btn-primary btn-sm">Add +</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Brand info summary -->
-                <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
-                  <div class="flex items-center gap-2 text-sm">
-                    <i data-lucide="map-pin" style="width:14px;height:14px;color:var(--text-muted);"></i>
-                    <span id="previewAddr" style="color:var(--text-secondary);font-size:13px;">123 Gourmet Avenue</span>
-                  </div>
-                  <div class="flex items-center gap-2 text-sm">
-                    <i data-lucide="phone" style="width:14px;height:14px;color:var(--text-muted);"></i>
-                    <span id="previewPhone" style="color:var(--text-secondary);font-size:13px;">+1 (555) 234-5678</span>
-                  </div>
-                  <div class="flex items-center gap-2 text-sm">
-                    <i data-lucide="clock" style="width:14px;height:14px;color:var(--text-muted);"></i>
-                    <span id="previewHours" style="color:var(--text-secondary);font-size:13px;">11:00 – 23:00</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- =============================================
-           PAGE: THEME EDITOR
-           ============================================= -->
-      <section class="page" id="page-theme">
-        <div class="page-header">
-          <div>
-            <div class="page-title">Theme Editor</div>
-            <div class="page-subtitle">Live-edit colors, typography, and spacing.</div>
-          </div>
-          <div class="flex gap-2">
-            <button class="btn btn-ghost btn-sm" onclick="resetTheme()">
-              <i data-lucide="rotate-ccw" style="width:14px;height:14px;"></i> Reset
-            </button>
-            <button class="btn btn-primary btn-sm" onclick="saveTheme()">
-              <i data-lucide="save" style="width:14px;height:14px;"></i> Save Theme
-            </button>
-          </div>
-        </div>
-
-        <!-- ── Preset Themes ─────────────────────────────── -->
-        <div class="card" style="margin-bottom:24px;">
-          <div class="card-header">
-            <div class="card-title">Preset Themes</div>
-            <span style="font-size:12px;color:var(--text-muted);">One click to apply across all pages</span>
-          </div>
-          <div class="card-body">
-            <div class="presets-grid" id="presetsGrid">
-              <!-- Rendered by JS -->
-            </div>
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <!-- Left: Controls -->
-          <div style="display:flex;flex-direction:column;gap:20px;">
-
-            <!-- Colors -->
-            <div class="card">
-              <div class="card-header"><div class="card-title">Colors</div></div>
-              <div class="card-body">
-                <div class="theme-section">
-                  <div class="theme-section-title">Brand Colors</div>
-                  <div class="color-grid" id="brandColorsGrid">
-                    <!-- Rendered by JS -->
-                  </div>
-                </div>
-                <div class="theme-section">
-                  <div class="theme-section-title">Background Colors</div>
-                  <div class="color-grid" id="bgColorsGrid">
-                    <!-- Rendered by JS -->
-                  </div>
-                </div>
-                <div class="theme-section">
-                  <div class="theme-section-title">Text Colors</div>
-                  <div class="color-grid" id="textColorsGrid">
-                    <!-- Rendered by JS -->
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Typography -->
-            <div class="card">
-              <div class="card-header"><div class="card-title">Typography</div></div>
-              <div class="card-body">
-                <div class="theme-section-title">Display Font</div>
-                <div class="font-grid" id="displayFontGrid">
-                  <!-- Rendered by JS -->
-                </div>
-                <div class="theme-section-title" style="margin-top:16px;">Body Font</div>
-                <div class="font-grid" id="bodyFontGrid">
-                  <!-- Rendered by JS -->
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: Spacing & Preview -->
-          <div style="display:flex;flex-direction:column;gap:20px;">
-            <!-- Spacing/Radius/Shadow -->
-            <div class="card">
-              <div class="card-header"><div class="card-title">Shape & Space</div></div>
-              <div class="card-body">
-                <div id="spacingSliders">
-                  <!-- Rendered by JS -->
-                </div>
-              </div>
-            </div>
-
-            <!-- Live Preview -->
-            <div class="card" style="position:sticky;top:80px;">
-              <div class="card-header"><div class="card-title">Live Preview</div></div>
-              <div class="card-body">
-                <div class="theme-preview-box" id="themePreviewBox">
-                  <div style="font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--color-primary);margin-bottom:4px;">Sample Heading</div>
-                  <div style="font-size:13px;color:var(--text-secondary);margin-bottom:16px;">This is how your text looks across the site.</div>
-                  <div class="preview-card" style="margin-bottom:12px;">
-                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                      <div style="width:36px;height:36px;border-radius:var(--radius-md);background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));"></div>
-                      <div>
-                        <div style="font-size:13px;font-weight:600;color:var(--text-primary);">Sample Card</div>
-                        <div style="font-size:11px;color:var(--text-muted);">Card subtitle</div>
-                      </div>
-                    </div>
-                    <div style="display:flex;gap:8px;">
-                      <button class="btn btn-primary btn-sm">Primary</button>
-                      <button class="btn btn-ghost btn-sm">Ghost</button>
-                    </div>
-                  </div>
-                  <div style="display:flex;gap:6px;flex-wrap:wrap;">
-                    <span class="badge badge-gold">Gold</span>
-                    <span class="badge badge-green">Active</span>
-                    <span class="badge badge-blue">Info</span>
-                    <span class="badge badge-red">Alert</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- =============================================
            PAGE: NOTIFICATIONS
            ============================================= -->
       <section class="page" id="page-notifications">
@@ -2046,70 +2094,6 @@
         <div class="card">
           <div class="card-body" id="notifList">
             <!-- Rendered by JS -->
-          </div>
-        </div>
-      </section>
-
-      <!-- =============================================
-           PAGE: AI ASSISTANT
-           ============================================= -->
-      <section class="page" id="page-ai">
-        <div class="page-header">
-          <div>
-            <div class="page-title">AI Assistant</div>
-            <div class="page-subtitle">Your intelligent restaurant management co-pilot.</div>
-          </div>
-          <span class="badge badge-purple">Simulated</span>
-        </div>
-
-        <div class="grid-2">
-          <!-- Chat -->
-          <div class="card" style="display:flex;flex-direction:column;">
-            <div class="card-header">
-              <div class="flex items-center gap-2">
-                <div style="width:28px;height:28px;border-radius:var(--radius-full);background:linear-gradient(135deg,var(--color-primary),var(--color-secondary));display:flex;align-items:center;justify-content:center;">
-                  <i data-lucide="sparkles" style="width:14px;height:14px;color:#fff;"></i>
-                </div>
-                <div class="card-title">NŌVA AI</div>
-              </div>
-              <span class="live-dot">Online</span>
-            </div>
-
-            <div class="ai-chat" id="aiChat">
-              <!-- Seeded by JS -->
-            </div>
-
-            <div class="ai-prompt-chips" id="aiChips">
-              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">✨ Suggest a food description</div>
-              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">📈 What's trending?</div>
-              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">💰 Optimize pricing</div>
-              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">📢 Marketing copy</div>
-              <div class="ai-chip" onclick="sendAIMsg(this.textContent)">🍕 Suggest new dishes</div>
-            </div>
-
-            <div class="ai-input-row">
-              <input class="ai-input" id="aiInput" placeholder="Ask anything about your restaurant…" onkeydown="if(event.key==='Enter')sendAIMsg()" />
-              <button class="btn btn-primary btn-sm" onclick="sendAIMsg()">
-                <i data-lucide="send" style="width:14px;height:14px;"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- Quick Suggestions -->
-          <div style="display:flex;flex-direction:column;gap:16px;">
-            <div class="card">
-              <div class="card-header"><div class="card-title">Quick Suggestions</div></div>
-              <div class="card-body" id="aiSuggestionsPanel">
-                <!-- Rendered by JS -->
-              </div>
-            </div>
-
-            <div class="card">
-              <div class="card-header"><div class="card-title">AI Insights</div></div>
-              <div class="card-body" id="aiInsights">
-                <!-- Rendered by JS -->
-              </div>
-            </div>
           </div>
         </div>
       </section>
@@ -2186,6 +2170,59 @@
     </main>
   </div>
 
+  <!-- Mobile bottom navigation (phone) -->
+  <nav class="mobile-tabbar" id="mobileTabbar" aria-label="Main navigation">
+    <button type="button" class="mobile-tab active" data-tab="home" onclick="mobileNavGo('dashboard')">
+      <i data-lucide="home"></i>
+      <span>Home</span>
+    </button>
+    <button type="button" class="mobile-tab" data-tab="orders" onclick="mobileNavGo('orders')">
+      <i data-lucide="receipt"></i>
+      <span>Orders</span>
+      <span class="mobile-tab-badge" id="mobileOrdersBadge" style="display:none;">0</span>
+    </button>
+    <button type="button" class="mobile-tab" data-tab="menu" onclick="mobileNavGo('foods')">
+      <i data-lucide="utensils"></i>
+      <span>Menu</span>
+    </button>
+    <button type="button" class="mobile-tab" data-tab="more" onclick="openMobileMoreSheet()">
+      <i data-lucide="grid-2x2"></i>
+      <span>More</span>
+    </button>
+  </nav>
+
+  <div class="mobile-more-backdrop" id="mobileMoreBackdrop" onclick="closeMobileMoreSheet()"></div>
+  <div class="mobile-more-sheet" id="mobileMoreSheet" role="dialog" aria-label="More options">
+    <div class="mobile-more-handle"></div>
+    <div class="mobile-more-title">More</div>
+    <div class="mobile-more-grid">
+      <button type="button" class="mobile-more-item" onclick="mobileNavGo('tables')">
+        <i data-lucide="table-2"></i> Tables
+      </button>
+      <button type="button" class="mobile-more-item" onclick="mobileNavGo('staff')">
+        <i data-lucide="users"></i> Staff
+      </button>
+      <button type="button" class="mobile-more-item" onclick="mobileNavGo('delivery')">
+        <i data-lucide="truck"></i> Delivery
+      </button>
+      <button type="button" class="mobile-more-item" onclick="mobileNavGo('reviews')">
+        <i data-lucide="star"></i> Reviews
+      </button>
+      <button type="button" class="mobile-more-item" onclick="mobileNavGo('analytics')">
+        <i data-lucide="bar-chart-2"></i> Analytics
+      </button>
+      <button type="button" class="mobile-more-item" onclick="mobileNavGo('notifications')">
+        <i data-lucide="bell"></i> Alerts
+      </button>
+      <button type="button" class="mobile-more-item" onclick="closeMobileMoreSheet(); window.open('index.html','_blank')">
+        <i data-lucide="external-link"></i> Live site
+      </button>
+      <button type="button" class="mobile-more-item" onclick="closeMobileMoreSheet(); AdminApp.toggleTheme()">
+        <i data-lucide="sun-moon"></i> Theme
+      </button>
+    </div>
+  </div>
+
   <!-- =============================================
        MODAL: REVIEW ADD / EDIT
        ============================================= -->
@@ -2242,6 +2279,30 @@
   </div>
 
 
+  <div class="modal-overlay" id="bulkFoodModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title">Import IA — plusieurs plats</div>
+        <button class="modal-close" onclick="closeModal('bulkFoodModal')">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="text-sm text-muted" style="margin-bottom:12px;line-height:1.6;">
+          Un nom de plat par ligne (français ou anglais). L'IA remplit prix DA, catégorie, description, note et badges. Les noms ne sont modifiés que pour les majuscules.
+        </p>
+        <textarea class="form-control" id="bulkFoodNames" rows="10" placeholder="Tacos poulet&#10;Couscous royal&#10;Sandwich thon&#10;Poisson grillé&#10;Chorba frik"></textarea>
+        <div id="bulkFoodProgress" class="text-sm text-muted" style="margin-top:10px;display:none;"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('bulkFoodModal')">Annuler</button>
+        <button class="btn btn-primary" id="bulkFoodRunBtn" onclick="BulkFoodAI.run()">
+          <i data-lucide="sparkles" style="width:14px;height:14px;"></i> Générer et ajouter
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="modal-overlay" id="foodModal">
     <div class="modal modal-lg">
       <div class="modal-header">
@@ -2252,25 +2313,32 @@
       </div>
       <div class="modal-body">
         <input type="hidden" id="foodEditId" value="" />
+
+        <div class="food-ai-panel" id="foodAiPanel">
+          <div class="food-ai-header">
+            <i data-lucide="sparkles" style="width:14px;height:14px;"></i> NŌVA Food AI
+          </div>
+          <div class="food-ai-msg" id="foodAiMsg"></div>
+          <div class="food-ai-actions" id="foodAiActions"></div>
+        </div>
+
         <div class="form-row">
           <div class="form-group">
             <label class="form-label">Name *</label>
-            <input type="text" class="form-control" id="foodName" placeholder="e.g. Wagyu Burger" />
+            <div class="food-name-ai-row">
+              <input type="text" class="form-control" id="foodName" placeholder="e.g. Tacos Poulet" onblur="FoodAI.onNameBlur()" />
+              <button type="button" class="food-ai-trigger" title="Remplir avec l'IA (nom inchangé sauf majuscules)" onclick="FoodAI.fillFromName()">
+                <i data-lucide="sparkles" style="width:18px;height:18px;"></i>
+              </button>
+            </div>
           </div>
           <div class="form-group">
             <label class="form-label">Category *</label>
-            <select class="form-control" id="foodCategory">
-              <option>Burgers</option>
-              <option>Mains</option>
-              <option>Starters</option>
-              <option>Sides</option>
-              <option>Desserts</option>
-              <option>Drinks</option>
-              <option>Sushi</option>
-              <option>Pizza</option>
-              <option>Salads</option>
-              <option>Soups</option>
-            </select>
+            <select class="form-control" id="foodCategory"></select>
+            <div class="category-add-row">
+              <input type="text" class="form-control" id="newCategoryInput" placeholder="New category name…" />
+              <button type="button" class="btn btn-ghost btn-sm" onclick="addFoodCategory()">+ Add</button>
+            </div>
           </div>
         </div>
         <div class="form-row">
@@ -2287,28 +2355,60 @@
           <label class="form-label">Description</label>
           <textarea class="form-control" id="foodDesc" rows="2" placeholder="Describe this dish…"></textarea>
         </div>
+        <details class="food-google-cse-setup" id="foodGoogleCseSetup">
+          <summary>Google Images — clés API (recherche photo)</summary>
+          <p style="color:var(--text-muted);line-height:1.5;margin:0 0 10px;">
+            Créez un moteur sur <a href="https://programmablesearchengine.google.com/" target="_blank" rel="noopener">Programmable Search</a>
+            (recherche d'images activée) et activez l'API Custom Search sur Google Cloud.
+          </p>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:8px;">
+              <label class="form-label">API Key</label>
+              <input type="password" class="form-control" id="googleCseApiKey" placeholder="AIza…" autocomplete="off" />
+            </div>
+            <div class="form-group" style="margin-bottom:8px;">
+              <label class="form-label">Search engine ID (cx)</label>
+              <input type="text" class="form-control" id="googleCseCx" placeholder="a1b2c3…" autocomplete="off" />
+            </div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="FoodAI.saveGoogleSearchConfig()">Enregistrer les clés</button>
+        </details>
+
         <div class="form-group">
-          <label class="form-label">Image URL</label>
+          <label class="form-label">Photo</label>
+          <div class="food-img-upload" onclick="document.getElementById('foodImageFile').click()">
+            <i data-lucide="image-plus" style="width:20px;height:20px;color:var(--text-muted);margin:0 auto 6px;"></i>
+            <div style="font-size:13px;color:var(--text-muted);">Click to upload a photo</div>
+            <input type="file" id="foodImageFile" accept="image/*" style="display:none;" onchange="FoodAI.onImageSelected(event)" />
+          </div>
+          <label class="form-label" style="margin-top:8px;">Or image URL</label>
           <input type="text" class="form-control" id="foodImage" placeholder="https://…" oninput="updateFoodImagePreview()" />
         </div>
-        <!-- Image preview -->
-        <div id="foodImgPreviewWrap" style="margin-bottom:16px;display:none;">
-          <img id="foodImgPreview" src="" alt="Preview" style="height:120px;border-radius:var(--radius-md);object-fit:cover;border:1px solid var(--border-color);" />
+        <div id="foodImgPreviewWrap" class="food-img-preview-wrap" style="display:none;">
+          <div class="food-img-preview-box" onclick="FoodAI.toggleImageTools()" title="Cliquer pour les outils image">
+            <img id="foodImgPreview" src="" alt="Preview" />
+            <div class="food-img-preview-hint">Cliquer — améliorer ou détourer</div>
+          </div>
+          <div class="food-img-tools" id="foodImgTools" style="display:none;">
+            <button type="button" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();FoodAI.enhancePreviewImage()">
+              <i data-lucide="wand-2" style="width:14px;height:14px;"></i> Améliorer la qualité
+            </button>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="event.stopPropagation();FoodAI.removePreviewBackground()">
+              <i data-lucide="eraser" style="width:14px;height:14px;"></i> Supprimer l'arrière-plan
+            </button>
+          </div>
         </div>
 
-        <div class="form-row-3" style="margin-bottom:16px;">
-          <div class="toggle-wrap">
-            <div class="toggle on" id="foodAvailable" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
-            <span class="text-sm text-muted">Available</span>
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">Badges (plusieurs possibles)</label>
+          <div class="food-badge-chips" id="foodBadgeChips"></div>
+          <div class="food-badge-add-row">
+            <input type="text" class="form-control" id="foodBadgeInput" placeholder="Ajouter un badge…" maxlength="24"
+              onkeydown="if(event.key==='Enter'){event.preventDefault();FoodBadgeUI.addFromInput();}" />
+            <button type="button" class="btn btn-ghost btn-sm" onclick="FoodBadgeUI.addFromInput()">+ Ajouter</button>
           </div>
-          <div class="toggle-wrap">
-            <div class="toggle" id="foodFeatured" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
-            <span class="text-sm text-muted">Featured</span>
-          </div>
-          <div class="toggle-wrap">
-            <div class="toggle" id="foodBestseller" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
-            <span class="text-sm text-muted">Bestseller</span>
-          </div>
+          <div class="food-badge-suggestions" id="foodBadgeSuggestions"></div>
+          <div class="text-sm text-muted" style="margin-top:6px;">L'IA propose des badges avec ✨ — max 5 badges.</div>
         </div>
       </div>
       <div class="modal-footer">
@@ -2467,7 +2567,12 @@
      ============================================= */
   const StorageManager = {
     get: (key)          => { try { return JSON.parse(localStorage.getItem('nova_' + key)); } catch { return null; } },
-    set: (key, val)     => { try { localStorage.setItem('nova_' + key, JSON.stringify(val)); } catch {} },
+    set: (key, val)     => {
+      try {
+        localStorage.setItem('nova_' + key, JSON.stringify(val));
+        if (window.NovaSync) NovaSync._bump(key);
+      } catch {}
+    },
     remove: (key)       => { localStorage.removeItem('nova_' + key); },
   };
 
@@ -2482,395 +2587,1125 @@
 
   const DEFAULT_NOTIFICATIONS = [];
 
-  const AI_RESPONSES = {
-    'suggest a food description': [
-      '🍔 **Signature Wagyu Smash Burger** — *Two hand-smashed wagyu beef patties on a toasted brioche bun, layered with aged cheddar, caramelized onions, house-made truffle aioli, and crisp pickles. A luxurious twist on a timeless classic.*',
-      '🍝 **Saffron Lobster Linguine** — *Hand-made linguine tossed in a rich lobster bisque reduction, finished with saffron, cherry tomatoes, fresh basil, and a drizzle of aged balsamic. Elegance on a plate.*',
-    ],
-    'what\'s trending?': [
-      '📈 **Trending in Fine Dining (2025):**\n\n• **Smash burgers** with premium proteins (+34% searches)\n• **Korean fusion** tasting menus\n• **Zero-waste** tasting menus\n• **Craft mocktails** as premium offerings\n• **Hyper-local** seasonal ingredients\n\nI recommend adding a Korean-fusion item and a premium mocktail to your menu! 🌟',
-    ],
-    'optimize pricing': [
-      '💰 **Pricing Insights for NŌVA:**\n\nBased on your menu analysis:\n• Your **Truffle Fries** (11 DA) are underpriced vs market avg (14 DA–16). Consider a 1 DA–2 increase.\n• **Desserts** have the highest margin — promote them more aggressively.\n• A **prix fixe menu** at 65 DA–85 could increase avg spend by ~40%.\n• Add **premium combo bundles** (main + side + drink) for value perception.',
-    ],
-    'marketing copy': [
-      '📢 **Marketing Copy Suggestions:**\n\n**Instagram caption:**\n*"Where every bite tells a story. 🌟 Crafted with precision, plated with passion — NŌVA isn\'t just a meal, it\'s a memory. Reserve your table tonight. #NOVA #FineFood #LuxuryDining"*\n\n**Push notification:**\n*"🍽️ Tonight\'s special: Pan-Seared Wagyu with truffle jus. Only 8 portions left. Order now →"*',
-    ],
-    'suggest new dishes': [
-      '🍕 **Dish Suggestions for NŌVA:**\n\n1. **Miso Black Cod** — Nobu-inspired, pairs with your sake selection\n2. **Lobster Grilled Cheese** — Instagram-worthy, high margin\n3. **Matcha Tiramisu** — Fusion dessert trending globally\n4. **Wagyu Tartare** — Premium starter, low food cost\n5. **Kombucha Cocktails** — Wellness-forward mocktail option\n\nWant me to write full descriptions for any of these? 🎯',
-    ],
-  };
-
   /* =============================================
      ORDERS FILTER STATE
      ============================================= */
   let currentOrderFilter = 'all';
 
-  /* =============================================
-     THEME COLORS CONFIG
-     ============================================= */
-  const BRAND_COLORS = [
-    { label:'Primary',   var:'--color-primary',   default:'#e8a020' },
-    { label:'Secondary', var:'--color-secondary',  default:'#0ea5e9' },
-    { label:'Accent',    var:'--color-accent',     default:'#10b981' },
-    { label:'Danger',    var:'--color-danger',     default:'#ef4444' },
-    { label:'Warning',   var:'--color-warning',    default:'#f59e0b' },
-    { label:'Purple',    var:'--color-purple',     default:'#8b5cf6' },
+  const DEFAULT_FOOD_CATEGORIES = [
+    'Burgers', 'Mains', 'Starters', 'Sides', 'Desserts', 'Drinks',
+    'Seafood', 'Sushi', 'Pizza', 'Salads', 'Soups',
   ];
-  const BG_COLORS = [
-    { label:'Base BG',    var:'--bg-base',    default:'#080809' },
-    { label:'Surface',    var:'--bg-surface', default:'#0f0f12' },
-    { label:'Card',       var:'--bg-card',    default:'#161619' },
-  ];
-  const TEXT_COLORS = [
-    { label:'Primary Text',   var:'--text-primary',   default:'#f0ede8' },
-    { label:'Secondary Text', var:'--text-secondary', default:'#a09a90' },
-    { label:'Muted Text',     var:'--text-muted',     default:'#5a5650' },
-  ];
-  const SPACING_SLIDERS = [
-    { label:'Border Radius (sm)', var:'--radius-md', min:0, max:24, step:1, unit:'px', default:12 },
-    { label:'Border Radius (lg)', var:'--radius-lg', min:0, max:40, step:1, unit:'px', default:20 },
-    { label:'Font Size Scale',    var:'--font-scale', min:0.85, max:1.2, step:0.05, unit:'', default:1 },
-  ];
+  const FOOD_CATEGORY_NONE_LABEL = 'None';
+  const FOOD_CATEGORY_FILTER_NONE = '__none__';
 
-  /* =============================================
-     THEME PRESETS
-     ============================================= */
-  const THEME_PRESETS = [
-    {
-      id: 'nova-gold',
-      name: 'NŌVA Gold',
-      desc: 'Default',
-      emoji: '✦',
-      vars: {
-        '--color-primary':       '#e8a020',
-        '--color-primary-light': '#f5be52',
-        '--color-primary-dark':  '#b8780e',
-        '--color-secondary':     '#0ea5e9',
-        '--color-accent':        '#10b981',
-        '--color-danger':        '#ef4444',
-        '--color-warning':       '#f59e0b',
-        '--color-purple':        '#8b5cf6',
-        '--bg-base':             '#080809',
-        '--bg-surface':          '#0f0f12',
-        '--bg-card':             '#161619',
-        '--bg-card-hover':       '#1e1e23',
-        '--text-primary':        '#f0ede8',
-        '--text-secondary':      '#a09a90',
-        '--text-muted':          '#5a5650',
-        '--border-color':        'rgba(240,237,232,0.07)',
-        '--shadow-md':           '0 4px 20px rgba(0,0,0,0.6)',
-        '--font-display':        "'Cormorant Garamond', Georgia, serif",
-        '--font-body':           "'DM Sans', sans-serif",
-        '--radius-md':           '12px',
-        '--radius-lg':           '20px',
-      },
-      swatches: ['#e8a020','#080809','#161619'],
-    },
-    {
-      id: 'midnight-ember',
-      name: 'Midnight Ember',
-      desc: 'Dark Crimson',
-      emoji: '🔥',
-      vars: {
-        '--color-primary':       '#e53e3e',
-        '--color-primary-light': '#fc8181',
-        '--color-primary-dark':  '#9b2c2c',
-        '--color-secondary':     '#f6ad55',
-        '--color-accent':        '#48bb78',
-        '--color-danger':        '#fc4d4d',
-        '--color-warning':       '#ed8936',
-        '--color-purple':        '#9f7aea',
-        '--bg-base':             '#0a0405',
-        '--bg-surface':          '#120708',
-        '--bg-card':             '#1a0b0d',
-        '--bg-card-hover':       '#221014',
-        '--text-primary':        '#fff5f5',
-        '--text-secondary':      '#a09090',
-        '--text-muted':          '#6b5050',
-        '--border-color':        'rgba(255,245,245,0.07)',
-        '--shadow-md':           '0 4px 20px rgba(80,0,0,0.5)',
-        '--font-display':        "'Playfair Display', Georgia, serif",
-        '--font-body':           "'DM Sans', sans-serif",
-        '--radius-md':           '10px',
-        '--radius-lg':           '18px',
-      },
-      swatches: ['#e53e3e','#0a0405','#1a0b0d'],
-    },
-    {
-      id: 'ocean-noir',
-      name: 'Ocean Noir',
-      desc: 'Dark Electric Blue',
-      emoji: '🌊',
-      vars: {
-        '--color-primary':       '#00b4d8',
-        '--color-primary-light': '#48cae4',
-        '--color-primary-dark':  '#0077b6',
-        '--color-secondary':     '#90e0ef',
-        '--color-accent':        '#2dd4bf',
-        '--color-danger':        '#ef4444',
-        '--color-warning':       '#f59e0b',
-        '--color-purple':        '#818cf8',
-        '--bg-base':             '#020b18',
-        '--bg-surface':          '#051422',
-        '--bg-card':             '#091e32',
-        '--bg-card-hover':       '#0d2840',
-        '--text-primary':        '#e0f4ff',
-        '--text-secondary':      '#7ba3bf',
-        '--text-muted':          '#3a5f7a',
-        '--border-color':        'rgba(0,180,216,0.1)',
-        '--shadow-md':           '0 4px 20px rgba(0,30,60,0.7)',
-        '--font-display':        "'DM Serif Display', Georgia, serif",
-        '--font-body':           "'Inter', sans-serif",
-        '--radius-md':           '12px',
-        '--radius-lg':           '20px',
-      },
-      swatches: ['#00b4d8','#020b18','#091e32'],
-    },
-    {
-      id: 'forest-dark',
-      name: 'Forest Dark',
-      desc: 'Emerald & Moss',
-      emoji: '🌿',
-      vars: {
-        '--color-primary':       '#22c55e',
-        '--color-primary-light': '#4ade80',
-        '--color-primary-dark':  '#16a34a',
-        '--color-secondary':     '#84cc16',
-        '--color-accent':        '#2dd4bf',
-        '--color-danger':        '#f87171',
-        '--color-warning':       '#fbbf24',
-        '--color-purple':        '#a78bfa',
-        '--bg-base':             '#020d06',
-        '--bg-surface':          '#05140a',
-        '--bg-card':             '#091a0f',
-        '--bg-card-hover':       '#0e2416',
-        '--text-primary':        '#ecfdf5',
-        '--text-secondary':      '#86b898',
-        '--text-muted':          '#3d6b50',
-        '--border-color':        'rgba(34,197,94,0.09)',
-        '--shadow-md':           '0 4px 20px rgba(0,40,15,0.6)',
-        '--font-display':        "'Lora', Georgia, serif",
-        '--font-body':           "'Plus Jakarta Sans', sans-serif",
-        '--radius-md':           '14px',
-        '--radius-lg':           '22px',
-      },
-      swatches: ['#22c55e','#020d06','#091a0f'],
-    },
-    {
-      id: 'royal-dusk',
-      name: 'Royal Dusk',
-      desc: 'Dark Violet',
-      emoji: '👑',
-      vars: {
-        '--color-primary':       '#a855f7',
-        '--color-primary-light': '#c084fc',
-        '--color-primary-dark':  '#7e22ce',
-        '--color-secondary':     '#f472b6',
-        '--color-accent':        '#34d399',
-        '--color-danger':        '#f87171',
-        '--color-warning':       '#fbbf24',
-        '--color-purple':        '#818cf8',
-        '--bg-base':             '#07030f',
-        '--bg-surface':          '#0e0619',
-        '--bg-card':             '#150a24',
-        '--bg-card-hover':       '#1d0f30',
-        '--text-primary':        '#f3e8ff',
-        '--text-secondary':      '#9a80b0',
-        '--text-muted':          '#5a4070',
-        '--border-color':        'rgba(168,85,247,0.1)',
-        '--shadow-md':           '0 4px 24px rgba(60,0,100,0.5)',
-        '--font-display':        "'Cormorant Garamond', Georgia, serif",
-        '--font-body':           "'DM Sans', sans-serif",
-        '--radius-md':           '12px',
-        '--radius-lg':           '22px',
-      },
-      swatches: ['#a855f7','#07030f','#150a24'],
-    },
-    {
-      id: 'ivory-light',
-      name: 'Ivory Light',
-      desc: 'Warm & Minimal',
-      emoji: '☀️',
-      vars: {
-        '--color-primary':       '#d97706',
-        '--color-primary-light': '#fbbf24',
-        '--color-primary-dark':  '#b45309',
-        '--color-secondary':     '#0ea5e9',
-        '--color-accent':        '#10b981',
-        '--color-danger':        '#ef4444',
-        '--color-warning':       '#f59e0b',
-        '--color-purple':        '#8b5cf6',
-        '--bg-base':             '#fdfaf5',
-        '--bg-surface':          '#ffffff',
-        '--bg-card':             '#ffffff',
-        '--bg-card-hover':       '#fef9f0',
-        '--text-primary':        '#1c1209',
-        '--text-secondary':      '#6b5c45',
-        '--text-muted':          '#a8947a',
-        '--border-color':        'rgba(28,18,9,0.09)',
-        '--shadow-md':           '0 4px 20px rgba(0,0,0,0.08)',
-        '--font-display':        "'Playfair Display', Georgia, serif",
-        '--font-body':           "'DM Sans', sans-serif",
-        '--radius-md':           '12px',
-        '--radius-lg':           '20px',
-      },
-      swatches: ['#d97706','#fdfaf5','#ffffff'],
-      light: true,
-    },
-    {
-      id: 'arctic-light',
-      name: 'Arctic Light',
-      desc: 'Clean Blue & White',
-      emoji: '❄️',
-      vars: {
-        '--color-primary':       '#2563eb',
-        '--color-primary-light': '#60a5fa',
-        '--color-primary-dark':  '#1d4ed8',
-        '--color-secondary':     '#0ea5e9',
-        '--color-accent':        '#10b981',
-        '--color-danger':        '#ef4444',
-        '--color-warning':       '#f59e0b',
-        '--color-purple':        '#8b5cf6',
-        '--bg-base':             '#f0f4ff',
-        '--bg-surface':          '#ffffff',
-        '--bg-card':             '#ffffff',
-        '--bg-card-hover':       '#f5f8ff',
-        '--text-primary':        '#0f1729',
-        '--text-secondary':      '#4a5580',
-        '--text-muted':          '#8a95b0',
-        '--border-color':        'rgba(15,23,41,0.08)',
-        '--shadow-md':           '0 4px 20px rgba(37,99,235,0.1)',
-        '--font-display':        "'Syne', sans-serif",
-        '--font-body':           "'Inter', sans-serif",
-        '--radius-md':           '10px',
-        '--radius-lg':           '18px',
-      },
-      swatches: ['#2563eb','#f0f4ff','#ffffff'],
-      light: true,
-    },
-    {
-      id: 'rose-dusk',
-      name: 'Rose Dusk',
-      desc: 'Dark Rose & Blush',
-      emoji: '🌹',
-      vars: {
-        '--color-primary':       '#f43f5e',
-        '--color-primary-light': '#fb7185',
-        '--color-primary-dark':  '#be123c',
-        '--color-secondary':     '#f97316',
-        '--color-accent':        '#34d399',
-        '--color-danger':        '#f87171',
-        '--color-warning':       '#fbbf24',
-        '--color-purple':        '#c084fc',
-        '--bg-base':             '#0d0308',
-        '--bg-surface':          '#16050e',
-        '--bg-card':             '#1e0714',
-        '--bg-card-hover':       '#280a1c',
-        '--text-primary':        '#fff0f5',
-        '--text-secondary':      '#b07090',
-        '--text-muted':          '#6b3050',
-        '--border-color':        'rgba(244,63,94,0.1)',
-        '--shadow-md':           '0 4px 24px rgba(100,0,40,0.5)',
-        '--font-display':        "'Libre Baskerville', Georgia, serif",
-        '--font-body':           "'Nunito', sans-serif",
-        '--radius-md':           '16px',
-        '--radius-lg':           '26px',
-      },
-      swatches: ['#f43f5e','#0d0308','#1e0714'],
-    },
-    {
-      id: 'slate-mono',
-      name: 'Slate Mono',
-      desc: 'Neutral Minimal',
-      emoji: '🪨',
-      vars: {
-        '--color-primary':       '#94a3b8',
-        '--color-primary-light': '#cbd5e1',
-        '--color-primary-dark':  '#64748b',
-        '--color-secondary':     '#38bdf8',
-        '--color-accent':        '#34d399',
-        '--color-danger':        '#f87171',
-        '--color-warning':       '#fbbf24',
-        '--color-purple':        '#a78bfa',
-        '--bg-base':             '#070a0f',
-        '--bg-surface':          '#0d1117',
-        '--bg-card':             '#161b22',
-        '--bg-card-hover':       '#1c242e',
-        '--text-primary':        '#e6edf3',
-        '--text-secondary':      '#8b949e',
-        '--text-muted':          '#484f58',
-        '--border-color':        'rgba(230,237,243,0.08)',
-        '--shadow-md':           '0 4px 20px rgba(0,0,0,0.5)',
-        '--font-display':        "'Syne', sans-serif",
-        '--font-body':           "'Space Grotesk', sans-serif",
-        '--radius-md':           '8px',
-        '--radius-lg':           '14px',
-      },
-      swatches: ['#94a3b8','#070a0f','#161b22'],
-    },
-  ];
-
-  /* Current active preset id (persisted) */
-  let _activePresetId = StorageManager.get('active_preset_id') || 'nova-gold';
-
-  function renderPresetGrid() {
-    const grid = document.getElementById('presetsGrid');
-    if (!grid) return;
-    grid.innerHTML = THEME_PRESETS.map(p => `
-      <div class="preset-card ${_activePresetId === p.id ? 'active' : ''}"
-           id="preset-card-${p.id}"
-           onclick="applyPreset('${p.id}')"
-           style="background:${p.vars['--bg-card']};border-color:${_activePresetId===p.id?p.vars['--color-primary']:'rgba(255,255,255,0.07)'};">
-        <div class="preset-active-badge">
-          <i data-lucide="check" style="width:10px;height:10px;color:#000;"></i>
-        </div>
-        <div style="font-size:20px;margin-bottom:8px;">${p.emoji}</div>
-        <div class="preset-swatch">
-          ${p.swatches.map(s=>`<div class="preset-dot" style="background:${s};border-color:rgba(255,255,255,0.2);"></div>`).join('')}
-        </div>
-        <div class="preset-name" style="color:${p.vars['--text-primary']}">${p.name}</div>
-        <div class="preset-desc">${p.desc}</div>
-      </div>
-    `).join('');
-    if (window.lucide) lucide.createIcons();
+  function normalizeFoodCategory(val) {
+    const v = (val == null ? '' : String(val)).trim();
+    if (!v || v.toLowerCase() === 'none') return '';
+    return v;
   }
 
-  function applyPreset(id) {
-    const preset = THEME_PRESETS.find(p => p.id === id);
-    if (!preset) return;
-    _activePresetId = id;
-    StorageManager.set('active_preset_id', id);
+  function formatFoodCategory(cat) {
+    return normalizeFoodCategory(cat) || FOOD_CATEGORY_NONE_LABEL;
+  }
 
-    const root = document.documentElement;
+  function isUncategorizedFood(cat) {
+    return !normalizeFoodCategory(cat);
+  }
 
-    // Apply all CSS vars live
-    Object.entries(preset.vars).forEach(([k, v]) => {
-      root.style.setProperty(k, v);
-    });
+  function getFoodCategories() {
+    const custom = StorageManager.get('food_categories') || [];
+    return [...new Set([...DEFAULT_FOOD_CATEGORIES, ...custom])]
+      .filter(c => c.toLowerCase() !== 'none')
+      .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  }
 
-    // Also set light/dark mode
-    const mode = preset.light ? 'light' : 'dark';
-    root.setAttribute('data-theme', mode);
-    StorageManager.set('themeMode', mode);
+  function populateFoodCategorySelect(selected) {
+    const sel = document.getElementById('foodCategory');
+    if (!sel) return;
+    const cats = getFoodCategories();
+    const normalized = normalizeFoodCategory(selected);
+    const useNone = selected === undefined || selected === null || isUncategorizedFood(selected);
+    sel.innerHTML =
+      `<option value="">${FOOD_CATEGORY_NONE_LABEL}</option>` +
+      cats.map(c =>
+        `<option value="${c.replace(/"/g, '&quot;')}"${c === normalized ? ' selected' : ''}>${c}</option>`
+      ).join('');
+    sel.value = useNone ? '' : (cats.includes(normalized) ? normalized : '');
+  }
 
-    // Persist as both keys so all pages pick it up
-    StorageManager.set('admin_theme', preset.vars);
-    StorageManager.set('theme', preset.vars);
+  function addFoodCategory() {
+    const input = document.getElementById('newCategoryInput');
+    const name = (input?.value || '').trim();
+    if (!name) { toast('Enter a category name', 'error'); return; }
+    if (name.toLowerCase() === 'none') {
+      toast('"None" is reserved for items without a category', 'warning');
+      return;
+    }
+    const exists = getFoodCategories().some(c => c.toLowerCase() === name.toLowerCase());
+    if (exists) { toast('Category already exists', 'warning'); return; }
+    const custom = StorageManager.get('food_categories') || [];
+    custom.push(name);
+    StorageManager.set('food_categories', custom);
+    if (input) input.value = '';
+    populateFoodCategorySelect(name);
+    document.getElementById('foodCategory').value = name;
+    toast(`Category "${name}" added`, 'success', 'Category');
+  }
 
-    // Refresh color pickers & sliders in editor
-    initThemeEditor();
+  /* Curated food photos — Algerian / North African first, then common dishes */
+  const FOOD_IMAGE_LIBRARY = [
+    {
+      keys: ['taco', 'tacos', 'tacos poulet', 'tacos viande', 'tacos francais', 'french taco', 'tacos algerien', 'tacos algerian', 'tacos curry'],
+      url: 'assets/food/algerian-tacos.jpg',
+      guess: {
+        name: 'Tacos Poulet Curry',
+        cat: 'Mains',
+        desc: 'Galette grillée garnie de poulet curry, frites, sauce algérienne et fromage fondant — style tacos français.',
+        price: 9.5,
+        rating: 4.8,
+        badges: ['Populaire', 'Copieux', 'Épicé'],
+      },
+    },
+    {
+      keys: ['couscous', 'cous cous', 'seksu'],
+      url: 'https://images.unsplash.com/photo-1585937421612-70a00835636e?w=800&h=500&fit=crop',
+      guess: { name: 'Couscous Royal', cat: 'Mains', desc: 'Semoule légère, légumes de saison, pois chiches et viandes tendres, bouillon parfumé.', price: 14, rating: 4.9, badges: ['Traditionnel', 'Copieux', 'Spécialité'] },
+    },
+    {
+      keys: ['chorba', 'harira', 'chorcha', 'soup alger'],
+      url: 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=800&h=500&fit=crop',
+      guess: { name: 'Chorba Frik', cat: 'Soups', desc: 'Soupe traditionnelle au frik, tomates, pois chiches et épices douces.', price: 6.5, rating: 4.7, badges: ['Traditionnel', 'Réconfortant'] },
+    },
+    {
+      keys: ['merguez', 'merguez sandwich', 'mkila'],
+      url: 'https://images.unsplash.com/photo-1529048199988-dac925087a55?w=800&h=500&fit=crop',
+      guess: { name: 'Merguez Grillées', cat: 'Mains', desc: 'Saucisses épicées grillées, servies avec pain et harissa.', price: 11, rating: 4.6 },
+    },
+    {
+      keys: ['bourek', 'brik', 'boureks', 'brick'],
+      url: 'https://images.unsplash.com/photo-1601055921321-d4fefe9c2c0e?w=800&h=500&fit=crop',
+      guess: { name: 'Bourek au Thon', cat: 'Starters', desc: 'Feuille croustillante farcie au thon, pommes de terre et persil.', price: 5.5, rating: 4.5 },
+    },
+    {
+      keys: ['mhadjeb', 'mhamjeb', 'galette farcie'],
+      url: 'https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=800&h=500&fit=crop',
+      guess: { name: 'Mhadjeb', cat: 'Mains', desc: 'Galette de semoule farcie aux tomates, oignons et poivrons, cuite à la poêle.', price: 4.5, rating: 4.6 },
+    },
+    {
+      keys: ['chawarma', 'shawarma', 'chawarma poulet'],
+      url: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc07f?w=800&h=500&fit=crop',
+      guess: { name: 'Chawarma Poulet', cat: 'Mains', desc: 'Poulet mariné, crudités fraîches, sauce à l\'ail et pain pita chaud.', price: 8.5, rating: 4.7 },
+    },
+    {
+      keys: ['rechta', 'rachta'],
+      url: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800&h=500&fit=crop',
+      guess: { name: 'Rechta', cat: 'Mains', desc: 'Pâtes fines maison, sauce blanche au poulet et pois chiches.', price: 13, rating: 4.8 },
+    },
+    {
+      keys: ['chakhchoukha', 'chakhchouka'],
+      url: 'https://images.unsplash.com/photo-1590412207238-c4aba84c4cb8?w=800&h=500&fit=crop',
+      guess: { name: 'Chakhchoukha', cat: 'Mains', desc: 'Feuilles de rougag, sauce tomate épicée et viande mijotée.', price: 12, rating: 4.7 },
+    },
+    {
+      keys: ['makroud', 'makrout', 'baklava', 'baklawa'],
+      url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&h=500&fit=crop',
+      guess: { name: 'Makroud aux Dattes', cat: 'Desserts', desc: 'Pâte de semoule frite, fourrée aux dattes et miel d\'oranger.', price: 4, rating: 4.8 },
+    },
+    {
+      keys: ['mssemen', 'msemen', 'crepe alger'],
+      url: 'https://images.unsplash.com/photo-1528207776542-56584fcc9e7f?w=800&h=500&fit=crop',
+      guess: { name: 'Msemen', cat: 'Starters', desc: 'Crêpes feuilletées dorées, servies avec miel ou confiture.', price: 3.5, rating: 4.5 },
+    },
+    {
+      keys: ['baghrir', 'ghrayef', 'crepe mille trou'],
+      url: 'https://images.unsplash.com/photo-1484723091739-32b99b09f751?w=800&h=500&fit=crop',
+      guess: { name: 'Baghrir', cat: 'Starters', desc: 'Crêpes aux mille trous, miel et beurre fondant.', price: 4, rating: 4.6 },
+    },
+    {
+      keys: ['burger', 'beef', 'smash'],
+      url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=800&h=500&fit=crop',
+      guess: { name: 'Signature Smash Burger', cat: 'Burgers', desc: 'Hand-smashed patty, aged cheddar, house sauce, and crisp pickles.', price: 18.5, rating: 4.7 },
+    },
+    {
+      keys: ['pizza', 'margherita'],
+      url: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=800&h=500&fit=crop',
+      guess: { name: 'Wood-Fired Margherita', cat: 'Pizza', desc: 'San Marzano tomato, fresh mozzarella, basil, and olive oil.', price: 16, rating: 4.6 },
+    },
+    {
+      keys: ['sushi', 'salmon', 'roll'],
+      url: 'https://images.unsplash.com/photo-1559410545-0bdcd187e0a6?w=800&h=500&fit=crop',
+      guess: { name: 'Salmon Avocado Roll', cat: 'Sushi', desc: 'Fresh salmon, avocado, and seasoned rice with soy glaze.', price: 14.5, rating: 4.8 },
+    },
+    {
+      keys: ['salad', 'greens'],
+      url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&h=500&fit=crop',
+      guess: { name: 'Garden Salad', cat: 'Salads', desc: 'Mixed greens, roasted vegetables, feta, and citrus vinaigrette.', price: 12, rating: 4.5 },
+    },
+    {
+      keys: ['pasta', 'linguine', 'carbonara', 'spaghetti'],
+      url: 'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=800&h=500&fit=crop',
+      guess: { name: 'Truffle Linguine', cat: 'Mains', desc: 'Silky linguine in truffle cream with parmesan and herbs.', price: 22, rating: 4.9 },
+    },
+    {
+      keys: ['steak', 'wagyu', 'grill'],
+      url: 'https://images.unsplash.com/photo-1600891964092-4316c288032e?w=800&h=500&fit=crop',
+      guess: { name: 'Pan-Seared Steak', cat: 'Mains', desc: 'Premium cut, rosemary butter, seasonal vegetables, and jus.', price: 42, rating: 4.9 },
+    },
+    {
+      keys: ['cake', 'dessert', 'chocolate'],
+      url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&h=500&fit=crop',
+      guess: { name: 'Dark Chocolate Fondant', cat: 'Desserts', desc: 'Warm molten center with vanilla ice cream.', price: 9.5, rating: 4.8 },
+    },
+    {
+      keys: ['coffee', 'latte', 'cafe', 'the'],
+      url: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&h=500&fit=crop',
+      guess: { name: 'Café Maison', cat: 'Drinks', desc: 'Espresso or creamy latte, Algerian hospitality style.', price: 3.5, rating: 4.4 },
+    },
+    {
+      keys: ['fries', 'frites', 'frite'],
+      url: 'https://images.unsplash.com/photo-1573080496219-bb080e631bb6?w=800&h=500&fit=crop',
+      guess: { name: 'Frites Maison', cat: 'Sides', desc: 'Golden crispy fries, lightly salted.', price: 4.5, rating: 4.5 },
+    },
+    {
+      keys: ['sandwich', 'panini'],
+      url: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800&h=500&fit=crop',
+      guess: { name: 'Sandwich Grillé', cat: 'Mains', desc: 'Pain grillé, garniture généreuse et sauce maison.', price: 7.5, rating: 4.5 },
+    },
+    {
+      keys: ['sandwich poulet', 'sandwich chicken', 'sandwich escalope', 'panini poulet', 'poulet pane', 'chicken sandwich'],
+      url: 'https://images.unsplash.com/photo-1550547660-d9450f859349?w=800&h=500&fit=crop',
+      guess: { name: 'Sandwich Poulet Pané', cat: 'Mains', desc: 'Poulet pané croustillant, crudités fraîches, sauce maison et pain toasté.', price: 8, rating: 4.6, badges: ['Populaire', 'Copieux'] },
+    },
+    {
+      keys: ['sandwich thon', 'thon', 'tuna sandwich', 'panini thon'],
+      url: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800&h=500&fit=crop',
+      guess: { name: 'Sandwich Thon', cat: 'Mains', desc: 'Thon assaisonné, fromage, olives et crudités, servi dans un pain chaud.', price: 7.5, rating: 4.6, badges: ['Populaire'] },
+    },
+    {
+      keys: ['sandwich jambon', 'jambon beurre', 'panini jambon'],
+      url: 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=800&h=500&fit=crop',
+      guess: { name: 'Sandwich Jambon', cat: 'Mains', desc: 'Jambon, fromage, beurre et crudités dans un pain frais.', price: 7, rating: 4.5, badges: ['Populaire'] },
+    },
+    {
+      keys: ['kebab', 'kebap', 'sandwich kebab'],
+      url: 'https://images.unsplash.com/photo-1529006557810-274b9b2fc07f?w=800&h=500&fit=crop',
+      guess: { name: 'Kebab Viande', cat: 'Mains', desc: 'Viande grillée, crudités, sauce blanche et pain pita.', price: 6.5, rating: 4.6, badges: ['Populaire', 'Grillade'] },
+    },
+    {
+      keys: ['brochettes', 'brochette', 'skewer', 'brochette viande'],
+      url: 'https://images.unsplash.com/photo-1529048199988-dac925087a55?w=800&h=500&fit=crop',
+      guess: { name: 'Brochettes Grillées', cat: 'Mains', desc: 'Morceaux de viande marinés, grillés au charbon, servis avec salade.', price: 9, rating: 4.7, badges: ['Grillade'] },
+    },
+    {
+      keys: ['tajine', 'tagine', 'tajine poulet', 'tajine viande'],
+      url: 'https://images.unsplash.com/photo-1590412207238-c4aba84c4cb8?w=800&h=500&fit=crop',
+      guess: { name: 'Tajine Poulet', cat: 'Mains', desc: 'Poulet mijoté aux légumes et épices douces, cuisson lente au couvercle.', price: 11, rating: 4.8, badges: ['Traditionnel'] },
+    },
+    {
+      keys: ['saumon', 'salmon', 'saumon grille'],
+      url: 'https://images.unsplash.com/photo-1467003909585-2f8a72700288?w=800&h=500&fit=crop',
+      guess: { name: 'Saumon Grillé', cat: 'Seafood', desc: 'Filet de saumon grillé, citron et herbes, accompagnement du chef.', price: 16, rating: 4.8, badges: ['Fruits de mer', 'Grillade'] },
+    },
+    {
+      keys: ['calamar', 'calamars', 'squid', 'encornet'],
+      url: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=800&h=500&fit=crop',
+      guess: { name: 'Calamars Frits', cat: 'Seafood', desc: 'Anneaux de calamars croustillants, servis avec sauce aïoli.', price: 8.5, rating: 4.5, badges: ['Fruits de mer'] },
+    },
+    {
+      keys: ['sardine', 'sardines', 'sardines grillees'],
+      url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&h=500&fit=crop',
+      guess: { name: 'Sardines Grillées', cat: 'Seafood', desc: 'Sardines fraîches grillées, ail et persil, pain maison.', price: 7.5, rating: 4.6, badges: ['Fruits de mer', 'Traditionnel'] },
+    },
+    {
+      keys: ['salade cesar', 'salade césar', 'caesar salad', 'salade poulet'],
+      url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&h=500&fit=crop',
+      guess: { name: 'Salade César', cat: 'Salads', desc: 'Laitue croquante, poulet, parmesan, croûtons et sauce césar.', price: 5.5, rating: 4.5, badges: ['Léger'] },
+    },
+    {
+      keys: ['jus orange', 'jus d orange', 'jus citron', 'limonade'],
+      url: 'https://images.unsplash.com/photo-1502741224143-90386d7f8c82?w=800&h=500&fit=crop',
+      guess: { name: 'Jus d\'Orange Frais', cat: 'Drinks', desc: 'Jus pressé, servi bien frais avec glaçons.', price: 2.5, rating: 4.4, badges: ['Fraîcheur'] },
+    },
+    {
+      keys: ['the menthe', 'thé à la menthe', 'the vert', 'the'],
+      url: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&h=500&fit=crop',
+      guess: { name: 'Thé à la Menthe', cat: 'Drinks', desc: 'Thé vert parfumé à la menthe fraîche, tradition maghrébine.', price: 1.5, rating: 4.6, badges: ['Traditionnel', 'Fraîcheur'] },
+    },
+    {
+      keys: ['glace', 'glaces', 'ice cream', 'sorbet'],
+      url: 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=800&h=500&fit=crop',
+      guess: { name: 'Glace Maison', cat: 'Desserts', desc: 'Parfum du jour, texture onctueuse, servie en boule.', price: 3.5, rating: 4.5, badges: ['Maison', 'Sucré'] },
+    },
+    {
+      keys: ['poisson', 'poisson grille', 'fish', 'grilled fish', 'dorade', 'loup de mer', 'bar grille', 'sardines', 'sardine'],
+      url: 'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&h=500&fit=crop',
+      guess: { name: 'Poisson Grillé', cat: 'Seafood', desc: 'Poisson grillé, citron, herbes fraîches et accompagnement du jour.', price: 15, rating: 4.7, badges: ['Fruits de mer', 'Grillade'] },
+    },
+    {
+      keys: ['crevettes', 'crevette', 'shrimp', 'gambas', 'fruits de mer', 'seafood'],
+      url: 'https://images.unsplash.com/photo-1563379926898-05f4575a45d8?w=800&h=500&fit=crop',
+      guess: { name: 'Crevettes Sautées', cat: 'Seafood', desc: 'Crevettes sautées à l’ail, beurre citronné et persil, servies bien chaudes.', price: 18, rating: 4.7, badges: ['Fruits de mer'] },
+    },
+  ];
 
-    // Re-render preset grid to reflect new active
-    renderPresetGrid();
+  const FOODISH_CATEGORY_HINTS = [
+    { keys: ['burger', 'smash'], cat: 'burger' },
+    { keys: ['pizza'], cat: 'pizza' },
+    { keys: ['pasta', 'spaghetti', 'biryani', 'rice'], cat: 'biryani' },
+    { keys: ['dessert', 'cake', 'sweet'], cat: 'dessert' },
+    { keys: ['samosa', 'bourek', 'brik'], cat: 'samosa' },
+    { keys: ['dosa', 'crepe', 'mhadjeb'], cat: 'dosa' },
+  ];
 
-    // Update topbar theme icon
-    const sun  = document.getElementById('themeIconSun');
-    const moon = document.getElementById('themeIconMoon');
-    if (sun)  sun.style.display  = mode === 'light' ? '' : 'none';
-    if (moon) moon.style.display = mode === 'dark'  ? '' : 'none';
+  const FOOD_FR_WORD_MAP = [
+    ['crêpe', 'crepe'], ['gâteau', 'gateau'], ['garniture', 'garniture'],
+    ['sandwich jambon', 'sandwich jambon'], ['sandwich poulet', 'sandwich poulet'],
+    ['sandwich thon', 'sandwich thon'], ['panini', 'panini'],
+    ['poisson grillé', 'poisson grille'], ['poisson frit', 'poisson'],
+    ['poissons', 'poisson'], ['dorade', 'poisson'], ['bar ', 'poisson '],
+    ['crevettes', 'crevettes'], ['crevette', 'crevettes'], ['gambas', 'crevettes'],
+    ['fruits de mer', 'fruits de mer'], ['soupe', 'soup'], ['salade', 'salad'],
+    ['café', 'cafe'], ['thé', 'the'], ['jus ', 'jus '], ['boisson', 'drink'],
+    ['poulet', 'poulet'], ['viande', 'viande'], ['boeuf', 'beef'], ['agneau', 'lamb'],
+    ['tajine', 'tajine'], ['kebab', 'kebab'], ['brochettes', 'brochettes'],
+    ['pâtes', 'pasta'], ['spaghetti', 'spaghetti'], ['lasagne', 'pasta'],
+    ['glace', 'glace'], ['pâtisserie', 'patisserie'], ['crème', 'creme'],
+    ['frites', 'frites'], ['riz', 'rice'], ['légumes', 'legumes'],
+  ];
 
-    toast(`"${preset.name}" theme applied to all pages`, 'success', 'Theme Applied ✓');
+  function translateFrenchFoodTerms(text) {
+    let out = String(text || '');
+    for (const [fr, en] of FOOD_FR_WORD_MAP) {
+      out = out.replace(new RegExp(fr, 'gi'), en);
+    }
+    return out;
+  }
+
+  function normalizeFoodText(text) {
+    return translateFrenchFoodTerms(text)
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ');
+  }
+
+  function matchFoodLibrary(nameOrHint) {
+    const t = normalizeFoodText(nameOrHint);
+    if (!t.trim()) return null;
+    let best = null;
+    let bestScore = 0;
+    for (const item of FOOD_IMAGE_LIBRARY) {
+      for (const key of item.keys) {
+        const k = normalizeFoodText(key);
+        if (!k) continue;
+        if (t.includes(k) && k.length > bestScore) {
+          best = item;
+          bestScore = k.length;
+        }
+      }
+    }
+    return best;
+  }
+
+  function inferFoodishCategory(name) {
+    const t = normalizeFoodText(name);
+    for (const h of FOODISH_CATEGORY_HINTS) {
+      if (h.keys.some(k => t.includes(normalizeFoodText(k)))) return h.cat;
+    }
+    return 'burger';
+  }
+
+  const FOOD_NAME_SMALL_WORDS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', 'au', 'aux', 'à', 'en', 'ou']);
+
+  function titleCaseDishName(name) {
+    const trimmed = (name || '').trim().replace(/\s+/g, ' ');
+    if (!trimmed) return '';
+    return trimmed.split(' ').map((word, i) => {
+      const lower = word.toLowerCase();
+      if (i > 0 && FOOD_NAME_SMALL_WORDS.has(lower)) return lower;
+      if (word.length <= 3 && /^[A-Z0-9]+$/.test(word)) return word;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    }).join(' ');
+  }
+
+  function inferAlgeriaPrice(cat, name) {
+    const t = normalizeFoodText(`${name} ${cat}`);
+    if (/cafe|the|jus|drink|boisson|smoothie/.test(t)) return 150;
+    if (/dessert|gateau|makroud|glace|patisserie|chocolate|fondant/.test(t)) return 350;
+    if (/soup|chorba|entree|starter|bourek|mhadjeb|msemen|baghrir|salad/.test(t)) return 300;
+    if (/side|frite|fries/.test(t)) return 250;
+    if (/pizza|burger|taco|sandwich|chawarma|panini|wrap|tortilla/.test(t)) return 550;
+    if (/couscous|chakhchoukha|rechta|steak|grill|wagyu|merguez|viande/.test(t)) return 1200;
+    if (/sushi|seafood|saumon|lobster|poisson|crevette|crevettes|thon|sardine|fruits de mer/.test(t)) return 1500;
+    if (/pasta|spaghetti|linguine|risotto/.test(t)) return 850;
+    return 650;
+  }
+
+  function enrichFoodDescription(name, cat, baseDesc) {
+    const n = (name || '').trim();
+    const c = cat || 'Mains';
+    if (baseDesc && baseDesc.length >= 120) return baseDesc;
+    const t = normalizeFoodText(n);
+    const details = [];
+    if (/taco/.test(t)) {
+      details.push('galette dorée au grill', 'poulet ou viande hachée', 'frites croustillantes', 'sauce blanche et fromagère');
+    } else if (/couscous/.test(t)) {
+      details.push('semoule légère', 'légumes de saison', 'pois chiches', 'viande tendre', 'bouillon parfumé au raz el hanout');
+    } else if (/chorba|harira/.test(t)) {
+      details.push('bouillon réconfortant', 'tomates fraîches', 'herbes fraîches', 'épices douces');
+    } else if (/merguez/.test(t)) {
+      details.push('saucisses épicées grillées', 'pain traditionnel', 'harissa maison');
+    } else if (/chawarma|shawarma/.test(t)) {
+      details.push('viande marinée longuement', 'crudités croquantes', 'sauce à l\'ail', 'pain pita chaud');
+    } else if (/burger/.test(t)) {
+      details.push('steak haché juteux', 'cheddar fondant', 'sauce maison', 'pain brioché toasté');
+    } else if (/pizza/.test(t)) {
+      details.push('pâte fine croustillante', 'mozzarella fondante', 'sauce tomate maison');
+    } else if (/bourek|brik/.test(t)) {
+      details.push('feuille de brick croustillante', 'farce généreuse', 'friture légère');
+    } else if (/mhadjeb|msemen|baghrir/.test(t)) {
+      details.push('pâte traditionnelle', 'garniture savoureuse', 'préparation du jour');
+    } else if (/dessert|makroud|gateau|glace/.test(t)) {
+      details.push('recette maison', 'sirop parfumé', 'texture fondante');
+    } else if (/sandwich|panini|kebab/.test(t)) {
+      details.push('pain frais', 'garniture généreuse', 'sauce maison');
+    } else if (/poisson|saumon|thon|sardine|crevette|calamar|seafood/.test(t)) {
+      details.push('poisson frais du jour', 'cuisson maîtrisée', 'assaisonnement citron et herbes');
+    } else if (/salade/.test(t)) {
+      details.push('légumes croquants', 'vinaigrette légère', 'fraîcheur garantie');
+    } else {
+      details.push('ingrédients frais sélectionnés', 'assaisonnement équilibré', 'présentation soignée');
+    }
+    const lead = baseDesc
+      ? baseDesc.replace(/\s*\.?\s*$/, '')
+      : `${n} — une valeur sûre de notre carte ${c.toLowerCase()}`;
+    const body = details.slice(0, 3).join(', ');
+    return `${lead}. ${body.charAt(0).toUpperCase() + body.slice(1)}. Servi chaud, généreux et parfait pour découvrir les saveurs algériennes.`;
+  }
+
+  function inferCategoryFromName(name) {
+    const match = matchFoodLibrary(name);
+    if (match?.guess?.cat) return match.guess.cat;
+    const t = normalizeFoodText(name);
+    if (/cafe|the|jus|boisson|smoothie|limonade|citron/.test(t)) return 'Drinks';
+    if (/dessert|gateau|makroud|glace|patisserie|chocolate|fondant/.test(t)) return 'Desserts';
+    if (/chorba|harira|soup|soupe/.test(t)) return 'Soups';
+    if (/salade/.test(t)) return 'Salads';
+    if (/burger|smash/.test(t)) return 'Burgers';
+    if (/pizza/.test(t)) return 'Pizza';
+    if (/bourek|brik|mhadjeb|msemen|baghrir/.test(t)) return 'Starters';
+    if (/frite/.test(t)) return 'Sides';
+    if (/sushi|roll/.test(t)) return 'Sushi';
+    if (/poisson|fish|saumon|thon|sardine|crevette|fruits de mer|seafood|gambas/.test(t)) return 'Seafood';
+    if (/pasta|spaghetti|carbonara|linguine/.test(t)) return 'Pasta';
+    if (/taco|chawarma|shawarma|sandwich|wrap|tortilla/.test(t)) return 'Mains';
+    return 'Mains';
+  }
+
+  function inferRatingFromName(name, cat) {
+    const t = normalizeFoodText(name);
+    let base = 4.6;
+    if (/royal|signature|chef|premium|wagyu/.test(t)) base = 4.9;
+    else if (/traditionnel|couscous|chorba|merguez|mhadjeb/.test(t)) base = 4.8;
+    else if (/salade|jus|the/.test(t)) base = 4.4;
+    const hash = [...name].reduce((a, c) => a + c.charCodeAt(0), 0);
+    const bump = (hash % 5) * 0.05;
+    return Math.min(4.95, Math.round((base + bump) * 10) / 10);
+  }
+
+  function inferBadgesFromName(name, cat, libraryItem) {
+    if (libraryItem?.guess?.badges?.length) return [...libraryItem.guess.badges];
+    const badges = [];
+    const t = normalizeFoodText(name);
+    if (/couscous|chorba|merguez|mhadjeb|chakhchoukha|rechta|bourek|makroud|msemen|baghrir/.test(t)) badges.push('Traditionnel');
+    if (/taco|chawarma|burger/.test(t)) badges.push('Populaire');
+    if (/epice|harissa|merguez|piquant|curry/.test(t)) badges.push('Épicé');
+    if (/nouveau|new|edition/.test(t)) badges.push('Nouveau');
+    if (/vegan|vegetarien|vegetarienne|veg\b|sans viande/.test(t)) badges.push('Végétarien');
+    if (/grill|bbq|steak|merguez/.test(t)) badges.push('Grillade');
+    if (/promo|offre|deal/.test(t)) badges.push('Promo');
+    if (/dessert|makroud|gateau|glace/.test(t)) badges.push('Maison');
+    if (/salade/.test(t)) badges.push('Léger');
+    if (/burger|pizza|taco|couscous/.test(t)) badges.push('Copieux');
+    if (cat === 'Drinks') badges.push('Fraîcheur');
+    if (cat === 'Soups') badges.push('Réconfortant');
+    if (cat === 'Seafood' || /poisson|fish|saumon|thon|sardine|crevette|fruits de mer|seafood/.test(t)) badges.push('Fruits de mer');
+    if (cat === 'Desserts' && !badges.includes('Maison')) badges.push('Sucré');
+    if (!badges.length) badges.push('Spécialité');
+    return [...new Set(badges)].slice(0, 3);
+  }
+
+  function getFoodBadgesFromItem(food) {
+    if (!food) return [];
+    if (Array.isArray(food.badges) && food.badges.length) {
+      return food.badges.map(b => String(b).trim()).filter(Boolean);
+    }
+    if (food.badge) {
+      return String(food.badge).split(/[,;|·]/).map(b => b.trim()).filter(Boolean);
+    }
+    const legacy = [];
+    if (food.featured) legacy.push('Vedette');
+    if (food.bestseller) legacy.push('Best-seller');
+    if (food.available === false) legacy.push('Indisponible');
+    return legacy;
+  }
+
+  function escapeFoodHtml(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  }
+
+  function renderFoodBadgesHtml(food, extraClass) {
+    const cls = extraClass || 'badge badge-gold';
+    return getFoodBadgesFromItem(food)
+      .map(b => `<span class="${cls}" style="font-size:9px;">${escapeFoodHtml(b)}</span>`)
+      .join('');
+  }
+
+  const FoodBadgeUI = {
+    _badges: [],
+    _suggestions: [],
+
+    reset() {
+      this._badges = [];
+      this._suggestions = [];
+      this.render();
+      this.renderSuggestions();
+    },
+
+    getBadges() {
+      return [...this._badges];
+    },
+
+    setBadges(arr) {
+      this._badges = [...new Set((arr || []).map(b => String(b).trim()).filter(Boolean))].slice(0, 5);
+      this.render();
+    },
+
+    addFromInput() {
+      const input = document.getElementById('foodBadgeInput');
+      const v = (input?.value || '').trim();
+      if (!v) return;
+      this.add(v);
+      if (input) input.value = '';
+    },
+
+    add(label) {
+      const v = String(label).trim();
+      if (!v) return;
+      if (this._badges.length >= 5) {
+        toast('Maximum 5 badges par plat', 'warning');
+        return;
+      }
+      if (this._badges.some(b => b.toLowerCase() === v.toLowerCase())) return;
+      this._badges.push(v);
+      this.render();
+      this.renderSuggestions();
+    },
+
+    remove(i) {
+      this._badges.splice(i, 1);
+      this.render();
+      this.renderSuggestions();
+    },
+
+    setSuggestions(labels) {
+      const uniq = [...new Set((labels || []).map(l => String(l).trim()).filter(Boolean))];
+      this._suggestions = uniq.filter(l => !this._badges.some(b => b.toLowerCase() === l.toLowerCase()));
+      this.renderSuggestions();
+    },
+
+    render() {
+      const el = document.getElementById('foodBadgeChips');
+      if (!el) return;
+      el.innerHTML = this._badges.length
+        ? this._badges.map((b, i) => `
+          <span class="food-badge-chip">${escapeFoodHtml(b)}
+            <button type="button" title="Retirer" onclick="FoodBadgeUI.remove(${i})">×</button>
+          </span>`).join('')
+        : '<span class="text-sm text-muted">Aucun badge — l\'IA peut en suggérer</span>';
+    },
+
+    renderSuggestions() {
+      const el = document.getElementById('foodBadgeSuggestions');
+      if (!el) return;
+      if (!this._suggestions.length) { el.innerHTML = ''; return; }
+      el.innerHTML = this._suggestions.map((s, i) =>
+        `<button type="button" class="food-badge-suggestion" data-sugg-idx="${i}">+ ${escapeFoodHtml(s)}</button>`
+      ).join('');
+      el.querySelectorAll('[data-sugg-idx]').forEach(btn => {
+        btn.onclick = () => {
+          const idx = parseInt(btn.dataset.suggIdx, 10);
+          if (this._suggestions[idx]) this.add(this._suggestions[idx]);
+        };
+      });
+    },
+  };
+
+  function getFoodImageSearchConfig() {
+    return StorageManager.get('food_image_search') || { googleApiKey: '', googleCx: '' };
+  }
+
+  function loadFoodImageSearchConfigIntoForm() {
+    const cfg = getFoodImageSearchConfig();
+    const keyEl = document.getElementById('googleCseApiKey');
+    const cxEl = document.getElementById('googleCseCx');
+    if (keyEl) keyEl.value = cfg.googleApiKey || '';
+    if (cxEl) cxEl.value = cfg.googleCx || '';
+  }
+
+  function normalizeGuessForAlgeria(guess, userName, libraryItem) {
+    const nameFor = userName || guess?.name || '';
+    const cat = guess?.cat || inferCategoryFromName(nameFor);
+    const price = (typeof guess?.price === 'number' && guess.price >= 100)
+      ? Math.round(guess.price)
+      : inferAlgeriaPrice(cat, nameFor);
+    return {
+      cat,
+      desc: enrichFoodDescription(nameFor, cat, guess?.desc),
+      price,
+      rating: guess?.rating || inferRatingFromName(nameFor, cat),
+      badges: inferBadgesFromName(nameFor, cat, libraryItem),
+    };
+  }
+
+  const FoodAI = {
+    _askedNameImage: false,
+    _hasUserImage: false,
+    _pendingActions: [],
+    _bgRemovalMod: null,
+    _bgRemovalLoading: null,
+
+    reset() {
+      this._askedNameImage = false;
+      this._hasUserImage = false;
+      this.hidePanel();
+    },
+
+    showPanel(msg, actions) {
+      const panel = document.getElementById('foodAiPanel');
+      const msgEl = document.getElementById('foodAiMsg');
+      const actEl = document.getElementById('foodAiActions');
+      if (!panel || !msgEl || !actEl) return;
+      this._pendingActions = actions || [];
+      msgEl.textContent = msg;
+      actEl.innerHTML = this._pendingActions.map((a, i) =>
+        `<button type="button" class="food-ai-btn ${a.primary ? 'primary' : ''}" onclick="FoodAI.runAction(${i})">${a.label}</button>`
+      ).join('');
+      panel.classList.add('visible');
+      if (window.lucide) lucide.createIcons();
+    },
+
+    runAction(i) {
+      const fn = this._pendingActions[i]?.fn;
+      if (fn) fn.call(this);
+    },
+
+    hidePanel() {
+      document.getElementById('foodAiPanel')?.classList.remove('visible');
+      const actEl = document.getElementById('foodAiActions');
+      if (actEl) actEl.innerHTML = '';
+    },
+
+    setImageUrl(url) {
+      const el = document.getElementById('foodImage');
+      if (el) el.value = url;
+      this._hasUserImage = !!url;
+      updateFoodImagePreview();
+    },
+
+    enhanceImageDataUrl(dataUrl, callback, subtle) {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const max = 1200;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.round(img.width * scale);
+        const h = Math.round(img.height * scale);
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (subtle) {
+          ctx.filter = 'brightness(1.03) contrast(1.06) saturate(1.04)';
+        } else {
+          ctx.filter = 'brightness(1.05) contrast(1.08) saturate(1.06)';
+        }
+        ctx.drawImage(img, 0, 0, w, h);
+        callback(canvas.toDataURL('image/jpeg', 0.9));
+      };
+      img.onerror = () => callback(dataUrl);
+      img.src = dataUrl;
+    },
+
+    _proxyImageUrl(src) {
+      if (!src || src.startsWith('data:') || src.startsWith('blob:')) return src;
+      if (src.includes('images.weserv.nl')) return src;
+      return `https://images.weserv.nl/?url=${encodeURIComponent(src)}&w=1200&fit=inside&output=jpg`;
+    },
+
+    _loadImageAsDataUrl(src) {
+      return new Promise((resolve, reject) => {
+        if (src.startsWith('data:')) { resolve(src); return; }
+        const tryUrls = [this._proxyImageUrl(src), src];
+        let i = 0;
+        const attempt = () => {
+          if (i >= tryUrls.length) { reject(new Error('Image load failed')); return; }
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth;
+            canvas.height = img.naturalHeight;
+            canvas.getContext('2d').drawImage(img, 0, 0);
+            try { resolve(canvas.toDataURL('image/png')); }
+            catch (e) { reject(e); }
+          };
+          img.onerror = () => { i++; attempt(); };
+          img.src = tryUrls[i++];
+        };
+        attempt();
+      });
+    },
+
+    _dataUrlToBlob(dataUrl) {
+      const [meta, b64] = dataUrl.split(',');
+      const mime = (meta.match(/data:([^;]+)/) || [])[1] || 'image/png';
+      const bin = atob(b64);
+      const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return new Blob([arr], { type: mime });
+    },
+
+    async _urlToImageBlob(url) {
+      if (url.startsWith('data:')) return this._dataUrlToBlob(url);
+      const proxied = this._proxyImageUrl(url);
+      const res = await fetch(proxied, { mode: 'cors' });
+      if (!res.ok) throw new Error('fetch failed');
+      return res.blob();
+    },
+
+    async fetchAndEnhanceToDataUrl(imageUrl) {
+      const dataUrl = await this._loadImageAsDataUrl(imageUrl);
+      return new Promise((resolve) => {
+        this.enhanceImageDataUrl(dataUrl, (enhanced) => resolve(enhanced), true);
+      });
+    },
+
+    saveGoogleSearchConfig() {
+      const googleApiKey = document.getElementById('googleCseApiKey')?.value.trim() || '';
+      const googleCx = document.getElementById('googleCseCx')?.value.trim() || '';
+      StorageManager.set('food_image_search', { googleApiKey, googleCx });
+      toast(googleApiKey && googleCx ? 'Clés Google enregistrées' : 'Configuration effacée', 'success', 'Google Images');
+    },
+
+    async _getBgRemovalModule() {
+      if (this._bgRemovalMod) return this._bgRemovalMod;
+      if (this._bgRemovalLoading) return this._bgRemovalLoading;
+      this._bgRemovalLoading = (async () => {
+        const raw = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.7.0/+esm');
+        const removeBackground = raw.default || raw.removeBackground;
+        if (!removeBackground) throw new Error('Background removal library failed to load');
+        try {
+          if (typeof raw.preload === 'function') await raw.preload({ model: 'isnet_fp16' });
+        } catch (preloadErr) {
+          console.warn('BG preload:', preloadErr);
+        }
+        this._bgRemovalMod = { removeBackground };
+        this._bgRemovalLoading = null;
+        return this._bgRemovalMod;
+      })();
+      return this._bgRemovalLoading;
+    },
+
+    toggleImageTools() {
+      const tools = document.getElementById('foodImgTools');
+      if (tools) tools.style.display = tools.style.display === 'none' ? 'flex' : 'none';
+      if (window.lucide) lucide.createIcons();
+    },
+
+    async enhancePreviewImage() {
+      const url = document.getElementById('foodImage')?.value?.trim();
+      if (!url) { toast('Ajoutez une image d\'abord', 'warning'); return; }
+      toast('Amélioration de la photo…', 'info', 'Image');
+      try {
+        const dataUrl = await this._loadImageAsDataUrl(url);
+        this.enhanceImageDataUrl(dataUrl, (enhanced) => {
+          this.setImageUrl(enhanced);
+          toast('Qualité améliorée (réaliste)', 'success', 'Image');
+        }, true);
+      } catch (e) {
+        toast('Impossible d\'améliorer cette image (CORS ou URL invalide)', 'error');
+      }
+    },
+
+    async removePreviewBackground() {
+      const url = document.getElementById('foodImage')?.value?.trim();
+      if (!url) { toast('Ajoutez une image d\'abord', 'warning'); return; }
+      toast('Chargement du modèle IA… (1ère fois ~20 s)', 'info', 'Détourage');
+      try {
+        const mod = await this._getBgRemovalModule();
+        const inputBlob = await this._urlToImageBlob(url);
+        toast('Suppression de l\'arrière-plan…', 'info', 'Détourage');
+        const bgOpts = {
+          output: { format: 'image/png', quality: 0.92 },
+          progress: (_key, current, total) => {
+            if (total > 0 && current > 0) {
+              const pct = Math.min(99, Math.round((current / total) * 100));
+              const msg = document.getElementById('foodAiMsg');
+              if (msg) msg.textContent = `Détourage en cours… ${pct}%`;
+            }
+          },
+        };
+        let resultBlob;
+        try {
+          resultBlob = await mod.removeBackground(inputBlob, { ...bgOpts, model: 'isnet_fp16' });
+        } catch (fp16Err) {
+          resultBlob = await mod.removeBackground(inputBlob, { ...bgOpts, model: 'isnet_quint8' });
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          this.setImageUrl(reader.result);
+          this._hasUserImage = true;
+          toast('Arrière-plan supprimé', 'success', 'Détourage');
+        };
+        reader.readAsDataURL(resultBlob);
+      } catch (e) {
+        console.error('Background removal failed:', e);
+        toast('Échec du détourage. Utilisez une photo uploadée (fichier local) ou réessayez.', 'error', 'Détourage');
+      }
+    },
+
+    guessFromHints(fileName) {
+      return this.guessFromName(fileName);
+    },
+
+    guessFromName(name) {
+      const match = matchFoodLibrary(name);
+      const raw = match?.guess
+        ? { ...match.guess }
+        : { cat: inferCategoryFromName(name), desc: '', price: 0, rating: 4.5 };
+      return normalizeGuessForAlgeria(raw, name, match);
+    },
+
+    applyGuess(g, userName) {
+      if (!g) return;
+      const nameEl = document.getElementById('foodName');
+      const preserved = (userName ?? nameEl?.value ?? '').trim();
+      if (nameEl && preserved) nameEl.value = titleCaseDishName(preserved);
+      document.getElementById('foodDesc').value = g.desc;
+      document.getElementById('foodPrice').value = g.price;
+      document.getElementById('foodRating').value = g.rating;
+      populateFoodCategorySelect(g.cat);
+      document.getElementById('foodCategory').value = g.cat;
+      FoodBadgeUI.setBadges(g.badges || []);
+      FoodBadgeUI.setSuggestions([
+        ...(g.badges || []),
+        'Nouveau', 'Promo', 'Vedette', 'Halal', 'Fait maison', 'Best-seller',
+      ]);
+      const badgeHint = (g.badges || []).length ? ` Badges : ${g.badges.join(', ')}.` : '';
+      toast(`Champs remplis par l'IA.${badgeHint}`, 'success', 'Auto-fill');
+    },
+
+    fillFromName() {
+      const name = (document.getElementById('foodName')?.value || '').trim();
+      if (name.length < 2) {
+        toast('Entrez d\'abord un nom de plat (2 caractères min.)', 'warning');
+        return;
+      }
+      this.applyGuess(this.guessFromName(name), name);
+      this.showPanel(
+        `Détails remplis pour « ${titleCaseDishName(name)} ». Chercher une photo sur Google / le web et l'améliorer ?`,
+        [
+          { label: 'Oui, chercher photo', primary: true, fn: async () => {
+            this.hidePanel();
+            await this.applyFoodImageForName(name);
+          }},
+          { label: 'Non merci', fn: () => this.hidePanel() },
+        ]
+      );
+    },
+
+    onImageSelected(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        this.enhanceImageDataUrl(ev.target.result, (enhanced) => {
+          this.setImageUrl(enhanced);
+          this.showPanel(
+            'Photo enhanced (brightness, contrast & color). Should I auto-fill the name, description, category, price, and rating?',
+            [
+              { label: 'Yes, fill everything', primary: true, fn: () => {
+                this.hidePanel();
+                const hintName = (file.name || '').replace(/\.[^.]+$/i, '').replace(/[-_]/g, ' ');
+                const currentName = (document.getElementById('foodName')?.value || '').trim();
+                const useName = currentName || hintName;
+                if (!currentName && useName) document.getElementById('foodName').value = useName;
+                this.applyGuess(this.guessFromName(useName), useName);
+                this.onNameBlur(true);
+              }},
+              { label: 'No thanks', fn: () => { this.hidePanel(); }},
+            ]
+          );
+        });
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    },
+
+    resolveFoodImageUrl(name) {
+      const match = matchFoodLibrary(name);
+      if (match) return match.url;
+      return 'https://images.unsplash.com/photo-1546069901-ba9599a1e63c?w=800&h=500&fit=crop&q=80';
+    },
+
+    _foodSearchQuery(name) {
+      const dish = titleCaseDishName(name);
+      return `${dish} plat nourriture restaurant photo réaliste`;
+    },
+
+    async fetchGoogleImageDataUrl(name) {
+      const cfg = getFoodImageSearchConfig();
+      const { googleApiKey, googleCx } = cfg;
+      if (!googleApiKey || !googleCx) throw new Error('Google CSE not configured');
+
+      const q = this._foodSearchQuery(name);
+      const params = new URLSearchParams({
+        key: googleApiKey,
+        cx: googleCx,
+        q,
+        searchType: 'image',
+        num: '8',
+        safe: 'active',
+        imgSize: 'large',
+        imgType: 'photo',
+      });
+      const res = await fetch(`https://www.googleapis.com/customsearch/v1?${params}`);
+      const data = await res.json();
+      if (!res.ok) {
+        const errMsg = data?.error?.message || 'Google Images API error';
+        throw new Error(errMsg);
+      }
+      const items = data.items || [];
+      if (!items.length) throw new Error('No Google results');
+
+      for (const item of items) {
+        const link = item.link || item.image?.thumbnailLink;
+        if (!link) continue;
+        try {
+          return await this.fetchAndEnhanceToDataUrl(link);
+        } catch (e) { /* try next result */ }
+      }
+      throw new Error('Google images not loadable');
+    },
+
+    async fetchOpenverseImageDataUrl(name) {
+      const q = encodeURIComponent(this._foodSearchQuery(name));
+      const urls = [
+        `https://api.openverse.org/v1/images/?format=json&page_size=10&q=${q}&category=food`,
+        `https://api.openverse.org/v1/images/?format=json&page_size=10&q=${q}`,
+      ];
+      for (const apiUrl of urls) {
+        const res = await fetch(apiUrl);
+        if (!res.ok) continue;
+        const data = await res.json();
+        for (const r of data.results || []) {
+          const link = r.url || r.thumbnail;
+          if (!link) continue;
+          try {
+            return await this.fetchAndEnhanceToDataUrl(link);
+          } catch (e) { /* next */ }
+        }
+      }
+      throw new Error('No Openverse images');
+    },
+
+    async fetchWikimediaImageDataUrl(name) {
+      const q = encodeURIComponent(this._foodSearchQuery(name));
+      const api = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${q}&gsrnamespace=6&prop=imageinfo&iiprop=url&iiurlwidth=900&format=json&origin=*`;
+      const res = await fetch(api);
+      const data = await res.json();
+      const pages = data?.query?.pages || {};
+      for (const p of Object.values(pages)) {
+        const link = p.imageinfo?.[0]?.thumburl || p.imageinfo?.[0]?.url;
+        if (!link) continue;
+        try {
+          return await this.fetchAndEnhanceToDataUrl(link);
+        } catch (e) { /* next */ }
+      }
+      throw new Error('No Wikimedia images');
+    },
+
+    async searchWebFoodImage(name) {
+      const cfg = getFoodImageSearchConfig();
+      if (cfg.googleApiKey && cfg.googleCx) {
+        try {
+          const dataUrl = await this.fetchGoogleImageDataUrl(name);
+          return { dataUrl, source: 'Google Images' };
+        } catch (e) {
+          console.warn('Google image search:', e);
+        }
+      }
+      try {
+        const dataUrl = await this.fetchOpenverseImageDataUrl(name);
+        return { dataUrl, source: cfg.googleApiKey ? 'recherche web (secours)' : 'recherche web' };
+      } catch (e) { /* fall through */ }
+      try {
+        const dataUrl = await this.fetchWikimediaImageDataUrl(name);
+        return { dataUrl, source: 'Wikimedia' };
+      } catch (e) { /* fall through */ }
+      throw new Error('No web images found');
+    },
+
+    async fetchFoodishImageUrl(name) {
+      const cat = inferFoodishCategory(name);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch(`https://foodish-api.com/api/images/${cat}/`, { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) throw new Error('Foodish unavailable');
+      const data = await res.json();
+      if (!data?.image) throw new Error('No image');
+      return data.image;
+    },
+
+    async applyFoodImageForName(name) {
+      const match = matchFoodLibrary(name);
+      if (match) {
+        this.showPanel(`Photo reconnue — amélioration de « ${titleCaseDishName(name)} »…`, []);
+        try {
+          const enhanced = await this.fetchAndEnhanceToDataUrl(match.url);
+          this.hidePanel();
+          this.setImageUrl(enhanced);
+          this._hasUserImage = true;
+          toast('Photo reconnue et améliorée', 'success', 'AI Image');
+          return;
+        } catch (e) {
+          this.hidePanel();
+          this.setImageUrl(match.url);
+          toast('Photo reconnue (amélioration ignorée)', 'success', 'AI Image');
+          return;
+        }
+      }
+
+      const cfg = getFoodImageSearchConfig();
+      const searchLabel = cfg.googleApiKey && cfg.googleCx
+        ? 'Recherche Google Images'
+        : 'Recherche web (configurez Google ci-dessus pour Google Images)';
+      this.showPanel(`${searchLabel} : « ${titleCaseDishName(name)} »…`, []);
+
+      try {
+        const { dataUrl, source } = await this.searchWebFoodImage(name);
+        this.hidePanel();
+        this.setImageUrl(dataUrl);
+        this._hasUserImage = true;
+        toast(`Photo trouvée (${source}) et améliorée`, 'success', 'AI Image');
+        return;
+      } catch (e) { console.warn('Web image search:', e); }
+
+      try {
+        const url = await this.fetchFoodishImageUrl(name);
+        const enhanced = await this.fetchAndEnhanceToDataUrl(url);
+        this.hidePanel();
+        this.setImageUrl(enhanced);
+        this._hasUserImage = true;
+        toast('Photo alimentaire trouvée et améliorée', 'success', 'AI Image');
+        return;
+      } catch (e2) { /* fallback below */ }
+
+      try {
+        const fallback = this.resolveFoodImageUrl(name);
+        const enhanced = await this.fetchAndEnhanceToDataUrl(fallback);
+        this.hidePanel();
+        this.setImageUrl(enhanced);
+        this._hasUserImage = true;
+        toast('Photo de secours améliorée', 'warning', 'AI Image');
+      } catch (e3) {
+        this.hidePanel();
+        this.setImageUrl(this.resolveFoodImageUrl(name));
+        toast('Photo de secours (sans amélioration)', 'warning', 'AI Image');
+      }
+    },
+
+    onNameBlur(skipImagePrompt) {
+      const name = (document.getElementById('foodName')?.value || '').trim();
+      if (name.length < 2) return;
+      if (this._askedNameImage || skipImagePrompt) return;
+      const hasImage = !!(document.getElementById('foodImage')?.value || '').trim();
+      if (hasImage && this._hasUserImage) return;
+      this._askedNameImage = true;
+      this.showPanel(
+        `Chercher une photo (Google / web) pour « ${name} » et l'améliorer automatiquement ?`,
+        [
+          { label: 'Oui, photo + détails', primary: true, fn: async () => {
+            const guess = this.guessFromName(name);
+            const descEmpty = !document.getElementById('foodDesc')?.value.trim();
+            const priceEmpty = !document.getElementById('foodPrice')?.value;
+            if (descEmpty || priceEmpty || document.getElementById('foodCategory')?.value === '') {
+              this.applyGuess(guess, name);
+            }
+            await this.applyFoodImageForName(name);
+          }},
+          { label: 'Photo seulement', fn: async () => {
+            await this.applyFoodImageForName(name);
+          }},
+          { label: 'Non merci', fn: () => { this.hidePanel(); }},
+        ]
+      );
+    },
+  };
+
+  const BulkFoodAI = {
+    async run() {
+      const ta = document.getElementById('bulkFoodNames');
+      const prog = document.getElementById('bulkFoodProgress');
+      const btn = document.getElementById('bulkFoodRunBtn');
+      const raw = (ta?.value || '').split(/\n/).map(l => l.trim()).filter(Boolean);
+      if (!raw.length) { toast('Ajoutez au moins un nom de plat', 'warning'); return; }
+      if (btn) btn.disabled = true;
+      const foods = getFoods();
+      let added = 0;
+      for (let i = 0; i < raw.length; i++) {
+        const name = raw[i];
+        if (prog) { prog.style.display = ''; prog.textContent = `Traitement ${i + 1}/${raw.length} : ${name}…`; }
+        const guess = FoodAI.guessFromName(name);
+        const finalName = titleCaseDishName(name);
+        const badges = guess.badges || [];
+        foods.push({
+          id: Date.now() + i,
+          name: finalName,
+          category: guess.cat || 'Mains',
+          price: guess.price,
+          rating: guess.rating,
+          description: guess.desc,
+          image: FoodAI.resolveFoodImageUrl(name),
+          badges,
+          badge: badges.join(' · '),
+          available: !badges.some(b => /indisponible|épuisé|rupture/i.test(b)),
+          featured: false,
+          bestseller: false,
+          orders: 0,
+        });
+        added++;
+        await new Promise(r => setTimeout(r, 50));
+      }
+      StorageManager.set('foods', foods);
+      if (prog) prog.textContent = `${added} plat(s) ajouté(s).`;
+      if (btn) btn.disabled = false;
+      renderFoodGrid();
+      closeModal('bulkFoodModal');
+      toast(`${added} plats importés par l'IA`, 'success', 'Import IA');
+    },
+  };
+
+  function openBulkFoodModal() {
+    const ta = document.getElementById('bulkFoodNames');
+    if (ta) ta.value = '';
+    const prog = document.getElementById('bulkFoodProgress');
+    if (prog) { prog.style.display = 'none'; prog.textContent = ''; }
+    openModal('bulkFoodModal');
+    if (window.lucide) lucide.createIcons();
   }
 
   /* =============================================
@@ -2932,23 +3767,57 @@
   const PAGE_TITLES = {
     dashboard: 'Dashboard', analytics: 'Analytics', orders: 'Orders',
     foods: 'Menu & Foods', tables: 'Tables', staff: 'Staff',
-    delivery: 'Delivery', branding: 'Branding', theme: 'Theme Editor',
-    notifications: 'Notifications', ai: 'AI Assistant',
+    delivery: 'Delivery', notifications: 'Notifications', reviews: 'Reviews',
   };
 
+  const MOBILE_TAB_HOME = ['dashboard'];
+  const MOBILE_TAB_ORDERS = ['orders'];
+  const MOBILE_TAB_MENU = ['foods'];
+  const MOBILE_TAB_MORE = ['analytics', 'tables', 'staff', 'delivery', 'reviews', 'notifications'];
+
+  function getMobileTabForPage(pageId) {
+    if (MOBILE_TAB_HOME.includes(pageId)) return 'home';
+    if (MOBILE_TAB_ORDERS.includes(pageId)) return 'orders';
+    if (MOBILE_TAB_MENU.includes(pageId)) return 'menu';
+    return 'more';
+  }
+
+  function syncMobileNav(pageId) {
+    const tabbar = document.getElementById('mobileTabbar');
+    if (!tabbar || window.innerWidth >= 768) return;
+    const tab = getMobileTabForPage(pageId);
+    tabbar.querySelectorAll('.mobile-tab').forEach(t => {
+      t.classList.toggle('active', t.dataset.tab === tab);
+    });
+  }
+
+  function openMobileMoreSheet() {
+    document.getElementById('mobileMoreBackdrop')?.classList.add('open');
+    document.getElementById('mobileMoreSheet')?.classList.add('open');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function closeMobileMoreSheet() {
+    document.getElementById('mobileMoreBackdrop')?.classList.remove('open');
+    document.getElementById('mobileMoreSheet')?.classList.remove('open');
+  }
+
+  function mobileNavGo(pageId) {
+    closeMobileMoreSheet();
+    const navEl = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+    navigateTo(pageId, navEl);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   function navigateTo(pageId, navEl) {
-    // Hide all pages
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.getElementById('page-' + pageId)?.classList.add('active');
 
-    // Update nav items
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     if (navEl) navEl.classList.add('active');
 
-    // Update topbar title
     document.getElementById('topbarTitle').textContent = PAGE_TITLES[pageId] || pageId;
 
-    // Page-specific init
     if (pageId === 'dashboard')  { renderDashboard(); }
     if (pageId === 'analytics')  { renderAnalytics(); }
     if (pageId === 'orders')     { renderOrdersTable(); }
@@ -2957,12 +3826,13 @@
     if (pageId === 'staff')      { renderStaffGrid(); }
     if (pageId === 'delivery')   { renderDelivery(); }
     if (pageId === 'notifications') { renderNotifications(); }
-    if (pageId === 'theme')      { initThemeEditor(); }
-    if (pageId === 'branding')   { loadBranding(); }
-    if (pageId === 'ai')         { initAI(); }
+    if (pageId === 'reviews')    { if (typeof loadReviews === 'function') loadReviews(); }
 
-    // Close sidebar on mobile
-    if (window.innerWidth < 768) toggleSidebar(true);
+    syncMobileNav(pageId);
+
+    if (window.innerWidth < 768) {
+      closeMobileMoreSheet();
+    }
   }
 
   /* =============================================
@@ -3093,7 +3963,7 @@
         <img class="top-item-img" src="${f.image}" alt="${f.name}" onerror="this.src='https://via.placeholder.com/36'" />
         <div style="flex:1;">
           <div class="top-item-name">${f.name}</div>
-          <div class="top-item-cat">${f.category}</div>
+          <div class="top-item-cat">${formatFoodCategory(f.category)}</div>
         </div>
         <div class="top-item-orders">${f.orders} orders</div>
       </div>
@@ -3543,6 +4413,8 @@
     const pending = getOrders().filter(o => (o.kitchenStatus||o.status) === 'pending').length;
     const ob = document.getElementById('ordersBadge');
     if (ob) { ob.textContent = pending; ob.style.display = pending ? '' : 'none'; }
+    const mob = document.getElementById('mobileOrdersBadge');
+    if (mob) { mob.textContent = pending; mob.style.display = pending ? '' : 'none'; }
   }
 
   /* =============================================
@@ -3553,8 +4425,18 @@
     const search   = document.getElementById('foodSearch')?.value.trim().toLowerCase();
     const catFilter = document.getElementById('foodCatFilter')?.value || 'all';
 
-    if (search)           foods = foods.filter(f => f.name.toLowerCase().includes(search) || f.category.toLowerCase().includes(search));
-    if (catFilter !== 'all') foods = foods.filter(f => f.category === catFilter);
+    if (search) {
+      foods = foods.filter(f =>
+        f.name.toLowerCase().includes(search) ||
+        formatFoodCategory(f.category).toLowerCase().includes(search) ||
+        (f.description || '').toLowerCase().includes(search)
+      );
+    }
+    if (catFilter === FOOD_CATEGORY_FILTER_NONE) {
+      foods = foods.filter(f => isUncategorizedFood(f.category));
+    } else if (catFilter !== 'all') {
+      foods = foods.filter(f => f.category === catFilter);
+    }
 
     const grid  = document.getElementById('foodGrid');
     const empty = document.getElementById('foodEmpty');
@@ -3567,16 +4449,12 @@
         <div class="food-admin-img">
           <img src="${f.image}" alt="${f.name}" onerror="this.src='https://via.placeholder.com/400x200?text=No+Image'" />
           <div class="food-admin-img-overlay">
-            <div style="display:flex;gap:4px;">
-              ${f.featured   ? '<span class="badge badge-gold" style="font-size:9px;">Featured</span>' : ''}
-              ${f.bestseller ? '<span class="badge badge-green" style="font-size:9px;">Best</span>'   : ''}
-            </div>
-            <span class="badge ${f.available?'badge-green':'badge-red'}" style="font-size:9px;">${f.available?'Active':'Off'}</span>
+            ${renderFoodBadgesHtml(f) || '<span></span>'}
           </div>
         </div>
         <div class="food-admin-body">
           <div class="food-admin-name">${f.name}</div>
-          <div class="food-admin-cat">${f.category} · ⭐ ${f.rating}</div>
+          <div class="food-admin-cat">${formatFoodCategory(f.category)} · ⭐ ${f.rating}</div>
           <div class="food-admin-row">
             <div class="food-admin-price">${f.price.toFixed(2)} DA</div>
             <span style="font-size:11px;color:var(--text-muted);">${f.orders||0} orders</span>
@@ -3593,53 +4471,64 @@
       </div>
     `).join('');
 
-    // Populate category filter
-    const cats = [...new Set(getFoods().map(f => f.category))].sort();
-    const sel  = document.getElementById('foodCatFilter');
-    if (sel && sel.options.length <= 2) {
-      cats.forEach(c => {
-        const o = document.createElement('option');
-        o.value = c; o.textContent = c;
-        sel.appendChild(o);
-      });
+    const sel = document.getElementById('foodCatFilter');
+    if (sel) {
+      const prev = sel.value;
+      const hasUncategorized = getFoods().some(f => isUncategorizedFood(f.category));
+      const cats = [...new Set([
+        ...getFoodCategories(),
+        ...getFoods().map(f => normalizeFoodCategory(f.category)).filter(Boolean),
+      ])].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+      sel.innerHTML = '<option value="all">All Categories</option>' +
+        (hasUncategorized ? `<option value="${FOOD_CATEGORY_FILTER_NONE}">${FOOD_CATEGORY_NONE_LABEL}</option>` : '') +
+        cats.map(c => `<option value="${c.replace(/"/g, '&quot;')}">${c}</option>`).join('');
+      if (prev && [...sel.options].some(o => o.value === prev)) sel.value = prev;
     }
 
     if (window.lucide) lucide.createIcons();
   }
 
   function openFoodModal(id = null) {
-    const modal = document.getElementById('foodModal');
     document.getElementById('foodEditId').value = id || '';
     document.getElementById('foodModalTitle').textContent = id ? 'Edit Food' : 'Add New Food';
 
-    // Reset form
+    FoodAI.reset();
+    FoodBadgeUI.reset();
     ['foodName','foodDesc','foodImage','foodPrice','foodRating'].forEach(fid => {
       const el = document.getElementById(fid);
       if (el) el.value = '';
     });
-    document.getElementById('foodAvailable').classList.add('on');
-    document.getElementById('foodFeatured').classList.remove('on');
-    document.getElementById('foodBestseller').classList.remove('on');
+    const newCat = document.getElementById('newCategoryInput');
+    if (newCat) newCat.value = '';
+    const tools = document.getElementById('foodImgTools');
+    if (tools) tools.style.display = 'none';
     document.getElementById('foodImgPreviewWrap').style.display = 'none';
 
+    let selectedCat;
     if (id) {
-      const foods = getFoods();
-      const food  = foods.find(f => f.id === id);
+      const food = getFoods().find(f => f.id === id);
       if (food) {
-        document.getElementById('foodName').value     = food.name;
-        document.getElementById('foodDesc').value     = food.description;
-        document.getElementById('foodImage').value    = food.image;
-        document.getElementById('foodPrice').value    = food.price;
-        document.getElementById('foodRating').value   = food.rating;
-        document.getElementById('foodCategory').value = food.category;
-        if (!food.available)  document.getElementById('foodAvailable').classList.remove('on');
-        if (food.featured)    document.getElementById('foodFeatured').classList.add('on');
-        if (food.bestseller)  document.getElementById('foodBestseller').classList.add('on');
+        document.getElementById('foodName').value   = food.name;
+        document.getElementById('foodDesc').value   = food.description;
+        document.getElementById('foodImage').value  = food.image;
+        document.getElementById('foodPrice').value  = food.price;
+        document.getElementById('foodRating').value = food.rating;
+        selectedCat = normalizeFoodCategory(food.category);
+        FoodBadgeUI.setBadges(getFoodBadgesFromItem(food));
+        FoodAI._hasUserImage = !!(food.image && food.image.startsWith('data:'));
         updateFoodImagePreview();
       }
     }
 
+    populateFoodCategorySelect(selectedCat);
+    loadFoodImageSearchConfigIntoForm();
     openModal('foodModal');
+    if (!id) {
+      FoodAI.showPanel(
+        'Tape un nom puis ✨ — l\'IA remplit prix, description, catégorie, note, badges et peut chercher une photo.',
+        [{ label: 'Compris', primary: true, fn: () => FoodAI.hidePanel() }]
+      );
+    }
     if (window.lucide) lucide.createIcons();
   }
 
@@ -3647,20 +4536,29 @@
     const url  = document.getElementById('foodImage')?.value;
     const wrap = document.getElementById('foodImgPreviewWrap');
     const img  = document.getElementById('foodImgPreview');
-    if (url && wrap && img) { img.src = url; wrap.style.display = ''; }
-    else if (wrap) wrap.style.display = 'none';
+    const tools = document.getElementById('foodImgTools');
+    if (url && wrap && img) {
+      img.src = url;
+      wrap.style.display = '';
+      if (tools) tools.style.display = 'none';
+    } else {
+      if (wrap) wrap.style.display = 'none';
+      if (tools) tools.style.display = 'none';
+    }
+    if (window.lucide) lucide.createIcons();
   }
 
   function saveFood() {
     const name     = document.getElementById('foodName').value.trim();
     const price    = parseFloat(document.getElementById('foodPrice').value);
-    const category = document.getElementById('foodCategory').value;
+    const category = normalizeFoodCategory(document.getElementById('foodCategory').value);
     const editId   = document.getElementById('foodEditId').value;
 
     if (!name)  { toast('Food name is required', 'error'); return; }
     if (!price || price < 0) { toast('Valid price is required', 'error'); return; }
 
     const foods = getFoods();
+    const badges = FoodBadgeUI.getBadges();
     const food = {
       id:          editId ? parseInt(editId) : Date.now(),
       name,
@@ -3669,16 +4567,26 @@
       rating:      parseFloat(document.getElementById('foodRating').value) || 4.5,
       description: document.getElementById('foodDesc').value.trim(),
       image:       document.getElementById('foodImage').value.trim() || 'https://via.placeholder.com/400x200?text=No+Image',
-      available:   document.getElementById('foodAvailable').classList.contains('on'),
-      featured:    document.getElementById('foodFeatured').classList.contains('on'),
-      bestseller:  document.getElementById('foodBestseller').classList.contains('on'),
+      badges,
+      badge:       badges.join(' · '),
+      available:   true,
+      featured:    false,
+      bestseller:  false,
       orders:      0,
     };
 
+    const badgeText = badges.join(' ').toLowerCase();
+    const unavailableBadge = /indisponible|épuisé|rupture|sold out/.test(badgeText);
+
     if (editId) {
       const idx = foods.findIndex(f => f.id === parseInt(editId));
-      if (idx >= 0) { food.orders = foods[idx].orders || 0; foods[idx] = food; }
+      if (idx >= 0) {
+        food.orders = foods[idx].orders || 0;
+        food.available = unavailableBadge ? false : (foods[idx].available !== false);
+        foods[idx] = food;
+      }
     } else {
+      food.available = !unavailableBadge;
       foods.push(food);
     }
 
@@ -3927,59 +4835,159 @@
   /* =============================================
      DELIVERY PAGE
      ============================================= */
-  function renderDelivery() {
-    const orders = getOrders().filter(o => o.type === 'delivery');
-    const active   = orders.filter(o => ['pending','preparing','ready'].includes(o.kitchenStatus||o.status));
-    const done     = orders.filter(o => o.kitchenStatus === 'delivered' || o.status === 'delivered');
 
-    document.getElementById('delivActive').textContent  = active.length;
-    document.getElementById('delivDone').textContent    = done.length;
+  // Same fallback driver colors as delivery.html
+  const _DRIVER_COLORS = ['#ef4444','#10b981','#0ea5e9','#8b5cf6','#f59e0b','#e8a020','#ec4899','#14b8a6'];
+  const _DRIVER_FALLBACKS = [
+    { id:'D1', name:'Ravi Singh',  vehicle:'Motorcycle — #MX-2241', color:'#ef4444', status:'busy',    deliveries:8,  rating:4.9 },
+    { id:'D2', name:'Lena Park',   vehicle:'Bicycle — #BK-0419',    color:'#10b981', status:'online',  deliveries:5,  rating:4.7 },
+    { id:'D3', name:'Marco Diaz',  vehicle:'Car — #CR-8872',         color:'#0ea5e9', status:'busy',    deliveries:11, rating:4.8 },
+    { id:'D4', name:'Yuki Tanaka', vehicle:'Scooter — #SC-3315',     color:'#8b5cf6', status:'offline', deliveries:3,  rating:4.6 },
+    { id:'D5', name:'Hassan Ali',  vehicle:'Car — #CR-1190',         color:'#f59e0b', status:'online',  deliveries:6,  rating:5.0 },
+  ];
+
+  function _getDeliveryDrivers() {
+    // Mirror exact logic from delivery.html _loadDriversFromStaff()
+    try {
+      const staff = StorageManager.get('staff');
+      if (staff && Array.isArray(staff)) {
+        const driverRoles = ['Delivery Driver','Driver','Livreur','delivery driver','driver'];
+        const staffDrivers = staff.filter(s => driverRoles.some(r => (s.role||'').toLowerCase() === r.toLowerCase()));
+        if (staffDrivers.length > 0) {
+          return staffDrivers.map((d, i) => ({
+            id: d.id || ('D' + (i+1)),
+            name: d.name || 'Driver',
+            vehicle: d.vehicle || d.shift || 'Motorcycle',
+            color: d.color || _DRIVER_COLORS[i % _DRIVER_COLORS.length],
+            status: d.status === 'online' ? 'online' : (d.status === 'busy' ? 'busy' : 'offline'),
+            deliveries: d.deliveries || 0,
+            rating: d.rating || 4.5,
+            phone: d.phone || '',
+          }));
+        }
+      }
+    } catch(e) {}
+    // Same fallback as delivery.html — ensures both pages are always in sync
+    return _DRIVER_FALLBACKS;
+  }
+
+  function _getDeliveryOrders() {
+    // Primary source: nova_deliveries (what delivery.html writes)
+    const deliveries = StorageManager.get('deliveries') || [];
+    if (deliveries.length) return deliveries;
+    // Fallback: nova_kitchen_orders filtered to delivery type
+    return (StorageManager.get('kitchen_orders') || [])
+      .filter(o => o.type === 'delivery')
+      .map(o => ({
+        id: o.id,
+        orderNum: o.id,
+        customer: o.name || o.customer || 'Guest',
+        address: o.address || o.deliveryAddress || '',
+        total: o.total || 0,
+        status: o.kitchenStatus === 'delivered' ? 'delivered' : 'waiting',
+        driverId: null,
+        createdAt: o.createdAt || new Date().toISOString(),
+        items: o.items || [],
+      }));
+  }
+
+  function renderDelivery() {
+    const allOrders  = _getDeliveryOrders();
+    const active     = allOrders.filter(o => !['delivered','cancelled'].includes(o.status));
+    const done       = allOrders.filter(o => o.status === 'delivered');
+    const drivers    = _getDeliveryDrivers();
+    const onlineDrivers = drivers.filter(d => d.status !== 'offline');
+
+    // Update KPI stats
+    const elActive  = document.getElementById('delivActive');
+    const elDone    = document.getElementById('delivDone');
+    const elDrivers = document.getElementById('delivDrivers');
+    if (elActive)  elActive.textContent  = active.length;
+    if (elDone)    elDone.textContent    = done.length;
+    if (elDrivers) elDrivers.textContent = onlineDrivers.length;
+
+    // Status badge colors
+    const statusStyle = {
+      waiting:   { bg:'rgba(245,158,11,0.12)',  color:'var(--color-warning)',   label:'Waiting'   },
+      assigned:  { bg:'rgba(14,165,233,0.12)',  color:'var(--color-secondary)', label:'Assigned'  },
+      transit:   { bg:'rgba(232,160,32,0.12)',  color:'var(--color-primary)',   label:'On the Way'},
+      delivered: { bg:'rgba(16,185,129,0.12)',  color:'var(--color-accent)',    label:'Delivered' },
+      cancelled: { bg:'rgba(239,68,68,0.12)',   color:'var(--color-danger)',    label:'Cancelled' },
+    };
 
     // Delivery queue
     const queue = document.getElementById('deliveryQueue');
     if (queue) {
       if (!active.length) {
-        queue.innerHTML = '<div class="empty-state"><div class="empty-icon">🚚</div><div class="empty-title">No active deliveries</div><div class="empty-desc">Delivery orders appear here.</div></div>';
+        queue.innerHTML = '<div class="empty-state"><div class="empty-icon">🚚</div><div class="empty-title">No active deliveries</div><div class="empty-desc">Orders placed via the Delivery page appear here.</div></div>';
       } else {
-        queue.innerHTML = active.map(o => `
-          <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border-color);">
-            <div style="width:36px;height:36px;border-radius:var(--radius-md);background:rgba(14,165,233,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        const driverMap = Object.fromEntries(drivers.map(d => [d.id, d]));
+        queue.innerHTML = active.map(o => {
+          const st  = statusStyle[o.status] || statusStyle.waiting;
+          const drv = driverMap[o.driverId];
+          const ago = o.createdAt ? Math.max(0, Math.round((Date.now() - new Date(o.createdAt)) / 60000)) : 0;
+          return `
+          <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border-color);">
+            <div style="width:38px;height:38px;border-radius:var(--radius-md);background:rgba(14,165,233,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
               <i data-lucide="truck" style="width:16px;height:16px;color:var(--color-secondary);"></i>
             </div>
-            <div style="flex:1;">
-              <div style="font-size:13px;font-weight:600;color:var(--text-primary);">${o.id}</div>
-              <div style="font-size:11px;color:var(--text-muted);">${o.name||'Guest'} · ${o.address?.slice(0,30)||'No address'}…</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:13px;font-weight:700;color:var(--text-primary);">${o.orderNum||o.id}</div>
+              <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${o.customer||'Guest'} · ${(o.address||'').slice(0,28)||'No address'}</div>
+              ${drv ? `<div style="font-size:10px;color:var(--color-secondary);margin-top:2px;">🏍 ${drv.name}</div>` : ''}
             </div>
-            <span class="badge badge-blue" style="font-size:10px;">${o.kitchenStatus||o.status}</span>
-          </div>
-        `).join('');
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+              <span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:99px;background:${st.bg};color:${st.color};">${st.label}</span>
+              <span style="font-size:10px;color:var(--text-muted);">${ago}m ago</span>
+            </div>
+          </div>`;
+        }).join('');
       }
     }
 
-    // Drivers
-    const driverStaff = getStaff().filter(s => s.role === 'Delivery Driver');
-    const drivers = document.getElementById('driversGrid');
-    if (drivers) {
-      if (!driverStaff.length) {
-        drivers.innerHTML = '<div class="empty-state"><div class="empty-icon">🚗</div><div class="empty-title">No drivers added</div><div class="empty-desc">Add delivery drivers in Staff management.</div></div>';
-      } else {
-        drivers.innerHTML = driverStaff.map(d => `
-          <div class="staff-card">
-            <div class="staff-avatar" style="background:rgba(14,165,233,0.1);color:var(--color-secondary);">
-              ${d.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
-              ${d.status==='online'?'<div class="staff-online-dot"></div>':''}
+    // Drivers grid
+    const driversEl = document.getElementById('driversGrid');
+    if (driversEl) {
+      driversEl.innerHTML = drivers.map(d => {
+        const statusColor = d.status === 'online' ? 'var(--color-accent)' : d.status === 'busy' ? 'var(--color-warning)' : 'var(--text-muted)';
+        const statusLabel = d.status === 'online' ? 'Available' : d.status === 'busy' ? 'On Delivery' : 'Offline';
+        const activeDelivery = active.find(o => o.driverId === d.id);
+        return `
+          <div class="staff-card" style="position:relative;">
+            <div class="staff-avatar" style="background:${d.color}18;color:${d.color};border:2px solid ${d.color}35;font-size:16px;">
+              ${d.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase()}
+              ${d.status !== 'offline' ? '<div class="staff-online-dot" style="background:' + statusColor + ';"></div>' : ''}
             </div>
             <div class="staff-info">
               <div class="staff-name">${d.name}</div>
-              <div class="staff-role" style="color:${d.status==='online'?'var(--color-accent)':'var(--text-muted)'};">${d.status==='online'?'On Duty':'Offline'}</div>
-              <div style="font-size:11px;color:var(--text-muted);">${d.phone||'—'}</div>
+              <div class="staff-role" style="color:${statusColor};">${statusLabel}</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${d.vehicle||'—'}</div>
+              ${activeDelivery ? `<div style="font-size:10px;color:var(--color-secondary);margin-top:3px;">📦 ${activeDelivery.customer}</div>` : ''}
+              <div style="display:flex;gap:12px;margin-top:8px;">
+                <div style="text-align:center;">
+                  <div style="font-family:var(--font-heading);font-size:15px;font-weight:800;color:var(--text-primary);">${d.deliveries}</div>
+                  <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Today</div>
+                </div>
+                <div style="text-align:center;">
+                  <div style="font-family:var(--font-heading);font-size:15px;font-weight:800;color:var(--color-primary);">${d.rating}★</div>
+                  <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Rating</div>
+                </div>
+              </div>
             </div>
-          </div>
-        `).join('');
-      }
+          </div>`;
+      }).join('');
     }
+
     if (window.lucide) lucide.createIcons();
   }
+
+  // Keep delivery page live — refresh whenever delivery.html writes to localStorage
+  window.addEventListener('storage', function(e) {
+    if (['nova_deliveries','nova_kitchen_orders','nova_staff'].includes(e.key)) {
+      const page = document.querySelector('.page.active');
+      if (page && page.id === 'page-delivery') renderDelivery();
+    }
+  });
 
   /* =============================================
      NOTIFICATIONS
@@ -4027,434 +5035,6 @@
   }
 
   /* =============================================
-     BRANDING
-     ============================================= */
-  function _applyBrandingToFields(b) {
-    if (!b) return;
-    if (b.name)     document.getElementById('brandName').value    = b.name;
-    if (b.tagline)  document.getElementById('brandTagline').value = b.tagline;
-    if (b.desc)     document.getElementById('brandDesc').value    = b.desc;
-    if (b.address)  document.getElementById('brandAddress').value = b.address;
-    if (b.phone)    document.getElementById('brandPhone').value   = b.phone;
-    if (b.email)    document.getElementById('brandEmail').value   = b.email;
-    if (b.open)     document.getElementById('brandOpen').value    = b.open;
-    if (b.close)    document.getElementById('brandClose').value   = b.close;
-    if (b.deliveryFee) document.getElementById('deliveryFee').value = b.deliveryFee;
-    if (b.freeDeliveryThreshold) document.getElementById('freeDeliveryThreshold').value = b.freeDeliveryThreshold;
-    if (b.taxRate)  document.getElementById('taxRate').value      = b.taxRate;
-    if (b.currency) document.getElementById('currency').value     = b.currency;
-    if (b.logoText || b.name) {
-      const logo = b.logoText || b.name;
-      document.getElementById('logoPreview').textContent = logo;
-      document.getElementById('sidebarLogo').textContent  = logo;
-    }
-    updateBrandPreview();
-  }
-
-  // Tracks whether we've already done the initial Firestore fetch for branding.
-  // After the first fetch the localStorage copy is authoritative (it's kept in
-  // sync by updateBrandPreview on every keystroke), so re-fetching on every
-  // navigation to the Branding page would wipe unsaved edits.
-  let _brandingFetched = false;
-
-  async function loadBranding() {
-    // Always restore from localStorage first (instant paint + preserves edits)
-    _applyBrandingToFields(getBranding());
-
-    // Only hit Firestore on the first visit — subsequent calls just use localStorage
-    if (_brandingFetched) return;
-    _brandingFetched = true;
-
-    // 2. Fetch Firestore for the authoritative global value
-    try {
-      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-      const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-      const cfg = {
-        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
-        authDomain: "protech-6c388.firebaseapp.com",
-        projectId: "protech-6c388",
-        storageBucket: "protech-6c388.firebasestorage.app",
-        messagingSenderId: "987892798162",
-        appId: "1:987892798162:web:2307b1e8773430df1d930b",
-      };
-      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
-      const db  = getFirestore(app);
-      const snap = await getDoc(doc(db, 'settings', 'branding'));
-      if (snap.exists()) {
-        const b = snap.data();
-        // Update localStorage cache AND the form (first load only)
-        StorageManager.set('branding', b);
-        StorageManager.set('site_branding', b);
-        _applyBrandingToFields(b);
-      }
-    } catch(e) { console.warn('Firestore branding load error:', e); }
-  }
-
-  function updateBrandPreview() {
-    const name    = document.getElementById('brandName')?.value || 'NŌVA';
-    const tagline = document.getElementById('brandTagline')?.value || 'Premium Dining Experience';
-    const addr    = document.getElementById('brandAddress')?.value || '';
-    const phone   = document.getElementById('brandPhone')?.value || '';
-    const open    = document.getElementById('brandOpen')?.value || '11:00';
-    const close   = document.getElementById('brandClose')?.value || '23:00';
-
-    const el = id => document.getElementById(id);
-    if (el('previewLogo'))   el('previewLogo').textContent   = name;
-    if (el('previewTagline')) el('previewTagline').textContent = tagline;
-    if (el('previewAddr'))   el('previewAddr').textContent   = addr;
-    if (el('previewPhone'))  el('previewPhone').textContent  = phone;
-    if (el('previewHours'))  el('previewHours').textContent  = `${open} – ${close}`;
-    if (el('sidebarLogo'))   el('sidebarLogo').textContent   = name;
-    if (el('logoPreview'))   el('logoPreview').textContent   = name;
-
-    // Update page title
-    document.title = `${name} Admin — Control Center`;
-
-    // ── Persist to localStorage so navigating away and back within the admin
-    // panel never wipes the user's unsaved edits. ───────────────────────────
-    const snapshot = {
-      name,
-      tagline,
-      desc:                  document.getElementById('brandDesc')?.value                  || '',
-      address:               addr,
-      phone,
-      email:                 document.getElementById('brandEmail')?.value                 || '',
-      open,
-      close,
-      deliveryFee:           document.getElementById('deliveryFee')?.value                || '',
-      freeDeliveryThreshold: document.getElementById('freeDeliveryThreshold')?.value      || '',
-      taxRate:               document.getElementById('taxRate')?.value                    || '',
-      currency:              document.getElementById('currency')?.value                   || '',
-      logoText:              name,
-    };
-    StorageManager.set('branding', snapshot);
-
-    if (window.lucide) lucide.createIcons();
-  }
-
-  async function saveBranding() {
-    const b = {
-      name:     document.getElementById('brandName').value,
-      tagline:  document.getElementById('brandTagline').value,
-      desc:     document.getElementById('brandDesc').value,
-      address:  document.getElementById('brandAddress').value,
-      phone:    document.getElementById('brandPhone').value,
-      email:    document.getElementById('brandEmail').value,
-      open:     document.getElementById('brandOpen').value,
-      close:    document.getElementById('brandClose').value,
-      deliveryFee: document.getElementById('deliveryFee').value,
-      freeDeliveryThreshold: document.getElementById('freeDeliveryThreshold').value,
-      taxRate:  document.getElementById('taxRate').value,
-      currency: document.getElementById('currency').value,
-      logoText: document.getElementById('brandName').value,
-    };
-    StorageManager.set('branding', b);
-    StorageManager.set('site_branding', b);
-
-    try {
-      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-      const { getFirestore, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-      const cfg = {
-        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
-        authDomain: "protech-6c388.firebaseapp.com",
-        projectId: "protech-6c388",
-        storageBucket: "protech-6c388.firebasestorage.app",
-        messagingSenderId: "987892798162",
-        appId: "1:987892798162:web:2307b1e8773430df1d930b",
-      };
-      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
-      const db  = getFirestore(app);
-      await setDoc(doc(db, 'settings', 'branding'), b);
-      // Mark that we have a fresh copy — next navigation to Branding page
-      // will use localStorage (which is now in sync with Firestore) instead
-      // of re-fetching and potentially overwriting further edits.
-      _brandingFetched = true;
-      toast('✅ Branding saved globally — all accounts will see this', 'success', 'Saved ✓');
-      novaMarkFirestoreOK();
-    } catch(e) {
-      console.error('[NŌVA] Firestore branding save FAILED:', e.code, e.message);
-      // Show a hard-to-miss error so the user knows it did NOT save globally
-      novaShowFirestoreError('branding save', e);
-    }
-  }
-
-  function handleLogoUpload(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = ev => {
-      const preview = document.getElementById('logoPreview');
-      preview.innerHTML = `<img src="${ev.target.result}" alt="Logo" />`;
-      StorageManager.set('logo_url', ev.target.result);
-    };
-    reader.readAsDataURL(file);
-  }
-
-  /* =============================================
-     THEME EDITOR
-     ============================================= */
-  function initThemeEditor() {
-    // Preset themes
-    renderPresetGrid();
-
-    // Brand colors
-    renderColorGroup('brandColorsGrid', BRAND_COLORS);
-    renderColorGroup('bgColorsGrid',    BG_COLORS);
-    renderColorGroup('textColorsGrid',  TEXT_COLORS);
-
-    // Fonts
-    const displayFonts = [
-      { name:'Cormorant Garamond', family:"'Cormorant Garamond', serif" },
-      { name:'Playfair Display',   family:"'Playfair Display', serif" },
-      { name:'DM Serif Display',   family:"'DM Serif Display', serif" },
-    ];
-    const bodyFonts = [
-      { name:'DM Sans',   family:"'DM Sans', sans-serif" },
-      { name:'Inter',     family:"'Inter', sans-serif" },
-      { name:'Plus Jakarta', family:"'Plus Jakarta Sans', sans-serif" },
-    ];
-
-    const savedTheme = StorageManager.get('admin_theme') || {};
-
-    document.getElementById('displayFontGrid').innerHTML = displayFonts.map(f => `
-      <div class="font-option ${(savedTheme['--font-display']||"'Cormorant Garamond', Georgia, serif").includes(f.name)?'selected':''}"
-           style="font-family:${f.family};" onclick="selectFont('display','${f.family}',this)">
-        <div style="font-size:18px;font-weight:600;">${f.name.split(' ')[0]}</div>
-        <div class="font-option-name">${f.name}</div>
-      </div>
-    `).join('');
-
-    document.getElementById('bodyFontGrid').innerHTML = bodyFonts.map(f => `
-      <div class="font-option ${(savedTheme['--font-body']||"'DM Sans', sans-serif").includes(f.name)?'selected':''}"
-           style="font-family:${f.family};" onclick="selectFont('body','${f.family}',this)">
-        <div style="font-size:14px;">Aa Bb Cc</div>
-        <div class="font-option-name">${f.name}</div>
-      </div>
-    `).join('');
-
-    // Sliders
-    document.getElementById('spacingSliders').innerHTML = SPACING_SLIDERS.map(s => {
-      const cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(s.var)) || s.default;
-      return `
-        <div class="slider-row">
-          <div class="slider-label">${s.label}</div>
-          <input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${cur}"
-            oninput="updateSlider('${s.var}',this.value,'${s.unit}',this.nextElementSibling)" />
-          <div class="slider-val">${cur}${s.unit}</div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function renderColorGroup(containerId, colors) {
-    const savedTheme = StorageManager.get('admin_theme') || {};
-    document.getElementById(containerId).innerHTML = colors.map(c => {
-      const cur = savedTheme[c.var] || getComputedStyle(document.documentElement).getPropertyValue(c.var).trim() || c.default;
-      return `
-        <div class="color-row">
-          <div class="color-preview" style="background:${cur};">
-            <input type="color" value="${cur}" oninput="updateColor('${c.var}',this.value,this.parentElement,this.parentElement.nextElementSibling.querySelector('.color-val'))" />
-          </div>
-          <div class="color-info">
-            <div class="color-name">${c.label}</div>
-            <div class="color-val">${cur}</div>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }
-
-  function updateColor(cssVar, value, previewEl, valEl) {
-    document.documentElement.style.setProperty(cssVar, value);
-    if (previewEl) previewEl.style.background = value;
-    if (valEl)     valEl.textContent = value;
-    // Auto-save to temp
-    const saved = StorageManager.get('admin_theme') || {};
-    saved[cssVar] = value;
-    StorageManager.set('admin_theme', saved);
-  }
-
-  function updateSlider(cssVar, value, unit, labelEl) {
-    document.documentElement.style.setProperty(cssVar, value + unit);
-    if (labelEl) labelEl.textContent = value + unit;
-    const saved = StorageManager.get('admin_theme') || {};
-    saved[cssVar] = value + unit;
-    StorageManager.set('admin_theme', saved);
-  }
-
-  function selectFont(type, family, el) {
-    const group = type === 'display' ? '#displayFontGrid' : '#bodyFontGrid';
-    document.querySelectorAll(group + ' .font-option').forEach(f => f.classList.remove('selected'));
-    el.classList.add('selected');
-    const cssVar = type === 'display' ? '--font-display' : '--font-body';
-    document.documentElement.style.setProperty(cssVar, family);
-    const saved = StorageManager.get('admin_theme') || {};
-    saved[cssVar] = family;
-    StorageManager.set('admin_theme', saved);
-  }
-
-  async function saveTheme() {
-    // ── Use admin_theme (localStorage) as the primary source of truth. ──────
-    // The onSnapshot listener in novaThemeSync writes only to nova_theme (not
-    // nova_admin_theme), so admin_theme is immune to Firestore clobbering.
-    // Reading from DOM inline styles first was the old approach — it caused
-    // onSnapshot to silently overwrite the user's preset before the save ran.
-    const localSaved = StorageManager.get('admin_theme') || {};
-    const root  = document.documentElement;
-    const style = getComputedStyle(root);
-    const saved = {};
-    [...BRAND_COLORS, ...BG_COLORS, ...TEXT_COLORS].forEach(c => {
-      const v = localSaved[c.var]
-             || root.style.getPropertyValue(c.var)
-             || style.getPropertyValue(c.var).trim();
-      if (v) saved[c.var] = v;
-    });
-    SPACING_SLIDERS.forEach(s => {
-      const v = localSaved[s.var]
-             || root.style.getPropertyValue(s.var)
-             || style.getPropertyValue(s.var).trim();
-      if (v) saved[s.var] = v;
-    });
-    ['--font-display','--font-body'].forEach(f => {
-      const v = localSaved[f] || root.style.getPropertyValue(f);
-      if (v) saved[f] = v;
-    });
-
-    // Re-apply so the DOM reflects exactly what we're about to save
-    Object.entries(saved).forEach(([k, v]) => root.style.setProperty(k, v));
-    StorageManager.set('admin_theme', saved);
-    StorageManager.set('theme', saved);
-
-    // ── Persist to Firestore so every device & account picks it up ──
-    try {
-      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-      const { getFirestore, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-      const cfg = {
-        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
-        authDomain: "protech-6c388.firebaseapp.com",
-        projectId: "protech-6c388",
-        storageBucket: "protech-6c388.firebasestorage.app",
-        messagingSenderId: "987892798162",
-        appId: "1:987892798162:web:2307b1e8773430df1d930b",
-      };
-      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
-      const db  = getFirestore(app);
-      // Include the current light/dark mode in the saved doc
-      const mode = document.documentElement.getAttribute('data-theme') || 'dark';
-      await setDoc(doc(db, 'settings', 'theme'), { ...saved, mode });
-      toast('✅ Theme saved globally — all accounts will see this', 'success', 'Theme Saved ✓');
-      novaMarkFirestoreOK();
-    } catch(e) {
-      console.error('[NŌVA] Firestore theme save FAILED:', e.code, e.message);
-      novaShowFirestoreError('theme save', e);
-    }
-  }
-
-  function resetTheme() {
-    confirmAction('Reset Theme', 'Reset all colors and fonts to defaults?', () => {
-      StorageManager.remove('admin_theme');
-      StorageManager.remove('theme');
-      // Remove all inline styles
-      const root = document.documentElement;
-      [...BRAND_COLORS, ...BG_COLORS, ...TEXT_COLORS, ...SPACING_SLIDERS].forEach(c => {
-        root.style.removeProperty(c.var);
-      });
-      root.style.removeProperty('--font-display');
-      root.style.removeProperty('--font-body');
-      initThemeEditor();
-      toast('Theme reset to defaults', 'info', 'Reset');
-    });
-  }
-
-  /* =============================================
-     AI ASSISTANT
-     ============================================= */
-  function initAI() {
-    const chat = document.getElementById('aiChat');
-    if (chat && chat.children.length === 0) {
-      addAIMsg('bot', '👋 Hello! I\'m your NŌVA AI assistant. I can help you write food descriptions, analyze trends, generate marketing copy, and suggest menu improvements.\n\nWhat would you like to do today?');
-    }
-
-    // Quick suggestions panel
-    const suggs = [
-      { icon:'🌟', title:'Weekly Specials Copy', desc:'Generate marketing text for this week\'s specials.' },
-      { icon:'📊', title:'Menu Optimization',    desc:'Analyze your best sellers and suggest improvements.' },
-      { icon:'🍽️', title:'New Dish Ideas',       desc:'Get creative dish suggestions based on trends.' },
-      { icon:'💬', title:'Customer Response',    desc:'Draft responses to customer reviews.' },
-    ];
-    document.getElementById('aiSuggestionsPanel').innerHTML = suggs.map(s => `
-      <div class="notif-item" style="cursor:pointer;" onclick="sendAIMsg('${s.title}')">
-        <div style="font-size:20px;">${s.icon}</div>
-        <div class="notif-text">
-          <div class="notif-title">${s.title}</div>
-          <div class="notif-desc">${s.desc}</div>
-        </div>
-      </div>
-    `).join('');
-
-    // Insights
-    const insights = [
-      { icon:'📈', text:'Your <strong>Truffle Fries</strong> are the most re-ordered item this week.' },
-      { icon:'⚡', text:'Peak hours are <strong>12–2 PM</strong> and <strong>7–9 PM</strong>. Staff accordingly.' },
-      { icon:'💡', text:'Adding a <strong>vegetarian section</strong> could increase reach by ~18%.' },
-      { icon:'⭐', text:'Your average rating is <strong>4.7★</strong> — above industry benchmark of 4.2.' },
-    ];
-    document.getElementById('aiInsights').innerHTML = insights.map(i => `
-      <div class="notif-item" style="border-bottom:1px solid var(--border-color);padding:10px 0;">
-        <div style="font-size:16px;flex-shrink:0;">${i.icon}</div>
-        <div style="font-size:13px;color:var(--text-secondary);">${i.text}</div>
-      </div>
-    `).join('');
-  }
-
-  function addAIMsg(role, text) {
-    const chat = document.getElementById('aiChat');
-    const div  = document.createElement('div');
-    div.className = `ai-msg ${role}`;
-    div.innerHTML = `
-      <div class="ai-avatar ${role === 'bot' ? 'bot' : 'user-av'}">
-        ${role === 'bot' ? '✦' : 'A'}
-      </div>
-      <div class="ai-bubble" style="white-space:pre-wrap;">${text}</div>
-    `;
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
-  }
-
-  function sendAIMsg(preset = null) {
-    const input = document.getElementById('aiInput');
-    const msg   = preset || (input ? input.value.trim() : '');
-    if (!msg) return;
-    if (input && !preset) input.value = '';
-
-    addAIMsg('user', msg);
-
-    // Show typing indicator
-    const chat = document.getElementById('aiChat');
-    const typing = document.createElement('div');
-    typing.className = 'ai-msg bot';
-    typing.id = 'aiTyping';
-    typing.innerHTML = `
-      <div class="ai-avatar bot">✦</div>
-      <div class="ai-typing"><span></span><span></span><span></span></div>
-    `;
-    chat.appendChild(typing);
-    chat.scrollTop = chat.scrollHeight;
-
-    // Simulate delay
-    setTimeout(() => {
-      typing.remove();
-      const key   = msg.toLowerCase();
-      const found = Object.keys(AI_RESPONSES).find(k => key.includes(k));
-      const resp  = found
-        ? AI_RESPONSES[found][Math.floor(Math.random() * AI_RESPONSES[found].length)]
-        : `That's an interesting question! For **"${msg}"**, I'd recommend analyzing your current menu performance first, then cross-referencing with seasonal trends. Would you like me to help you draft specific content or dive deeper into any particular aspect? 🎯`;
-
-      addAIMsg('bot', resp);
-    }, 1200 + Math.random() * 800);
-  }
-
-  /* =============================================
      HELPERS
      ============================================= */
   function statusBadge(status) {
@@ -4492,7 +5072,8 @@
       else if (q.includes('table')) navigateTo('tables', document.querySelector('[data-page=tables]'));
       else if (q.includes('staff') || q.includes('team')) navigateTo('staff', document.querySelector('[data-page=staff]'));
       else if (q.includes('review') || q.includes('testimonial')) navigateTo('reviews', document.querySelector('[data-page=reviews]'));
-      else if (q.includes('theme') || q.includes('color')) navigateTo('theme', document.querySelector('[data-page=theme]'));
+      else if (q.includes('notif') || q.includes('alert')) navigateTo('notifications', document.querySelector('[data-page=notifications]'));
+      else if (q.includes('analytic') || q.includes('chart')) navigateTo('analytics', document.querySelector('[data-page=analytics]'));
     });
 
     input?.addEventListener('keydown', e => {
@@ -4585,6 +5166,7 @@
 
       // Init default page
       renderDashboard();
+      syncMobileNav('dashboard');
 
       // Seed defaults to localStorage if not set
       if (!StorageManager.get('foods'))  StorageManager.set('foods',  DEFAULT_FOODS);

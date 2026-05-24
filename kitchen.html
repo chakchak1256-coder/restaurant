@@ -14,6 +14,9 @@
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#e8a020" />
+  <script src="js/nova-sync.js"></script>
   <title>NŌVA Kitchen Display System</title>
 
   <!-- Fonts -->
@@ -347,6 +350,10 @@
     .order-card::before { background: var(--accent, var(--border-color)); }
 
     /* Glow on urgent cards */
+    .order-card.wait-warn {
+      border-color: rgba(245,158,11,0.45);
+      box-shadow: 0 0 20px rgba(245,158,11,0.2);
+    }
     .order-card.urgent {
       border-color: rgba(239,68,68,0.4);
       box-shadow: var(--glow-red);
@@ -427,6 +434,9 @@
     }
     .order-item-mods {
       font-size: 11px; color: var(--text-muted); margin-top: 2px; font-style: italic;
+    }
+    .order-item-allergens {
+      font-size: 10px; color: var(--color-warning); margin-top: 4px;
     }
     .order-item-done {
       width: 22px; height: 22px; border-radius: var(--radius-sm);
@@ -877,9 +887,25 @@
    ============================================= */
 const Storage = {
   get:    k => { try { return JSON.parse(localStorage.getItem('nova_' + k)); } catch { return null; } },
-  set:    (k,v) => { try { localStorage.setItem('nova_' + k, JSON.stringify(v)); } catch {} },
+  set:    (k,v) => {
+    try {
+      localStorage.setItem('nova_' + k, JSON.stringify(v));
+      if (window.NovaSync) NovaSync._bump(k);
+    } catch {}
+  },
   remove: k => localStorage.removeItem('nova_' + k),
 };
+
+function getFoodAllergenHints(itemName) {
+  const foods = Storage.get('foods') || [];
+  const food = foods.find(f => (f.name || '').toLowerCase() === String(itemName || '').toLowerCase());
+  if (!food) return [];
+  const badges = [];
+  if (Array.isArray(food.badges)) badges.push(...food.badges);
+  else if (food.badge) badges.push(...String(food.badge).split(/[,;|·]/));
+  const keys = ['gluten', 'lactose', 'arachide', 'noix', 'crustac', 'poisson', 'œuf', 'oeuf', 'sésame', 'sesame', 'vegan', 'végétarien', 'halal', 'épicé', 'allerg'];
+  return badges.map(b => String(b).trim()).filter(b => keys.some(k => b.toLowerCase().includes(k)));
+}
 
 /* =============================================
    THEME MANAGER
@@ -1159,6 +1185,7 @@ const KitchenApp = {
     const mins      = order.timestamp ? Math.floor((Date.now() - order.timestamp) / 60000) : 0;
     const timerClass = mins < 10 ? 'ok' : mins < 20 ? 'warning' : 'urgent';
     const isUrgent   = mins >= 20 && ['pending','preparing'].includes(status);
+    const isWarn     = mins >= 10 && mins < 20 && ['pending','preparing'].includes(status);
 
     const typeMap = {
       'dine-in':  { cls:'type-dine',     label:'Dine-in' },
@@ -1172,7 +1199,7 @@ const KitchenApp = {
     const nextLabels = { preparing:'🔥 Start Cooking', ready:'✅ Mark Ready', delivered:'🚚 Delivered' };
 
     return `
-      <div class="order-card ${isUrgent ? 'urgent' : ''}" data-status="${status}" data-id="${order.id}" id="card-${order.id}">
+      <div class="order-card ${isUrgent ? 'urgent' : isWarn ? 'wait-warn' : ''}" data-status="${status}" data-id="${order.id}" id="card-${order.id}">
 
         <!-- Header -->
         <div class="card-head">
@@ -1204,6 +1231,7 @@ const KitchenApp = {
               <div style="flex:1;">
                 <div class="order-item-name" style="${item.done ? 'opacity:0.45;text-decoration:line-through;' : ''}">${item.name}</div>
                 ${item.mods ? `<div class="order-item-mods">— ${item.mods}</div>` : ''}
+                ${(() => { const h = getFoodAllergenHints(item.name); return h.length ? `<div class="order-item-allergens">⚠ ${h.map(x => x.replace(/</g,'&lt;')).join(' · ')}</div>` : ''; })()}
               </div>
               <button
                 class="order-item-done ${item.done ? 'checked' : ''}"
@@ -1294,7 +1322,7 @@ const KitchenApp = {
 
   /* Refresh timers every 10s */
   startTimerRefresh() {
-    setInterval(() => this.render(), 10000);
+    setInterval(() => this.render(), 2000);
   },
 
   /* ── New order simulation ─────────────────── */
@@ -1356,7 +1384,7 @@ const KitchenApp = {
       gain.connect(ctx.destination);
       osc.type      = 'sine';
       osc.frequency.setValueAtTime(isReady ? 880 : 660, ctx.currentTime);
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.setValueAtTime(isReady ? 0.2 : 0.28, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
       osc.start();
       osc.stop(ctx.currentTime + 0.6);
@@ -1392,18 +1420,28 @@ const KitchenApp = {
   /* ── Theme ────────────────────────────────── */
   toggleTheme() { ThemeManager.toggle(); },
 
-  /* ── Polling for new admin orders ─────────── */
+  /* ── Real-time sync (storage events + polling) ── */
   startPolling() {
+    if (window.NovaSync) {
+      NovaSync.watchKitchenOrders((orders, isNew) => {
+        if (isNew && orders[0]) {
+          this.showNewOrderBanner(orders[0]);
+          this.playBell(false);
+        }
+        this.render();
+      });
+      return;
+    }
     let lastCount = this.getOrders().length;
     setInterval(() => {
       const cur = this.getOrders().length;
       if (cur > lastCount) {
-        const newest = this.getOrders().slice(-1)[0];
+        const newest = this.getOrders()[0];
         if (newest) { this.showNewOrderBanner(newest); this.playBell(false); }
         this.render();
       }
       lastCount = cur;
-    }, 3000);
+    }, 2000);
   },
 
   /* ── Init ─────────────────────────────────── */

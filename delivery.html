@@ -5,15 +5,20 @@
   <script>
     (function(){
       try {
+        document.documentElement.classList.add('no-transition');
         var m = JSON.parse(localStorage.getItem("nova_themeMode") || '"dark"');
         document.documentElement.setAttribute("data-theme", m);
         var t = JSON.parse(localStorage.getItem("nova_admin_theme") || "null")
              || JSON.parse(localStorage.getItem("nova_theme") || "null");
         if (t) Object.entries(t).forEach(function(e){ document.documentElement.style.setProperty(e[0],e[1]); });
       } catch(e){}
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.documentElement.classList.remove('no-transition'); }); });
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#e8a020" />
+  <script src="js/nova-sync.js"></script>
   <title>NŌVA — Delivery Command Center</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -22,6 +27,9 @@
   <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 
   <style>
+    /* Prevent theme flash */
+    .no-transition, .no-transition * { transition: none !important; }
+
     /* =============================================
        CSS CUSTOM PROPERTIES
        ============================================= */
@@ -847,6 +855,12 @@
     </div>
   </div>
 
+  <div id="deliverySettingsBar" style="
+    padding:8px 24px;font-size:11px;color:var(--text-muted);
+    background:var(--bg-surface);border-bottom:1px solid var(--border-color);
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  "></div>
+
   <!-- =============================================
        MAIN LAYOUT
        ============================================= -->
@@ -959,19 +973,128 @@
        ============================================= */
     const Storage = {
       get: k => { try { const v = localStorage.getItem('nova_' + k); return v ? JSON.parse(v) : null; } catch { return null; } },
-      set: (k, v) => { try { localStorage.setItem('nova_' + k, JSON.stringify(v)); } catch {} },
+      set: (k, v) => {
+        try {
+          localStorage.setItem('nova_' + k, JSON.stringify(v));
+          if (window.NovaSync) NovaSync._bump(k);
+        } catch {}
+      },
     };
+
+    function getBrandingDelivery() {
+      const b = Storage.get('branding') || Storage.get('site_branding') || {};
+      let fee = parseFloat(b.deliveryFee);
+      let freeOver = parseFloat(b.freeDeliveryThreshold);
+      let minOrder = parseFloat(b.minOrder ?? b.deliveryMinOrder);
+      if (isNaN(fee) || fee <= 0) fee = 400;
+      else if (fee < 50) fee = Math.round(fee * 80);
+      if (isNaN(freeOver) || freeOver <= 0) freeOver = 3500;
+      else if (freeOver < 500) freeOver = Math.round(freeOver * 100);
+      if (isNaN(minOrder) || minOrder <= 0) minOrder = 1500;
+      else if (minOrder < 500) minOrder = Math.round(minOrder * 100);
+      const zones = Storage.get('delivery_zones') || [
+        { name: 'Centre-ville', fee: 0 },
+        { name: 'Périphérie', fee: 200 },
+        { name: 'Hors zone', fee: 500 },
+      ];
+      const paymentMethods = Storage.get('payment_methods') || ['Espèces', 'Carte bancaire', 'BaridiMob', 'CCP'];
+      return { fee, freeOver, minOrder, zones, paymentMethods };
+    }
+
+    function kitchenToDelivery(o) {
+      const k = o.kitchenStatus || o.status || 'pending';
+      const statusFlow = { pending:'waiting', preparing:'waiting', ready:'assigned', delivered:'delivered', cancelled:'cancelled' };
+      const items = (o.items || []).map(i => ({
+        name: i.name,
+        qty: i.qty || i.quantity || 1,
+        price: i.price || 0,
+      }));
+      const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+      return {
+        id: o.id,
+        orderNum: o.id,
+        customer: o.customerName || o.customer || 'Guest',
+        phone: o.phone || '—',
+        address: o.address || 'Adresse non renseignée',
+        notes: o.notes || '',
+        items,
+        total: o.total || subtotal || 0,
+        status: statusFlow[k] || 'waiting',
+        createdAt: typeof o.timestamp === 'number' ? new Date(o.timestamp).toISOString() : (o.timestamp || new Date().toISOString()),
+        driverId: null,
+        payment: o.payment || 'Espèces',
+        zone: o.zone || '',
+      };
+    }
+
+    function syncDeliveriesFromKitchen() {
+      const kitchen = (window.NovaSync ? NovaSync.getKitchenOrders() : (Storage.get('kitchen_orders') || []))
+        .filter(o => o.type === 'delivery');
+      const byId = new Map((deliveries || []).map(d => [d.id, d]));
+      kitchen.forEach(ko => {
+        const mapped = kitchenToDelivery(ko);
+        const ex = byId.get(ko.id);
+        if (!ex) byId.set(ko.id, mapped);
+        else {
+          const keepLocal = ['transit', 'assigned'].includes(ex.status) && mapped.status === 'waiting';
+          Object.assign(ex, mapped, {
+            driverId: ex.driverId,
+            status: keepLocal ? ex.status : mapped.status,
+          });
+        }
+      });
+      deliveries = Array.from(byId.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      Storage.set('deliveries', deliveries);
+    }
 
     /* =============================================
        MOCK DATA
        ============================================= */
-    const DRIVERS = [
-      { id: 'D1', name: 'Ravi Singh',    vehicle: 'Motorcycle — #MX-2241', color: '#ef4444', status: 'busy',    deliveries: 8,  rating: 4.9 },
-      { id: 'D2', name: 'Lena Park',     vehicle: 'Bicycle — #BK-0419',    color: '#10b981', status: 'online',  deliveries: 5,  rating: 4.7 },
-      { id: 'D3', name: 'Marco Diaz',    vehicle: 'Car — #CR-8872',         color: '#0ea5e9', status: 'busy',    deliveries: 11, rating: 4.8 },
-      { id: 'D4', name: 'Yuki Tanaka',   vehicle: 'Scooter — #SC-3315',     color: '#8b5cf6', status: 'offline', deliveries: 3,  rating: 4.6 },
-      { id: 'D5', name: 'Hassan Ali',    vehicle: 'Car — #CR-1190',         color: '#f59e0b', status: 'online',  deliveries: 6,  rating: 5.0 },
-    ];
+    // ── Load drivers from nova_staff (same source as admin panel) ──────────
+    const DRIVER_COLORS = ['#ef4444','#10b981','#0ea5e9','#8b5cf6','#f59e0b','#e8a020','#ec4899','#14b8a6'];
+    function _loadDriversFromStaff() {
+      try {
+        // Try nova_staff (StorageManager prefix = nova_)
+        const staffRaw = localStorage.getItem('nova_staff');
+        const staff = staffRaw ? JSON.parse(staffRaw) : null;
+        if (staff && Array.isArray(staff)) {
+          const driverRoles = ['Delivery Driver','Driver','Livreur','delivery driver','driver'];
+          const staffDrivers = staff.filter(s => driverRoles.some(r => (s.role||'').toLowerCase() === r.toLowerCase()));
+          if (staffDrivers.length > 0) {
+            return staffDrivers.map((d, i) => ({
+              id: d.id || ('D' + (i+1)),
+              name: d.name || 'Driver',
+              vehicle: d.vehicle || d.shift || 'Motorcycle',
+              color: d.color || DRIVER_COLORS[i % DRIVER_COLORS.length],
+              status: d.status === 'online' ? 'online' : (d.status === 'busy' ? 'busy' : 'offline'),
+              deliveries: d.deliveries || 0,
+              rating: d.rating || 4.5,
+              phone: d.phone || '',
+            }));
+          }
+        }
+      } catch(e) { console.warn('Driver load error:', e); }
+      // Fallback defaults if no staff configured yet
+      return [
+        { id: 'D1', name: 'Ravi Singh',  vehicle: 'Motorcycle — #MX-2241', color: '#ef4444', status: 'busy',    deliveries: 8,  rating: 4.9 },
+        { id: 'D2', name: 'Lena Park',   vehicle: 'Bicycle — #BK-0419',    color: '#10b981', status: 'online',  deliveries: 5,  rating: 4.7 },
+        { id: 'D3', name: 'Marco Diaz',  vehicle: 'Car — #CR-8872',         color: '#0ea5e9', status: 'busy',    deliveries: 11, rating: 4.8 },
+        { id: 'D4', name: 'Yuki Tanaka', vehicle: 'Scooter — #SC-3315',     color: '#8b5cf6', status: 'offline', deliveries: 3,  rating: 4.6 },
+        { id: 'D5', name: 'Hassan Ali',  vehicle: 'Car — #CR-1190',         color: '#f59e0b', status: 'online',  deliveries: 6,  rating: 5.0 },
+      ];
+    }
+    // Use a mutable array so drivers can be refreshed without full page reload
+    let DRIVERS = _loadDriversFromStaff();
+    // Listen for storage changes from admin panel
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'nova_staff') {
+        const freshDrivers = _loadDriversFromStaff();
+        DRIVERS.length = 0;
+        freshDrivers.forEach(d => DRIVERS.push(d));
+        renderDrivers();
+        updateKPIs();
+      }
+    });
 
     const NOW = Date.now();
     function minsAgo(m) { return new Date(NOW - m * 60000).toISOString(); }
@@ -1009,17 +1132,33 @@
       const themeVars = Storage.get('admin_theme') || Storage.get('theme');
       if (themeVars) Object.entries(themeVars).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
 
-      // Load or seed deliveries
       const saved = Storage.get('deliveries');
       deliveries = saved?.length ? saved : [...SEED_DELIVERIES];
-      Storage.set('deliveries', deliveries);
+      syncDeliveriesFromKitchen();
 
       renderQueue();
       renderDrivers();
       renderMap();
       updateKPIs();
+      renderDeliverySettingsBar();
       startClock();
       startSimulation();
+
+      if (window.NovaSync) {
+        NovaSync.watch(['kitchen_orders', 'deliveries'], () => {
+          syncDeliveriesFromKitchen();
+          renderQueue();
+          renderMap();
+          updateKPIs();
+          if (selectedId) selectDelivery(selectedId);
+        });
+      } else {
+        setInterval(() => {
+          syncDeliveriesFromKitchen();
+          renderQueue();
+          updateKPIs();
+        }, 3000);
+      }
 
       if (window.lucide) lucide.createIcons();
 
@@ -1047,6 +1186,18 @@
     /* =============================================
        KPI UPDATES
        ============================================= */
+    function renderDeliverySettingsBar() {
+      const el = document.getElementById('deliverySettingsBar');
+      if (!el) return;
+      const { minOrder, fee, freeOver, paymentMethods } = getBrandingDelivery();
+      el.innerHTML = `
+        <span>Min. ${minOrder.toFixed(0)} DA</span>
+        <span>·</span>
+        <span>Livraison ${fee.toFixed(0)} DA (gratuit &gt; ${freeOver.toFixed(0)} DA)</span>
+        <span>·</span>
+        <span>Paiements: ${paymentMethods.join(', ')}</span>`;
+    }
+
     function updateKPIs() {
       const active    = deliveries.filter(d => d.status === 'transit').length;
       const waiting   = deliveries.filter(d => d.status === 'waiting').length;
@@ -1409,7 +1560,9 @@
 
       // Totals
       const subtotal = d.items.reduce((s, i) => s + i.price * i.qty, 0);
-      const deliveryFee = 3.50;
+      const { fee, zones, paymentMethods } = getBrandingDelivery();
+      const zone = zones.find(z => z.name === d.zone) || zones[0];
+      const deliveryFee = zone?.fee ?? fee;
 
       document.getElementById('drawerOrderNum').textContent = `${d.orderNum} · ${d.customer}`;
       document.getElementById('drawerStatus').innerHTML = statusBadge(d.status);
@@ -1427,8 +1580,9 @@
           <div class="section-label" style="margin-bottom:10px;">Order Items</div>
           ${itemsHTML}
           <div class="info-row"><span class="info-key">Subtotal</span><span class="info-val">${subtotal.toFixed(2)} DA</span></div>
-          <div class="info-row"><span class="info-key">Delivery Fee</span><span class="info-val">${deliveryFee.toFixed(2)} DA</span></div>
-          <div class="info-row"><span class="info-key" style="color:var(--text-primary);font-weight:600;">Total</span><span class="info-val" style="color:var(--color-primary);font-family:var(--font-heading);font-size:15px;font-weight:800;">${(subtotal + deliveryFee).toFixed(2)} DA</span></div>
+          <div class="info-row"><span class="info-key">Frais livraison${d.zone ? ' (' + d.zone + ')' : ''}</span><span class="info-val">${deliveryFee.toFixed(0)} DA</span></div>
+          <div class="info-row"><span class="info-key">Paiement</span><span class="info-val">${d.payment || paymentMethods[0]}</span></div>
+          <div class="info-row"><span class="info-key" style="color:var(--text-primary);font-weight:600;">Total</span><span class="info-val" style="color:var(--color-primary);font-family:var(--font-heading);font-size:15px;font-weight:800;">${(subtotal + deliveryFee).toFixed(0)} DA</span></div>
         </div>
 
         ${driver ? `<div style="margin-bottom:4px;"><div class="section-label" style="margin-bottom:8px;">Assigned Driver</div>
@@ -1525,6 +1679,17 @@
 
       Storage.set('deliveries', deliveries);
 
+      const kitchenMap = { assigned:'ready', transit:'ready', delivered:'delivered', cancelled:'cancelled' };
+      if (kitchenMap[next]) {
+        const list = Storage.get('kitchen_orders') || [];
+        const ko = list.find(x => x.id === id);
+        if (ko) {
+          ko.kitchenStatus = kitchenMap[next];
+          ko.status = kitchenMap[next];
+          Storage.set('kitchen_orders', list);
+        }
+      }
+
       const labels = { assigned:'Driver dispatched', transit:'Order is on the way!', delivered:'Order delivered successfully!' };
       const types  = { assigned:'info', transit:'info', delivered:'success' };
       toast(labels[next], types[next] || 'info', `${d.orderNum} Updated`);
@@ -1578,6 +1743,7 @@
        REFRESH QUEUE
        ============================================= */
     function refreshQueue() {
+      syncDeliveriesFromKitchen();
       renderQueue();
       renderDrivers();
       renderMap();

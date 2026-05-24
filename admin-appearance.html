@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <script>
+    (function(){
+      try {
+        // Apply theme synchronously before any paint to prevent flash
+        document.documentElement.classList.add('no-transition');
+        var m = JSON.parse(localStorage.getItem("nova_themeMode") || '"dark"');
+        document.documentElement.setAttribute("data-theme", m);
+        var t = JSON.parse(localStorage.getItem("nova_admin_theme") || "null")
+             || JSON.parse(localStorage.getItem("nova_theme") || "null");
+        if (t) Object.entries(t).forEach(function(e){ document.documentElement.style.setProperty(e[0],e[1]); });
+      } catch(e){}
+      // Remove no-transition after first paint
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.documentElement.classList.remove('no-transition'); }); });
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NŌVA — Branding & Theme</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=DM+Serif+Display:ital@0;1&family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Nunito:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    /* Prevent theme flash on load */
+    .no-transition, .no-transition * { transition: none !important; }
+    :root {
+      --color-primary: #e8a020; --color-primary-light: #f5be52; --color-primary-dark: #b8780e;
+      --color-secondary: #0ea5e9; --color-accent: #10b981; --color-danger: #ef4444;
+      --color-warning: #f59e0b; --color-purple: #8b5cf6;
+      --bg-base: #080809; --bg-surface: #0f0f12; --bg-card: #161619; --bg-card-hover: #1e1e23;
+      --text-primary: #f0ede8; --text-secondary: #a09a90; --text-muted: #5a5650;
+      --border-color: rgba(240,237,232,0.07); --border-active: rgba(232,160,32,0.4);
+      --shadow-md: 0 4px 20px rgba(0,0,0,0.6);
+      --radius-sm: 6px; --radius-md: 12px; --radius-lg: 20px; --radius-full: 9999px;
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-heading: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
+      --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    [data-theme="light"] {
+      --bg-base: #f5f2ed; --bg-surface: #fff; --bg-card: #fff; --bg-card-hover: #f8f5f0;
+      --text-primary: #1a1714; --text-secondary: #6b6560; --text-muted: #a09a90;
+      --border-color: rgba(26,23,20,0.08); --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-body); background: var(--bg-base); color: var(--text-primary); line-height: 1.6; min-height: 100vh; }
+    button, input, textarea, select { font-family: inherit; }
+    button { cursor: pointer; border: none; background: none; }
+    a { color: inherit; text-decoration: none; }
+
+    .app-topbar {
+      position: sticky; top: 0; z-index: 100;
+      height: 64px; display: flex; align-items: center; gap: 16px;
+      padding: 0 24px; background: var(--bg-glass, rgba(22,22,25,0.9));
+      border-bottom: 1px solid var(--border-color); backdrop-filter: blur(12px);
+    }
+    .app-topbar-title { font-family: var(--font-heading); font-size: 15px; font-weight: 700; letter-spacing: 0.04em; }
+    .app-topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+    .page-wrap { max-width: 1200px; margin: 0 auto; padding: 24px; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .page-title { font-family: var(--font-display); font-size: 32px; font-weight: 600; }
+    .page-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+
+    .tab-bar { display: flex; gap: 4px; margin-bottom: 24px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 4px; width: fit-content; }
+    .tab-btn {
+      padding: 8px 18px; border-radius: var(--radius-sm); font-family: var(--font-heading);
+      font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+    }
+    .tab-btn.active { background: var(--color-primary); color: #000; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); overflow: hidden; }
+    .card-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--border-color); }
+    .card-title { font-family: var(--font-heading); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); }
+    .card-body { padding: 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px; padding: 9px 18px;
+      border-radius: var(--radius-md); font-family: var(--font-heading); font-size: 12px;
+      font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; transition: all 0.2s;
+    }
+    .btn-primary { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: #fff; }
+    .btn-ghost { background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary); }
+    .btn-ghost:hover { border-color: var(--border-active); color: var(--text-primary); }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
+    .flex { display: flex; } .gap-2 { gap: 8px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; margin-bottom: 6px; font-family: var(--font-heading); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); }
+    .form-control { width: 100%; padding: 10px 14px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-primary); font-size: 14px; outline: none; }
+    .form-control:focus { border-color: var(--border-active); }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+    .toggle { position: relative; width: 42px; height: 24px; background: var(--border-color); border-radius: var(--radius-full); cursor: pointer; }
+    .toggle.on { background: var(--color-primary); }
+    .toggle-thumb { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform 0.25s; }
+    .toggle.on .toggle-thumb { transform: translateX(18px); }
+
+    .logo-upload-area { border: 2px dashed var(--border-color); border-radius: var(--radius-lg); padding: 32px; text-align: center; cursor: pointer; background: var(--bg-surface); }
+    .logo-upload-area:hover { border-color: var(--border-active); }
+    .logo-preview { width: 80px; height: 80px; margin: 0 auto 12px; border-radius: var(--radius-lg); overflow: hidden; background: var(--bg-card); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 28px; font-weight: 700; color: var(--color-primary); }
+    .logo-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+    .theme-section { margin-bottom: 28px; }
+    .theme-section-title { font-family: var(--font-heading); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); }
+    .color-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+    .color-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-md); }
+    .color-preview { width: 28px; height: 28px; border-radius: var(--radius-sm); border: 2px solid rgba(255,255,255,0.1); position: relative; overflow: hidden; flex-shrink: 0; }
+    .color-preview input[type="color"] { position: absolute; inset: -4px; opacity: 0; cursor: pointer; width: 200%; height: 200%; }
+    .color-name { font-size: 12px; font-weight: 600; }
+    .color-val { font-size: 10px; font-family: monospace; color: var(--text-muted); }
+    .slider-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+    .slider-row:last-child { border-bottom: none; }
+    .slider-label { font-size: 13px; color: var(--text-secondary); min-width: 130px; }
+    .slider-val { font-size: 12px; font-weight: 700; min-width: 40px; text-align: right; }
+    input[type="range"] { flex: 1; accent-color: var(--color-primary); }
+    .theme-preview-box { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 20px; }
+    .preview-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 14px; }
+    .presets-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(115px, 1fr)); gap: 12px; }
+    .preset-card { border: 2px solid var(--border-color); border-radius: var(--radius-lg); padding: 14px 12px; cursor: pointer; text-align: center; position: relative; transition: transform 0.2s; }
+    .preset-card:hover { transform: translateY(-3px); }
+    .preset-card.active { border-color: var(--color-primary); }
+    .preset-swatch { display: flex; gap: 4px; justify-content: center; margin-bottom: 10px; }
+    .preset-dot { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.15); }
+    .preset-name { font-family: var(--font-heading); font-size: 11px; font-weight: 700; }
+    .preset-desc { font-size: 10px; color: var(--text-muted); }
+    .preset-active-badge { position: absolute; top: 6px; right: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--color-primary); display: none; align-items: center; justify-content: center; }
+    .preset-card.active .preset-active-badge { display: flex; }
+    .font-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    @media (max-width: 600px) { .font-grid { grid-template-columns: 1fr; } }
+    .font-option { padding: 14px 10px; background: var(--bg-surface); border: 1.5px solid var(--border-color); border-radius: var(--radius-md); cursor: pointer; text-align: center; }
+    .font-option.selected { border-color: var(--color-primary); background: rgba(232,160,32,0.07); }
+    .font-option-name { font-size: 10px; color: var(--text-muted); }
+
+    #toastContainer { position: fixed; bottom: 24px; right: 24px; z-index: 9000; display: flex; flex-direction: column; gap: 8px; }
+    .toast { display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); box-shadow: var(--shadow-md); min-width: 260px; animation: fadeIn 0.3s; }
+    .toast.success { border-color: rgba(16,185,129,0.3); }
+    .toast.error { border-color: rgba(239,68,68,0.3); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } }
+    .modal-overlay { position: fixed; inset: 0; z-index: 800; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); max-width: 400px; width: 100%; padding: 28px; text-align: center; }
+  </style>
+</head>
+<body>
+  <header class="app-topbar">
+    <a href="admin.html" class="btn btn-ghost btn-sm" title="Back to Admin">
+      <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Admin
+    </a>
+    <div class="app-topbar-title" id="topbarBrand">Branding & Theme</div>
+    <div class="app-topbar-actions">
+      <button class="btn btn-ghost btn-sm" onclick="AppearanceTheme.toggle()" aria-label="Toggle light/dark">
+        <i data-lucide="sun" id="themeIconSun" style="width:16px;height:16px;display:none;"></i>
+        <i data-lucide="moon" id="themeIconMoon" style="width:16px;height:16px;"></i>
+      </button>
+      <a href="index.html" class="btn btn-ghost btn-sm" target="_blank">
+        <i data-lucide="external-link" style="width:14px;height:14px;"></i> Live Site
+      </a>
+    </div>
+  </header>
+
+  <div class="page-wrap">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Appearance</div>
+        <div class="page-subtitle">Customize your restaurant identity and visual theme across all pages.</div>
+      </div>
+    </div>
+
+    <div class="tab-bar">
+      <div class="tab-btn active" data-tab="branding" onclick="switchTab('branding', this)">Branding</div>
+      <div class="tab-btn" data-tab="theme" onclick="switchTab('theme', this)">Theme Editor</div>
+    </div>
+
+    <!-- BRANDING -->
+    <div class="tab-panel active" id="tab-branding">
+      <div class="page-header" style="margin-bottom:16px;">
+        <div class="page-subtitle">Restaurant name, contact, delivery settings</div>
+        <button class="btn btn-primary btn-sm" onclick="saveBranding()">
+          <i data-lucide="save" style="width:14px;height:14px;"></i> Save Branding
+        </button>
+      </div>
+      <div class="grid-2">
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Identity</div></div>
+            <div class="card-body">
+              <div class="logo-upload-area" onclick="document.getElementById('logoFileInput').click()">
+                <div class="logo-preview" id="logoPreview">NŌVA</div>
+                <div style="font-size:13px;color:var(--text-muted);">Click to upload logo</div>
+                <input type="file" id="logoFileInput" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)" />
+              </div>
+              <div class="form-group" style="margin-top:16px;">
+                <label class="form-label">Restaurant Name</label>
+                <input type="text" class="form-control" id="brandName" value="NŌVA" oninput="updateBrandPreview()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tagline</label>
+                <input type="text" class="form-control" id="brandTagline" value="Premium Dining Experience" oninput="updateBrandPreview()" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" id="brandDesc" rows="3" oninput="updateBrandPreview()">A cinematic dining experience.</textarea>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Contact & Location</div></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Address</label>
+                <input type="text" class="form-control" id="brandAddress" oninput="updateBrandPreview()" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Phone</label>
+                  <input type="text" class="form-control" id="brandPhone" oninput="updateBrandPreview()" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <input type="text" class="form-control" id="brandEmail" oninput="updateBrandPreview()" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Opening</label>
+                  <input type="time" class="form-control" id="brandOpen" value="11:00" oninput="updateBrandPreview()" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Closing</label>
+                  <input type="time" class="form-control" id="brandClose" value="23:00" oninput="updateBrandPreview()" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Delivery Settings</div></div>
+            <div class="card-body">
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Delivery Fee (DA)</label>
+                  <input type="number" class="form-control" id="deliveryFee" value="4.99" step="0.01" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Free Delivery Over</label>
+                  <input type="number" class="form-control" id="freeDeliveryThreshold" value="35" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">Tax Rate (%)</label>
+                  <input type="number" class="form-control" id="taxRate" value="8" step="0.1" />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Currency</label>
+                  <input type="text" class="form-control" id="currency" value="DA" />
+                </div>
+              </div>
+              <div class="toggle-wrap">
+                <div class="toggle on" id="deliveryToggle" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+                <span style="font-size:13px;color:var(--text-secondary);">Delivery available</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="position:sticky;top:80px;height:fit-content;">
+          <div class="card-header"><div class="card-title">Live Preview</div></div>
+          <div class="card-body">
+            <div class="theme-preview-box" style="text-align:center;">
+              <div id="previewLogo" style="font-family:var(--font-display);font-size:26px;font-weight:700;color:var(--color-primary);">NŌVA</div>
+              <div id="previewTagline" style="font-size:12px;color:var(--text-muted);margin:8px 0 16px;">Premium Dining Experience</div>
+              <div class="preview-card" style="text-align:left;">
+                <div style="height:80px;background:linear-gradient(135deg,var(--bg-surface),var(--bg-card));border-radius:var(--radius-sm);margin-bottom:10px;display:flex;align-items:center;justify-content:center;font-size:28px;">🍔</div>
+                <div style="font-size:13px;font-weight:600;">Signature Burger</div>
+                <div style="font-size:12px;color:var(--text-muted);">Premium wagyu patty</div>
+              </div>
+            </div>
+            <div style="margin-top:12px;font-size:13px;color:var(--text-secondary);">
+              <div id="previewAddr"></div>
+              <div id="previewPhone"></div>
+              <div id="previewHours"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- THEME -->
+    <div class="tab-panel" id="tab-theme">
+      <div class="page-header" style="margin-bottom:16px;">
+        <div class="page-subtitle">Colors, fonts, and presets</div>
+        <div class="flex gap-2">
+          <button class="btn btn-ghost btn-sm" onclick="resetTheme()">Reset</button>
+          <button class="btn btn-primary btn-sm" onclick="saveTheme()">Save Theme</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:24px;">
+        <div class="card-header"><div class="card-title">Preset Themes</div></div>
+        <div class="card-body"><div class="presets-grid" id="presetsGrid"></div></div>
+      </div>
+      <div class="grid-2">
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Colors</div></div>
+            <div class="card-body">
+              <div class="theme-section"><div class="theme-section-title">Brand</div><div class="color-grid" id="brandColorsGrid"></div></div>
+              <div class="theme-section"><div class="theme-section-title">Background</div><div class="color-grid" id="bgColorsGrid"></div></div>
+              <div class="theme-section"><div class="theme-section-title">Text</div><div class="color-grid" id="textColorsGrid"></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Typography</div></div>
+            <div class="card-body">
+              <div class="theme-section-title">Display Font</div>
+              <div class="font-grid" id="displayFontGrid"></div>
+              <div class="theme-section-title" style="margin-top:16px;">Body Font</div>
+              <div class="font-grid" id="bodyFontGrid"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div class="card">
+            <div class="card-header"><div class="card-title">Shape & Space</div></div>
+            <div class="card-body"><div id="spacingSliders"></div></div>
+          </div>
+          <div class="card" style="position:sticky;top:80px;">
+            <div class="card-header"><div class="card-title">Live Preview</div></div>
+            <div class="card-body">
+              <div class="theme-preview-box" id="themePreviewBox">
+                <div style="font-family:var(--font-display);font-size:24px;font-weight:700;color:var(--color-primary);">Sample Heading</div>
+                <div style="font-size:13px;color:var(--text-secondary);margin:12px 0;">Body text preview</div>
+                <button class="btn btn-primary btn-sm">Primary</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer"></div>
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div style="font-family:var(--font-heading);font-size:16px;font-weight:700;margin-bottom:8px;" id="confirmTitle">Confirm</div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px;" id="confirmDesc"></div>
+      <div class="flex gap-2" style="justify-content:center;">
+        <button class="btn btn-ghost btn-sm" onclick="closeModal('confirmModal')">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="confirmOkBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const StorageManager = {
+    get: (key) => { try { return JSON.parse(localStorage.getItem('nova_' + key)); } catch { return null; } },
+    set: (key, val) => { try { localStorage.setItem('nova_' + key, JSON.stringify(val)); } catch {} },
+    remove: (key) => localStorage.removeItem('nova_' + key),
+  };
+
+  const FB_CFG = {
+    apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
+    authDomain: "protech-6c388.firebaseapp.com",
+    projectId: "protech-6c388",
+    storageBucket: "protech-6c388.firebasestorage.app",
+    messagingSenderId: "987892798162",
+    appId: "1:987892798162:web:2307b1e8773430df1d930b",
+  };
+
+  const BRAND_COLORS = [
+    { label:'Primary', var:'--color-primary', default:'#e8a020' },
+    { label:'Secondary', var:'--color-secondary', default:'#0ea5e9' },
+    { label:'Accent', var:'--color-accent', default:'#10b981' },
+    { label:'Danger', var:'--color-danger', default:'#ef4444' },
+    { label:'Warning', var:'--color-warning', default:'#f59e0b' },
+    { label:'Purple', var:'--color-purple', default:'#8b5cf6' },
+  ];
+  const BG_COLORS = [
+    { label:'Base BG', var:'--bg-base', default:'#080809' },
+    { label:'Surface', var:'--bg-surface', default:'#0f0f12' },
+    { label:'Card', var:'--bg-card', default:'#161619' },
+  ];
+  const TEXT_COLORS = [
+    { label:'Primary Text', var:'--text-primary', default:'#f0ede8' },
+    { label:'Secondary Text', var:'--text-secondary', default:'#a09a90' },
+    { label:'Muted Text', var:'--text-muted', default:'#5a5650' },
+  ];
+  const SPACING_SLIDERS = [
+    { label:'Border Radius (md)', var:'--radius-md', min:0, max:24, step:1, unit:'px', default:12 },
+    { label:'Border Radius (lg)', var:'--radius-lg', min:0, max:40, step:1, unit:'px', default:20 },
+  ];
+
+  const THEME_PRESETS = [
+    { id:'nova-gold', name:'NŌVA Gold', desc:'Default', emoji:'✦', light:false,
+      swatches:['#e8a020','#080809','#161619'],
+      vars:{'--color-primary':'#e8a020','--color-primary-light':'#f5be52','--color-primary-dark':'#b8780e','--color-secondary':'#0ea5e9','--color-accent':'#10b981','--color-danger':'#ef4444','--color-warning':'#f59e0b','--color-purple':'#8b5cf6','--bg-base':'#080809','--bg-surface':'#0f0f12','--bg-card':'#161619','--bg-card-hover':'#1e1e23','--text-primary':'#f0ede8','--text-secondary':'#a09a90','--text-muted':'#5a5650','--border-color':'rgba(240,237,232,0.07)','--font-display':"'Cormorant Garamond', Georgia, serif",'--font-body':"'DM Sans', sans-serif",'--radius-md':'12px','--radius-lg':'20px'}},
+    { id:'ocean-noir', name:'Ocean Noir', desc:'Electric Blue', emoji:'🌊', light:false,
+      swatches:['#00b4d8','#020b18','#091e32'],
+      vars:{'--color-primary':'#00b4d8','--color-primary-light':'#48cae4','--color-primary-dark':'#0077b6','--color-secondary':'#90e0ef','--color-accent':'#2dd4bf','--color-danger':'#ef4444','--color-warning':'#f59e0b','--color-purple':'#818cf8','--bg-base':'#020b18','--bg-surface':'#051422','--bg-card':'#091e32','--bg-card-hover':'#0d2840','--text-primary':'#e0f4ff','--text-secondary':'#7ba3bf','--text-muted':'#3a5f7a','--border-color':'rgba(0,180,216,0.1)','--font-display':"'DM Serif Display', Georgia, serif",'--font-body':"'Inter', sans-serif",'--radius-md':'12px','--radius-lg':'20px'}},
+    { id:'ivory-light', name:'Ivory Light', desc:'Warm Minimal', emoji:'☀️', light:true,
+      swatches:['#d97706','#fdfaf5','#ffffff'],
+      vars:{'--color-primary':'#d97706','--color-primary-light':'#fbbf24','--color-primary-dark':'#b45309','--color-secondary':'#0ea5e9','--color-accent':'#10b981','--color-danger':'#ef4444','--color-warning':'#f59e0b','--color-purple':'#8b5cf6','--bg-base':'#fdfaf5','--bg-surface':'#ffffff','--bg-card':'#ffffff','--bg-card-hover':'#fef9f0','--text-primary':'#1c1209','--text-secondary':'#6b5c45','--text-muted':'#a8947a','--border-color':'rgba(28,18,9,0.09)','--font-display':"'Playfair Display', Georgia, serif",'--font-body':"'DM Sans', sans-serif",'--radius-md':'12px','--radius-lg':'20px'}},
+    { id:'forest-dark', name:'Forest Dark', desc:'Emerald', emoji:'🌿', light:false,
+      swatches:['#22c55e','#020d06','#091a0f'],
+      vars:{'--color-primary':'#22c55e','--color-primary-light':'#4ade80','--color-primary-dark':'#16a34a','--color-secondary':'#84cc16','--color-accent':'#2dd4bf','--color-danger':'#f87171','--color-warning':'#fbbf24','--color-purple':'#a78bfa','--bg-base':'#020d06','--bg-surface':'#05140a','--bg-card':'#091a0f','--bg-card-hover':'#0e2416','--text-primary':'#ecfdf5','--text-secondary':'#86b898','--text-muted':'#3d6b50','--border-color':'rgba(34,197,94,0.09)','--font-display':"'Lora', Georgia, serif",'--font-body':"'Plus Jakarta Sans', sans-serif",'--radius-md':'14px','--radius-lg':'22px'}},
+  ];
+
+  let _activePresetId = StorageManager.get('active_preset_id') || 'nova-gold';
+  let _brandingFetched = false;
+
+  const AppearanceTheme = {
+    init() {
+      const mode = StorageManager.get('themeMode') || 'dark';
+      document.documentElement.setAttribute('data-theme', mode);
+      this.updateIcon(mode);
+      const saved = StorageManager.get('admin_theme');
+      if (saved) Object.entries(saved).forEach(([k,v]) => document.documentElement.style.setProperty(k,v));
+    },
+    toggle() {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      StorageManager.set('themeMode', next);
+      this.updateIcon(next);
+      toast('Switched to ' + next + ' mode', 'info');
+    },
+    updateIcon(mode) {
+      const sun = document.getElementById('themeIconSun');
+      const moon = document.getElementById('themeIconMoon');
+      if (sun) sun.style.display = mode === 'dark' ? '' : 'none';
+      if (moon) moon.style.display = mode === 'light' ? '' : 'none';
+    },
+  };
+
+  function switchTab(id, el) {
+    document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('tab-' + id).classList.add('active');
+    if (id === 'theme') initThemeEditor();
+    if (id === 'branding') loadBranding();
+  }
+
+  function toast(msg, type='info', title='') {
+    const c = document.getElementById('toastContainer');
+    const el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.innerHTML = '<div><strong>' + (title||'') + '</strong> ' + msg + '</div>';
+    c.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+
+  function openModal(id) { document.getElementById(id)?.classList.add('open'); }
+  function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
+  function confirmAction(title, desc, onOk) {
+    document.getElementById('confirmTitle').textContent = title;
+    document.getElementById('confirmDesc').textContent = desc;
+    document.getElementById('confirmOkBtn').onclick = () => { onOk(); closeModal('confirmModal'); };
+    openModal('confirmModal');
+  }
+
+  function getBranding() { return StorageManager.get('branding') || {}; }
+
+  function _applyBrandingToFields(b) {
+    if (!b) return;
+    const set = (id, v) => { const el = document.getElementById(id); if (el && v != null) el.value = v; };
+    set('brandName', b.name); set('brandTagline', b.tagline); set('brandDesc', b.desc);
+    set('brandAddress', b.address); set('brandPhone', b.phone); set('brandEmail', b.email);
+    set('brandOpen', b.open); set('brandClose', b.close);
+    set('deliveryFee', b.deliveryFee); set('freeDeliveryThreshold', b.freeDeliveryThreshold);
+    set('taxRate', b.taxRate); set('currency', b.currency);
+    if (b.name) {
+      document.getElementById('topbarBrand').textContent = (b.name) + ' — Appearance';
+      document.title = b.name + ' — Branding & Theme';
+    }
+    // Always try to show logo
+    const logoEl = document.getElementById('logoPreview');
+    if (logoEl) {
+      const savedLogoUrl = StorageManager.get('logo_url') || b.logoUrl;
+      if (savedLogoUrl) {
+        logoEl.innerHTML = '<img src="' + savedLogoUrl + '" alt="Logo" />';
+      } else {
+        logoEl.textContent = b.logoText || b.name || 'NŌVA';
+      }
+    }
+    updateBrandPreview();
+  }
+
+  async function loadBranding() {
+    _applyBrandingToFields(getBranding());
+    if (_brandingFetched) return;
+    _brandingFetched = true;
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, doc, getDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const app = getApps().length ? getApps()[0] : initializeApp(FB_CFG);
+      const snap = await getDoc(doc(getFirestore(app), 'settings', 'branding'));
+      if (snap.exists()) {
+        const b = snap.data();
+        StorageManager.set('branding', b);
+        StorageManager.set('site_branding', b);
+        _applyBrandingToFields(b);
+      }
+    } catch(e) { console.warn('Branding load:', e); }
+  }
+
+  function updateBrandPreview() {
+    const name = document.getElementById('brandName')?.value || 'NŌVA';
+    const tagline = document.getElementById('brandTagline')?.value || '';
+    const addr = document.getElementById('brandAddress')?.value || '';
+    const phone = document.getElementById('brandPhone')?.value || '';
+    const open = document.getElementById('brandOpen')?.value || '11:00';
+    const close = document.getElementById('brandClose')?.value || '23:00';
+    if (document.getElementById('previewLogo')) document.getElementById('previewLogo').textContent = name;
+    if (document.getElementById('previewTagline')) document.getElementById('previewTagline').textContent = tagline;
+    if (document.getElementById('previewAddr')) document.getElementById('previewAddr').textContent = addr;
+    if (document.getElementById('previewPhone')) document.getElementById('previewPhone').textContent = phone;
+    if (document.getElementById('previewHours')) document.getElementById('previewHours').textContent = open + ' – ' + close;
+    document.getElementById('topbarBrand').textContent = name + ' — Appearance';
+    document.title = name + ' — Branding & Theme';
+    // Preserve logoUrl when doing a preview update
+    const existingBranding = StorageManager.get('branding') || {};
+    const logoUrl = StorageManager.get('logo_url') || existingBranding.logoUrl || '';
+    StorageManager.set('branding', {
+      ...existingBranding,
+      name, tagline,
+      desc: document.getElementById('brandDesc')?.value || '',
+      address: addr, phone,
+      email: document.getElementById('brandEmail')?.value || '',
+      open, close,
+      deliveryFee: document.getElementById('deliveryFee')?.value,
+      freeDeliveryThreshold: document.getElementById('freeDeliveryThreshold')?.value,
+      taxRate: document.getElementById('taxRate')?.value,
+      currency: document.getElementById('currency')?.value,
+      logoText: name,
+      logoUrl,
+    });
+  }
+
+  async function saveBranding() {
+    const logoUrl = StorageManager.get('logo_url') || '';
+    const b = {
+      name: document.getElementById('brandName').value,
+      tagline: document.getElementById('brandTagline').value,
+      desc: document.getElementById('brandDesc').value,
+      address: document.getElementById('brandAddress').value,
+      phone: document.getElementById('brandPhone').value,
+      email: document.getElementById('brandEmail').value,
+      open: document.getElementById('brandOpen').value,
+      close: document.getElementById('brandClose').value,
+      deliveryFee: document.getElementById('deliveryFee').value,
+      freeDeliveryThreshold: document.getElementById('freeDeliveryThreshold').value,
+      taxRate: document.getElementById('taxRate').value,
+      currency: document.getElementById('currency').value,
+      logoText: document.getElementById('brandName').value,
+      logoUrl,
+    };
+    StorageManager.set('branding', b);
+    StorageManager.set('site_branding', b);
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const app = getApps().length ? getApps()[0] : initializeApp(FB_CFG);
+      await setDoc(doc(getFirestore(app), 'settings', 'branding'), b);
+      toast('Branding saved globally', 'success', 'Saved');
+    } catch(e) {
+      toast('Saved locally only — Firestore error', 'error');
+    }
+  }
+
+  function handleLogoUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const url = ev.target.result;
+      document.getElementById('logoPreview').innerHTML = '<img src="' + url + '" alt="Logo" />';
+      StorageManager.set('logo_url', url);
+      // Also merge into branding so it persists properly
+      const b = StorageManager.get('branding') || {};
+      b.logoUrl = url;
+      StorageManager.set('branding', b);
+      StorageManager.set('site_branding', b);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function renderPresetGrid() {
+    const grid = document.getElementById('presetsGrid');
+    if (!grid) return;
+    grid.innerHTML = THEME_PRESETS.map(p => `
+      <div class="preset-card ${_activePresetId === p.id ? 'active' : ''}" onclick="applyPreset('${p.id}')">
+        <div class="preset-active-badge"><i data-lucide="check" style="width:10px;height:10px;color:#000;"></i></div>
+        <div style="font-size:20px;margin-bottom:8px;">${p.emoji}</div>
+        <div class="preset-swatch">${p.swatches.map(s => '<div class="preset-dot" style="background:'+s+'"></div>').join('')}</div>
+        <div class="preset-name">${p.name}</div>
+        <div class="preset-desc">${p.desc}</div>
+      </div>`).join('');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function applyPreset(id) {
+    const preset = THEME_PRESETS.find(p => p.id === id);
+    if (!preset) return;
+    _activePresetId = id;
+    StorageManager.set('active_preset_id', id);
+    Object.entries(preset.vars).forEach(([k,v]) => document.documentElement.style.setProperty(k,v));
+    const mode = preset.light ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', mode);
+    StorageManager.set('themeMode', mode);
+    StorageManager.set('admin_theme', preset.vars);
+    StorageManager.set('theme', preset.vars);
+    AppearanceTheme.updateIcon(mode);
+    initThemeEditor();
+    renderPresetGrid();
+    toast('"' + preset.name + '" applied', 'success');
+  }
+
+  function initThemeEditor() {
+    renderPresetGrid();
+    renderColorGroup('brandColorsGrid', BRAND_COLORS);
+    renderColorGroup('bgColorsGrid', BG_COLORS);
+    renderColorGroup('textColorsGrid', TEXT_COLORS);
+    const displayFonts = [
+      { name:'Cormorant Garamond', family:"'Cormorant Garamond', serif" },
+      { name:'Playfair Display', family:"'Playfair Display', serif" },
+      { name:'DM Serif Display', family:"'DM Serif Display', serif" },
+    ];
+    const bodyFonts = [
+      { name:'DM Sans', family:"'DM Sans', sans-serif" },
+      { name:'Inter', family:"'Inter', sans-serif" },
+      { name:'Plus Jakarta', family:"'Plus Jakarta Sans', sans-serif" },
+    ];
+    const saved = StorageManager.get('admin_theme') || {};
+    document.getElementById('displayFontGrid').innerHTML = displayFonts.map(f => `
+      <div class="font-option ${(saved['--font-display']||'').includes(f.name.split(' ')[0])?'selected':''}" onclick="selectFont('display','${f.family.replace(/'/g,"\\'")}',this)">
+        <div style="font-family:${f.family};font-size:18px;font-weight:600;">${f.name.split(' ')[0]}</div>
+        <div class="font-option-name">${f.name}</div>
+      </div>`).join('');
+    document.getElementById('bodyFontGrid').innerHTML = bodyFonts.map(f => `
+      <div class="font-option" onclick="selectFont('body','${f.family.replace(/'/g,"\\'")}',this)">
+        <div style="font-family:${f.family};">Aa Bb Cc</div>
+        <div class="font-option-name">${f.name}</div>
+      </div>`).join('');
+    document.getElementById('spacingSliders').innerHTML = SPACING_SLIDERS.map(s => {
+      const cur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(s.var)) || s.default;
+      return `<div class="slider-row"><div class="slider-label">${s.label}</div>
+        <input type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${cur}"
+          oninput="updateSlider('${s.var}',this.value,'${s.unit}',this.nextElementSibling)" />
+        <div class="slider-val">${cur}${s.unit}</div></div>`;
+    }).join('');
+  }
+
+  function renderColorGroup(containerId, colors) {
+    const saved = StorageManager.get('admin_theme') || {};
+    document.getElementById(containerId).innerHTML = colors.map(c => {
+      const cur = saved[c.var] || getComputedStyle(document.documentElement).getPropertyValue(c.var).trim() || c.default;
+      return `<div class="color-row"><div class="color-preview" style="background:${cur};">
+        <input type="color" value="${cur}" oninput="updateColor('${c.var}',this.value,this.parentElement,this.parentElement.nextElementSibling.querySelector('.color-val'))" />
+        </div><div><div class="color-name">${c.label}</div><div class="color-val">${cur}</div></div></div>`;
+    }).join('');
+  }
+
+  function updateColor(cssVar, value, previewEl, valEl) {
+    document.documentElement.style.setProperty(cssVar, value);
+    if (previewEl) previewEl.style.background = value;
+    if (valEl) valEl.textContent = value;
+    const saved = StorageManager.get('admin_theme') || {};
+    saved[cssVar] = value;
+    StorageManager.set('admin_theme', saved);
+  }
+
+  function updateSlider(cssVar, value, unit, labelEl) {
+    document.documentElement.style.setProperty(cssVar, value + unit);
+    if (labelEl) labelEl.textContent = value + unit;
+    const saved = StorageManager.get('admin_theme') || {};
+    saved[cssVar] = value + unit;
+    StorageManager.set('admin_theme', saved);
+  }
+
+  function selectFont(type, family, el) {
+    const group = type === 'display' ? '#displayFontGrid' : '#bodyFontGrid';
+    document.querySelectorAll(group + ' .font-option').forEach(f => f.classList.remove('selected'));
+    el.classList.add('selected');
+    const cssVar = type === 'display' ? '--font-display' : '--font-body';
+    document.documentElement.style.setProperty(cssVar, family);
+    const saved = StorageManager.get('admin_theme') || {};
+    saved[cssVar] = family;
+    StorageManager.set('admin_theme', saved);
+  }
+
+  async function saveTheme() {
+    const localSaved = StorageManager.get('admin_theme') || {};
+    const root = document.documentElement;
+    const style = getComputedStyle(root);
+    const saved = {};
+    [...BRAND_COLORS, ...BG_COLORS, ...TEXT_COLORS].forEach(c => {
+      const v = localSaved[c.var] || root.style.getPropertyValue(c.var) || style.getPropertyValue(c.var).trim();
+      if (v) saved[c.var] = v;
+    });
+    SPACING_SLIDERS.forEach(s => {
+      const v = localSaved[s.var] || root.style.getPropertyValue(s.var) || style.getPropertyValue(s.var).trim();
+      if (v) saved[s.var] = v;
+    });
+    ['--font-display','--font-body'].forEach(f => {
+      const v = localSaved[f] || root.style.getPropertyValue(f);
+      if (v) saved[f] = v;
+    });
+    Object.entries(saved).forEach(([k,v]) => root.style.setProperty(k,v));
+    StorageManager.set('admin_theme', saved);
+    StorageManager.set('theme', saved);
+    try {
+      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
+      const { getFirestore, doc, setDoc } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
+      const app = getApps().length ? getApps()[0] : initializeApp(FB_CFG);
+      const mode = document.documentElement.getAttribute('data-theme') || 'dark';
+      await setDoc(doc(getFirestore(app), 'settings', 'theme'), { ...saved, mode });
+      toast('Theme saved globally', 'success', 'Saved');
+    } catch(e) {
+      toast('Saved locally only — Firestore error', 'error');
+    }
+  }
+
+  function resetTheme() {
+    confirmAction('Reset Theme', 'Reset all colors and fonts to defaults?', () => {
+      StorageManager.remove('admin_theme');
+      StorageManager.remove('theme');
+      const root = document.documentElement;
+      [...BRAND_COLORS, ...BG_COLORS, ...TEXT_COLORS, ...SPACING_SLIDERS].forEach(c => root.style.removeProperty(c.var));
+      root.style.removeProperty('--font-display');
+      root.style.removeProperty('--font-body');
+      initThemeEditor();
+      toast('Theme reset', 'info');
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    AppearanceTheme.init();
+    loadBranding();
+    initThemeEditor();
+    const hash = (location.hash || '').replace('#', '');
+    if (hash === 'theme') {
+      const btn = document.querySelector('[data-tab="theme"]');
+      if (btn) switchTab('theme', btn);
+    }
+    if (window.lucide) lucide.createIcons();
+  });
+  </script>
+</body>
+</html>

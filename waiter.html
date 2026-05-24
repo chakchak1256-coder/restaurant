@@ -14,6 +14,9 @@
     })();
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#e8a020" />
+  <script src="js/nova-sync.js"></script>
   <title>NŌVA Waiter — Ordering Panel</title>
 
   <!-- Fonts -->
@@ -402,6 +405,18 @@
       padding: 6px 2px 4px;
     }
     .tables-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+    .tables-map {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+      padding: 8px 4px 12px;
+    }
+    .tables-map .table-tile { aspect-ratio: auto; min-height: 72px; padding: 10px 6px; }
+    .table-view-toggle { display: flex; gap: 6px; margin-left: auto; }
+    .table-view-btn {
+      padding: 4px 8px; border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color); background: var(--bg-card);
+      font-size: 0.68rem; color: var(--text-muted); cursor: pointer;
+    }
+    .table-view-btn.active { border-color: var(--color-primary); color: var(--color-primary); }
     .table-tile {
       aspect-ratio: 1;
       background: var(--bg-card); border: 1.5px solid var(--border-color);
@@ -971,6 +986,10 @@
   <aside class="panel-tables" id="panelTables">
     <div class="panel-header">
       <div class="panel-title">Tables</div>
+      <div class="table-view-toggle">
+        <button type="button" class="table-view-btn active" id="tableViewGrid" onclick="App.setTableView('grid')">Grille</button>
+        <button type="button" class="table-view-btn" id="tableViewMap" onclick="App.setTableView('map')">Plan</button>
+      </div>
       <div class="table-legend">
         <div class="legend-dot"><span class="free-dot"></span>Free</div>
         <div class="legend-dot"><span class="occupied-dot"></span>Occ.</div>
@@ -1299,7 +1318,12 @@
    ============================================= */
 const Storage = {
   get:    k => { try { return JSON.parse(localStorage.getItem('nova_' + k)); } catch { return null; } },
-  set:    (k,v) => { try { localStorage.setItem('nova_' + k, JSON.stringify(v)); } catch {} },
+  set:    (k,v) => {
+    try {
+      localStorage.setItem('nova_' + k, JSON.stringify(v));
+      if (window.NovaSync) NovaSync._bump(k);
+    } catch {}
+  },
   remove: k => localStorage.removeItem('nova_' + k),
 };
 
@@ -1402,6 +1426,7 @@ const State = {
   pendingFood: null,          // food being customized in item modal
   shiftStart:  Date.now(),
   orderCounter: 0,
+  tableView:   'grid',
 };
 
 /* =============================================
@@ -1498,6 +1523,20 @@ document.head.appendChild(shakeStyle);
 /* =============================================
    MAIN APP CONTROLLER
    ============================================= */
+function getFoodBadgesFromItem(food) {
+  if (!food) return [];
+  if (Array.isArray(food.badges) && food.badges.length) {
+    return food.badges.map(b => String(b).trim()).filter(Boolean);
+  }
+  if (food.badge) {
+    return String(food.badge).split(/[,;|·]/).map(b => b.trim()).filter(Boolean);
+  }
+  if (food.bestseller) return ['Best-seller'];
+  if (food.featured) return ['Vedette'];
+  if (food.available === false) return ['Indisponible'];
+  return [];
+}
+
 const App = {
 
   /* ── INIT ─────────────────────────────────── */
@@ -1567,22 +1606,19 @@ const App = {
     }, 1000);
   },
 
-  /* ── FAKE REALTIME SYNC ───────────────────── */
+  /* ── Real-time sync (foods, tables, kitchen) ── */
   startFakeSync() {
-    // Poll localStorage every 8s to pick up table status changes from admin
-    setInterval(() => {
+    const refresh = () => {
       const freshTables = Storage.get('tables');
-      if (freshTables) {
-        State.tables = freshTables;
-        this.renderTables();
-      }
+      if (freshTables) { State.tables = freshTables; this.renderTables(); }
       this.applyTablesFlag();
       const freshFoods = Storage.get('foods');
-      if (freshFoods) {
-        State.foods = freshFoods;
-        this.renderMenu();
-      }
-    }, 8000);
+      if (freshFoods) { State.foods = freshFoods; this.renderMenu(); this.renderCatTabs(); }
+    };
+    if (window.NovaSync) {
+      NovaSync.watch(['tables', 'foods', 'kitchen_orders'], refresh);
+    }
+    setInterval(refresh, 3000);
   },
 
   /* ── MOBILE TAB SWITCHING ─────────────────── */
@@ -1596,20 +1632,40 @@ const App = {
     if (el) el.classList.add('active');
   },
 
+  setTableView(view) {
+    State.tableView = view;
+    document.getElementById('tableViewGrid')?.classList.toggle('active', view === 'grid');
+    document.getElementById('tableViewMap')?.classList.toggle('active', view === 'map');
+    this.renderTables();
+  },
+
   /* ── TABLES RENDERING ─────────────────────── */
   renderTables() {
     const scroll = document.getElementById('tablesScroll');
-    const zones  = [...new Set(State.tables.map(t => t.zone))];
+    if (!scroll) return;
+    const zones  = [...new Set(State.tables.map(t => t.zone || 'Salle'))];
 
-    scroll.innerHTML = zones.map(zone => {
-      const ts = State.tables.filter(t => t.zone === zone);
-      return `
-        <div class="zone-label">${zone}</div>
-        <div class="tables-grid">
-          ${ts.map(t => this.tableHTML(t)).join('')}
-        </div>
-      `;
-    }).join('');
+    if (State.tableView === 'map') {
+      scroll.innerHTML = zones.map(zone => {
+        const ts = State.tables.filter(t => (t.zone || 'Salle') === zone);
+        return `
+          <div class="zone-label">${zone}</div>
+          <div class="tables-map">
+            ${ts.map(t => this.tableHTML(t)).join('')}
+          </div>
+        `;
+      }).join('');
+    } else {
+      scroll.innerHTML = zones.map(zone => {
+        const ts = State.tables.filter(t => (t.zone || 'Salle') === zone);
+        return `
+          <div class="zone-label">${zone}</div>
+          <div class="tables-grid">
+            ${ts.map(t => this.tableHTML(t)).join('')}
+          </div>
+        `;
+      }).join('');
+    }
 
     if (window.lucide) lucide.createIcons();
   },
@@ -1704,9 +1760,8 @@ const App = {
       <div class="food-card ${!f.available ? 'unavailable' : ''}"
            onclick="${f.available ? `App.openItemModal(${f.id})` : ''}"
            title="${f.name}">
-        ${f.bestseller ? '<span class="food-badge badge-best">Best</span>'  : ''}
-        ${f.featured && !f.bestseller ? '<span class="food-badge badge-feat">Featured</span>' : ''}
-        ${!f.available ? '<span class="food-badge badge-na">Unavailable</span>' : ''}
+        ${getFoodBadgesFromItem(f).slice(0, 3).map(b => `<span class="food-badge badge-best">${String(b).replace(/</g,'&lt;')}</span>`).join('')}
+        ${!f.available && !getFoodBadgesFromItem(f).length ? '<span class="food-badge badge-na">Indisponible</span>' : ''}
         <img class="food-card-img" src="${f.image}" alt="${f.name}" loading="lazy"
              onerror="this.src='https://via.placeholder.com/300x200/161619/e8a020?text=${encodeURIComponent(f.name)}'" />
         <div class="food-card-body">
@@ -1896,9 +1951,12 @@ const App = {
     };
 
     /* Write to kitchen_orders (read by kitchen.html) */
-    const kitchenOrders = Storage.get('kitchen_orders') || [];
-    kitchenOrders.unshift(order);
-    Storage.set('kitchen_orders', kitchenOrders);
+    if (window.NovaSync) NovaSync.pushKitchenOrder(order);
+    else {
+      const kitchenOrders = Storage.get('kitchen_orders') || [];
+      kitchenOrders.unshift(order);
+      Storage.set('kitchen_orders', kitchenOrders);
+    }
 
     /* Write to waiter_orders (this waiter's history) */
     const waiterOrders = Storage.get(`waiter_orders_${State.waiter.id}`) || [];
