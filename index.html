@@ -12,14 +12,8 @@
         var t = null;
         try { t = JSON.parse(localStorage.getItem('nova_admin_theme') || 'null'); } catch(e){}
         if (!t) { try { t = JSON.parse(localStorage.getItem('nova_theme') || 'null'); } catch(e){} }
-        // Only apply non-theme-dependent vars as inline overrides (brand colors, fonts, etc.)
-        var themeDep = ['--bg-base','--bg-surface','--bg-card','--bg-card-hover','--bg-glass','--bg-glass-light',
-          '--text-primary','--text-secondary','--text-muted','--text-inverse',
-          '--border-color','--shadow-sm','--shadow-md','--shadow-lg','--shadow-gold','--shadow-glow'];
         if (t && typeof t === 'object') {
-          Object.entries(t).forEach(function(kv){
-            if(themeDep.indexOf(kv[0]) === -1) document.documentElement.style.setProperty(kv[0], kv[1]);
-          });
+          Object.entries(t).forEach(function(kv){ document.documentElement.style.setProperty(kv[0], kv[1]); });
         }
       } catch(e){}
       requestAnimationFrame(function(){ requestAnimationFrame(function(){
@@ -132,15 +126,6 @@
       -webkit-font-smoothing: antialiased;
       transition: background var(--t-base), color var(--t-base);
     }
-    /* Smooth theme transitions everywhere */
-    *, *::before, *::after {
-      transition: background-color var(--t-base), border-color var(--t-base), color var(--t-base), box-shadow var(--t-base);
-    }
-    /* But exclude animations and transforms from the catch-all */
-    .hero-orb, .hero-plate, .hero-thumb, .hero-card, .hero-plate-ring, .hero-plate-ring-2,
-    .loader-ring, .announcement-bar::before, .ann-dot {
-      transition: none !important;
-    }
     img { display: block; max-width: 100%; }
     a { color: inherit; text-decoration: none; }
     button { font-family: inherit; cursor: pointer; border: none; background: none; }
@@ -208,47 +193,13 @@
        ANNOUNCEMENT BAR
     ══════════════════════════════════════════════ */
     .announcement-bar {
-      position: relative; overflow: hidden;
-      background: #111010;
-      border-bottom: 1px solid rgba(232,160,32,0.18);
-      padding: 0; height: 38px;
-      display: flex; align-items: center; justify-content: center;
-    }
-    [data-theme="light"] .announcement-bar {
-      background: #1a1410;
-      border-bottom: 1px solid rgba(232,160,32,0.22);
-    }
-    .announcement-bar::before {
-      content: '';
-      position: absolute; inset: 0;
-      background: linear-gradient(90deg,
-        transparent 0%,
-        rgba(232,160,32,0.07) 30%,
-        rgba(245,190,82,0.12) 50%,
-        rgba(232,160,32,0.07) 70%,
-        transparent 100%);
-      background-size: 200% 100%;
-      animation: ann-sweep 4s ease-in-out infinite;
-    }
-    @keyframes ann-sweep {
-      0%   { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-    .announcement-bar-inner {
-      position: relative; z-index: 1;
-      display: flex; align-items: center; gap: 10px;
+      background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary), var(--color-primary-light), var(--color-primary));
+      background-size: 300% 100%; animation: shimmer-bg 5s linear infinite;
+      padding: 9px 16px; text-align: center;
       font-family: var(--font-heading); font-size: 11px; font-weight: 700;
-      letter-spacing: 0.09em; color: var(--color-primary-light); text-transform: uppercase;
+      letter-spacing: 0.06em; color: #000; text-transform: uppercase;
     }
-    .announcement-bar-inner .ann-dot {
-      width: 5px; height: 5px; border-radius: 50%;
-      background: var(--color-primary); box-shadow: 0 0 6px var(--color-primary);
-      animation: ann-pulse 2s ease-in-out infinite;
-    }
-    @keyframes ann-pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.7)} }
-    .announcement-bar-inner .ann-sep {
-      color: rgba(232,160,32,0.35); font-weight: 400;
-    }
+    @keyframes shimmer-bg { 0%{background-position:0%} 100%{background-position:300%} }
 
     /* ══════════════════════════════════════════════
        NAVIGATION
@@ -611,24 +562,34 @@
     .btn-outline:hover { background: rgba(232,160,32,0.08); box-shadow: var(--shadow-gold); }
 
     /* Feature pills */
-    .hero-features {
-      display: flex; gap: 24px; margin-top: 48px;
-      padding-top: 36px; border-top: 1px solid var(--border-color);
-      flex-wrap: wrap;
-      animation: fadeInUp 0.8s 0.55s var(--ease-expo) both;
+    .hero-features-bar {
+      position: relative; z-index: 10;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
     }
-    .hero-feature { display: flex; align-items: center; gap: 10px; }
+    .hero-features-inner {
+      display: flex; align-items: stretch;
+    }
+    .hero-feature-item {
+      flex: 1; display: flex; align-items: center; gap: 14px;
+      padding: 22px 0;
+      transition: background var(--t-fast);
+    }
+    .hero-feature-divider {
+      width: 1px; background: var(--border-color); flex-shrink: 0; margin: 16px 28px;
+    }
     .hero-feature-icon {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: rgba(232,160,32,0.1); color: var(--color-primary);
+      width: 40px; height: 40px; border-radius: var(--radius-md); flex-shrink: 0;
+      background: rgba(232,160,32,0.08); color: var(--color-primary);
       display: flex; align-items: center; justify-content: center;
-      border: 1px solid rgba(232,160,32,0.2); flex-shrink: 0;
+      border: 1px solid rgba(232,160,32,0.18);
     }
     .hero-feature-name {
-      font-family: var(--font-heading); font-size: 11px; font-weight: 700;
-      color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.05em;
+      font-family: var(--font-heading); font-size: 12px; font-weight: 700;
+      color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.06em;
     }
-    .hero-feature-desc { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+    .hero-feature-desc { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 
     /* ── Visual side ── */
     .hero-visual {
@@ -699,8 +660,7 @@
        SEARCH SECTION
     ══════════════════════════════════════════════ */
     .search-section {
-      padding: 56px 0 20px; background: var(--bg-surface);
-      border-top: 1px solid var(--border-color);
+      padding: 48px 0 20px; background: var(--bg-surface);
     }
     .search-wrap { max-width: 680px; margin: 0 auto; position: relative; }
     .search-icon { position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
@@ -1208,6 +1168,9 @@
       .nav-links { display: none; }
       .hamburger { display: flex; }
       .btn-nav-cta { display: none; }
+      .hero-features-inner { flex-direction: column; }
+      .hero-feature-divider { width: auto; height: 1px; margin: 0; }
+      .hero-feature-item { padding: 18px 0; }
       .testimonials-grid { grid-template-columns: 1fr; }
       .footer-grid { grid-template-columns: 1fr; gap: 32px; }
       .promo-card { flex-direction: column; text-align: center; padding: 40px 28px; gap: 24px; }
@@ -1223,7 +1186,6 @@
       .container { padding: 0 16px; }
       .food-grid { grid-template-columns: 1fr; }
       .hero-title { font-size: clamp(40px, 12vw, 60px); }
-      .hero-features { gap: 16px; }
       .bestseller-grid { grid-template-columns: 1fr; }
       .order-type-btn { padding: 10px 14px; font-size: 11px; }
       .toast-container { right: 16px; left: 16px; bottom: 16px; }
@@ -1268,12 +1230,7 @@
 
 <!-- Announcement Bar -->
 <div class="announcement-bar" id="announcementBar">
-  <div class="announcement-bar-inner" id="announcementBarInner">
-    <span class="ann-dot"></span>
-    <span id="announcementText">Free delivery on orders over 3,500 DA</span>
-    <span class="ann-sep">·</span>
-    <span id="announcementCta">Order now &amp; enjoy!</span>
-  </div>
+  🎉 Free delivery on orders over 3,500 DA &nbsp;·&nbsp; Order now &amp; enjoy!
 </div>
 
 <!-- Navbar -->
@@ -1406,29 +1363,6 @@
             Reserve a Table
           </button>
         </div>
-        <div class="hero-features">
-          <div class="hero-feature">
-            <div class="hero-feature-icon"><i data-lucide="leaf" style="width:15px;height:15px;"></i></div>
-            <div>
-              <div class="hero-feature-name">Farm Fresh</div>
-              <div class="hero-feature-desc">Sourced daily from local farms</div>
-            </div>
-          </div>
-          <div class="hero-feature">
-            <div class="hero-feature-icon"><i data-lucide="chef-hat" style="width:15px;height:15px;"></i></div>
-            <div>
-              <div class="hero-feature-name">Expert Chefs</div>
-              <div class="hero-feature-desc">Crafted with passion</div>
-            </div>
-          </div>
-          <div class="hero-feature">
-            <div class="hero-feature-icon"><i data-lucide="star" style="width:15px;height:15px;"></i></div>
-            <div>
-              <div class="hero-feature-name">Award Winning</div>
-              <div class="hero-feature-desc">Recognized for excellence</div>
-            </div>
-          </div>
-        </div>
       </div>
       <!-- Visual -->
       <div class="hero-visual">
@@ -1461,6 +1395,37 @@
     </div>
   </div>
 </section>
+
+<!-- ══ FEATURES BAR ══ -->
+<div class="hero-features-bar">
+  <div class="container">
+    <div class="hero-features-inner">
+      <div class="hero-feature-item">
+        <div class="hero-feature-icon"><i data-lucide="leaf" style="width:18px;height:18px;"></i></div>
+        <div>
+          <div class="hero-feature-name">Farm Fresh</div>
+          <div class="hero-feature-desc">Sourced daily from local farms</div>
+        </div>
+      </div>
+      <div class="hero-feature-divider"></div>
+      <div class="hero-feature-item">
+        <div class="hero-feature-icon"><i data-lucide="chef-hat" style="width:18px;height:18px;"></i></div>
+        <div>
+          <div class="hero-feature-name">Expert Chefs</div>
+          <div class="hero-feature-desc">Crafted with passion</div>
+        </div>
+      </div>
+      <div class="hero-feature-divider"></div>
+      <div class="hero-feature-item">
+        <div class="hero-feature-icon"><i data-lucide="star" style="width:18px;height:18px;"></i></div>
+        <div>
+          <div class="hero-feature-name">Award Winning</div>
+          <div class="hero-feature-desc">Recognized for excellence</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ══ SEARCH ══ -->
 <section class="search-section" id="searchSection">
@@ -1906,29 +1871,17 @@ const DataManager = {
 
 /* ── Theme Manager ── */
 const ThemeManager = {
-  // These vars are theme-dependent and must NOT be overridden by inline saved styles when switching mode
-  themeDependentVars: ['--bg-base','--bg-surface','--bg-card','--bg-card-hover','--bg-glass','--bg-glass-light',
-    '--text-primary','--text-secondary','--text-muted','--text-inverse',
-    '--border-color','--shadow-sm','--shadow-md','--shadow-lg','--shadow-gold','--shadow-glow'],
   init(){
     const mode = StorageManager.get('themeMode') || 'dark';
     document.documentElement.setAttribute('data-theme', mode);
     this.updateIcon(mode);
     const saved = StorageManager.get('admin_theme') || StorageManager.get('theme');
-    if(saved) {
-      Object.entries(saved).forEach(([k,v])=>{
-        // Don't apply theme-dependent vars as inline overrides — let the CSS cascade handle them
-        if(!this.themeDependentVars.includes(k)) document.documentElement.style.setProperty(k,v);
-      });
-    }
-    this.loadAnnouncement();
+    if(saved) Object.entries(saved).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
   },
   toggle(){
     const cur = document.documentElement.getAttribute('data-theme');
     const next = cur === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
-    // Remove any inline overrides for theme-dependent vars so CSS cascade takes over
-    this.themeDependentVars.forEach(v => document.documentElement.style.removeProperty(v));
     StorageManager.set('themeMode', next);
     this.updateIcon(next);
     UIManager.toast(`Switched to ${next} mode`, 'info');
@@ -1938,15 +1891,6 @@ const ThemeManager = {
     if(!sun||!moon) return;
     if(mode==='dark'){ sun.style.display=''; moon.style.display='none'; }
     else { sun.style.display='none'; moon.style.display=''; }
-  },
-  loadAnnouncement(){
-    const b = StorageManager.get('branding') || StorageManager.get('site_branding') || {};
-    const textEl = document.getElementById('announcementText');
-    const ctaEl  = document.getElementById('announcementCta');
-    const barEl  = document.getElementById('announcementBar');
-    if(b.announcementHidden && barEl) barEl.style.display='none';
-    if(b.announcementText && textEl) textEl.textContent = b.announcementText;
-    if(b.announcementCta  && ctaEl)  ctaEl.textContent  = b.announcementCta;
   },
 };
 
