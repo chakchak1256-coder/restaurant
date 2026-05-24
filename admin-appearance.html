@@ -9,9 +9,14 @@
         document.documentElement.classList.add('no-transition');
         var m = JSON.parse(localStorage.getItem("nova_themeMode") || '"dark"');
         document.documentElement.setAttribute("data-theme", m);
+        var themeDep = ['--bg-base','--bg-surface','--bg-card','--bg-card-hover','--bg-glass','--bg-glass-light',
+          '--text-primary','--text-secondary','--text-muted','--text-inverse',
+          '--border-color','--shadow-sm','--shadow-md','--shadow-lg','--shadow-gold','--shadow-glow'];
         var t = JSON.parse(localStorage.getItem("nova_admin_theme") || "null")
              || JSON.parse(localStorage.getItem("nova_theme") || "null");
-        if (t) Object.entries(t).forEach(function(e){ document.documentElement.style.setProperty(e[0],e[1]); });
+        if (t) Object.entries(t).forEach(function(e){
+          if(themeDep.indexOf(e[0]) === -1) document.documentElement.style.setProperty(e[0],e[1]);
+        });
       } catch(e){}
       // Remove no-transition after first paint
       requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.documentElement.classList.remove('no-transition'); }); });
@@ -242,7 +247,22 @@
             </div>
           </div>
           <div class="card">
-            <div class="card-header"><div class="card-title">Delivery Settings</div></div>
+            <div class="card-header"><div class="card-title">Announcement Bar</div></div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Main Message</label>
+                <input type="text" class="form-control" id="announcementText" placeholder="e.g. Free delivery on orders over 3,500 DA" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Call-to-action Text</label>
+                <input type="text" class="form-control" id="announcementCta" placeholder="e.g. Order now &amp; enjoy!" />
+              </div>
+              <div class="toggle-wrap">
+                <div class="toggle on" id="announcementToggle" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+                <span style="font-size:13px;color:var(--text-secondary);">Show announcement bar</span>
+              </div>
+            </div>
+          </div>
             <div class="card-body">
               <div class="form-row">
                 <div class="form-group">
@@ -415,17 +435,25 @@
   let _activePresetId = StorageManager.get('active_preset_id') || 'nova-gold';
   let _brandingFetched = false;
 
+  const THEME_DEP_VARS = ['--bg-base','--bg-surface','--bg-card','--bg-card-hover','--bg-glass','--bg-glass-light',
+    '--text-primary','--text-secondary','--text-muted','--text-inverse',
+    '--border-color','--shadow-sm','--shadow-md','--shadow-lg','--shadow-gold','--shadow-glow'];
+
   const AppearanceTheme = {
     init() {
       const mode = StorageManager.get('themeMode') || 'dark';
       document.documentElement.setAttribute('data-theme', mode);
       this.updateIcon(mode);
       const saved = StorageManager.get('admin_theme');
-      if (saved) Object.entries(saved).forEach(([k,v]) => document.documentElement.style.setProperty(k,v));
+      if (saved) Object.entries(saved).forEach(([k,v]) => {
+        if(!THEME_DEP_VARS.includes(k)) document.documentElement.style.setProperty(k,v);
+      });
     },
     toggle() {
       const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       document.documentElement.setAttribute('data-theme', next);
+      // Remove inline overrides for theme-dependent vars so CSS cascade handles them
+      THEME_DEP_VARS.forEach(v => document.documentElement.style.removeProperty(v));
       StorageManager.set('themeMode', next);
       this.updateIcon(next);
       toast('Switched to ' + next + ' mode', 'info');
@@ -475,6 +503,12 @@
     set('brandOpen', b.open); set('brandClose', b.close);
     set('deliveryFee', b.deliveryFee); set('freeDeliveryThreshold', b.freeDeliveryThreshold);
     set('taxRate', b.taxRate); set('currency', b.currency);
+    set('announcementText', b.announcementText);
+    set('announcementCta', b.announcementCta);
+    if (b.announcementHidden != null) {
+      const t = document.getElementById('announcementToggle');
+      if (t) { if (b.announcementHidden) t.classList.remove('on'); else t.classList.add('on'); }
+    }
     if (b.name) {
       document.getElementById('topbarBrand').textContent = (b.name) + ' — Appearance';
       document.title = b.name + ' — Branding & Theme';
@@ -545,6 +579,7 @@
 
   async function saveBranding() {
     const logoUrl = StorageManager.get('logo_url') || '';
+    const annToggle = document.getElementById('announcementToggle');
     const b = {
       name: document.getElementById('brandName').value,
       tagline: document.getElementById('brandTagline').value,
@@ -560,6 +595,9 @@
       currency: document.getElementById('currency').value,
       logoText: document.getElementById('brandName').value,
       logoUrl,
+      announcementText: document.getElementById('announcementText').value,
+      announcementCta: document.getElementById('announcementCta').value,
+      announcementHidden: annToggle ? !annToggle.classList.contains('on') : false,
     };
     StorageManager.set('branding', b);
     StorageManager.set('site_branding', b);
