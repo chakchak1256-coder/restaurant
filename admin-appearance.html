@@ -288,6 +288,14 @@
                 <div class="toggle on" id="deliveryToggle" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
                 <span style="font-size:13px;color:var(--text-secondary);">Delivery available</span>
               </div>
+              <div class="toggle-wrap" style="margin-top:12px;">
+                <div class="toggle on" id="tablesToggle" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+                <span style="font-size:13px;color:var(--text-secondary);">Tables / Dine-in available</span>
+              </div>
+              <div class="toggle-wrap" style="margin-top:12px;">
+                <div class="toggle on" id="bestSellersToggle" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
+                <span style="font-size:13px;color:var(--text-secondary);">Show Best Sellers section</span>
+              </div>
             </div>
           </div>
         </div>
@@ -509,6 +517,18 @@
       const t = document.getElementById('announcementToggle');
       if (t) { if (b.announcementHidden) t.classList.remove('on'); else t.classList.add('on'); }
     }
+    if (b.deliveryDisabled != null) {
+      const t = document.getElementById('deliveryToggle');
+      if (t) { if (b.deliveryDisabled) t.classList.remove('on'); else t.classList.add('on'); }
+    }
+    if (b.tablesDisabled != null) {
+      const t = document.getElementById('tablesToggle');
+      if (t) { if (b.tablesDisabled) t.classList.remove('on'); else t.classList.add('on'); }
+    }
+    if (b.bestSellersHidden != null) {
+      const t = document.getElementById('bestSellersToggle');
+      if (t) { if (b.bestSellersHidden) t.classList.remove('on'); else t.classList.add('on'); }
+    }
     if (b.name) {
       document.getElementById('topbarBrand').textContent = (b.name) + ' — Appearance';
       document.title = b.name + ' — Branding & Theme';
@@ -598,6 +618,9 @@
       announcementText: document.getElementById('announcementText').value,
       announcementCta: document.getElementById('announcementCta').value,
       announcementHidden: annToggle ? !annToggle.classList.contains('on') : false,
+      deliveryDisabled: !(document.getElementById('deliveryToggle')?.classList.contains('on') ?? true),
+      tablesDisabled: !(document.getElementById('tablesToggle')?.classList.contains('on') ?? true),
+      bestSellersHidden: !(document.getElementById('bestSellersToggle')?.classList.contains('on') ?? true),
     };
     StorageManager.set('branding', b);
     StorageManager.set('site_branding', b);

@@ -2530,6 +2530,10 @@
           <label class="form-label">Location / Zone</label>
           <input type="text" class="form-control" id="tableZone" placeholder="e.g. Indoor, Terrace, VIP" />
         </div>
+        <div class="form-group">
+          <label class="form-label">Table Price (DA) <span style="font-size:11px;color:var(--text-muted);font-weight:400;">(optional — reservation/cover fee)</span></label>
+          <input type="number" class="form-control" id="tablePrice" placeholder="e.g. 500 — leave empty for free" min="0" step="0.01" />
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('tableModal')">Cancel</button>
@@ -4726,7 +4730,7 @@
           </button>
         </div>
         <div class="table-num">${t.number}</div>
-        <div class="table-cap">${t.capacity} seats · ${t.zone||'Indoor'}</div>
+        <div class="table-cap">${t.capacity} seats · ${t.zone||'Indoor'}${t.price != null ? ` · <span style="color:var(--color-primary);font-weight:700;">${t.price} DA</span>` : ''}</div>
         <div class="table-status-dot"></div>
       </div>
     `).join('');
@@ -4770,7 +4774,7 @@
   function openTableModal(id = null) {
     document.getElementById('tableEditId').value = id || '';
     document.getElementById('tableModalTitle').textContent = id ? 'Edit Table' : 'Add Table';
-    ['tableNumber','tableCapacity','tableZone'].forEach(fid => document.getElementById(fid).value = '');
+    ['tableNumber','tableCapacity','tableZone','tablePrice'].forEach(fid => document.getElementById(fid).value = '');
     document.getElementById('tableStatus').value = 'free';
 
     if (id) {
@@ -4780,6 +4784,7 @@
         document.getElementById('tableCapacity').value = t.capacity;
         document.getElementById('tableZone').value     = t.zone||'';
         document.getElementById('tableStatus').value   = t.status;
+        document.getElementById('tablePrice').value    = t.price != null ? t.price : '';
       }
     }
     openModal('tableModal');
@@ -4799,6 +4804,7 @@
       number:   num, capacity: cap,
       status:   document.getElementById('tableStatus').value,
       zone:     document.getElementById('tableZone').value || 'Indoor',
+      price:    document.getElementById('tablePrice').value !== '' ? parseFloat(document.getElementById('tablePrice').value) : null,
     };
 
     if (editId) {
