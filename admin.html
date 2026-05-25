@@ -5310,43 +5310,22 @@
      ADMIN REVIEWS MANAGER — Firebase Firestore
      ============================================= */
   const AdminReviewsManager = {
-    _db: null,
     _filter: 'pending',
-    _cached: null,
     _page: 0,
     _perPage: 8,
 
-    async _getDb() {
-      if (this._db) return this._db;
-      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-      const mod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-      const cfg = {
-        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
-        authDomain: "protech-6c388.firebaseapp.com",
-        projectId: "protech-6c388",
-        storageBucket: "protech-6c388.firebasestorage.app",
-        messagingSenderId: "987892798162",
-        appId: "1:987892798162:web:2307b1e8773430df1d930b",
-      };
-      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
-      this._db = { db: mod.getFirestore(app), ...mod };
-      return this._db;
+    /* ── localStorage helpers ── */
+    _loadAll() {
+      try { return JSON.parse(localStorage.getItem('nova_reviews') || '[]'); } catch { return []; }
+    },
+    _saveAll(arr) {
+      localStorage.setItem('nova_reviews', JSON.stringify(arr));
+    },
+    _uid() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     },
 
-    // All docs cached after first fetch — avoids composite index requirement.
-    // Firestore only auto-indexes single fields; where+orderBy on different
-    // fields needs a manual composite index, so we fetch all ordered by
-    // createdAt (single-field = auto-indexed) and filter/paginate client-side.
-    _cached: null,
-
-    async _fetchAll() {
-      const { db, collection, query, orderBy, getDocs } = await this._getDb();
-      const snap = await getDocs(query(collection(db, 'reviews'), orderBy('createdAt', 'desc')));
-      this._cached = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      return this._cached;
-    },
-
-    async loadPage(dir = 0) {
+    loadPage(dir = 0) {
       this._page = Math.max(0, this._page + dir);
 
       const loadEl  = document.getElementById('reviewsLoadingState');
@@ -5354,55 +5333,43 @@
       const gridEl  = document.getElementById('reviewsGrid');
       const paginEl = document.getElementById('reviewsPaginationWrap');
 
-      if (loadEl)  { loadEl.style.display = ''; loadEl.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-muted);"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div>Loading reviews…</div></div>'; }
+      if (loadEl)  loadEl.style.display = 'none';
       if (emptyEl) emptyEl.style.display = 'none';
       if (gridEl)  gridEl.style.display  = 'none';
       if (paginEl) paginEl.style.display = 'none';
 
-      try {
-        // Always re-fetch to get fresh data
-        const all = await this._fetchAll();
+      const all = this._loadAll();
 
-        // Client-side filter
-        const filtered = this._filter === 'pending'
-          ? all.filter(d => !d.approved)
-          : this._filter === 'approved'
-            ? all.filter(d =>  d.approved)
-            : all;
+      // Client-side filter
+      const filtered = this._filter === 'pending'
+        ? all.filter(d => !d.approved)
+        : this._filter === 'approved'
+          ? all.filter(d =>  d.approved)
+          : all;
 
-        // Client-side pagination
-        const start = this._page * this._perPage;
-        const docs  = filtered.slice(start, start + this._perPage);
-        const totalPages = Math.ceil(filtered.length / this._perPage);
+      // Clamp page
+      const totalPages = Math.max(1, Math.ceil(filtered.length / this._perPage));
+      if (this._page >= totalPages) this._page = totalPages - 1;
 
-        // Clamp page
-        if (this._page >= totalPages && totalPages > 0) {
-          this._page = totalPages - 1;
-          return this.loadPage(0);
+      const start = this._page * this._perPage;
+      const docs  = filtered.slice(start, start + this._perPage);
+
+      // Update stats
+      this._updateStatsFromCache(all);
+
+      if (docs.length === 0) {
+        if (emptyEl) emptyEl.style.display = '';
+      } else {
+        if (gridEl) { gridEl.style.display = 'flex'; this._renderGrid(docs, gridEl); }
+        if (paginEl && totalPages > 1) {
+          paginEl.style.display = 'flex';
+          document.getElementById('rvPageLabel').textContent = `Page ${this._page + 1} of ${totalPages}`;
+          document.getElementById('rvPrevBtn').disabled = this._page === 0;
+          document.getElementById('rvNextBtn').disabled = this._page >= totalPages - 1;
         }
-
-        // Update stats from cached data
-        this._updateStatsFromCache(all);
-
-        if (loadEl) loadEl.style.display = 'none';
-
-        if (docs.length === 0) {
-          if (emptyEl) emptyEl.style.display = '';
-        } else {
-          if (gridEl) { gridEl.style.display = 'flex'; this._renderGrid(docs, gridEl); }
-          if (paginEl && totalPages > 1) {
-            paginEl.style.display = 'flex';
-            document.getElementById('rvPageLabel').textContent = `Page ${this._page + 1} of ${totalPages}`;
-            document.getElementById('rvPrevBtn').disabled = this._page === 0;
-            document.getElementById('rvNextBtn').disabled = this._page >= totalPages - 1;
-          }
-        }
-
-        if (window.lucide) lucide.createIcons();
-      } catch (err) {
-        console.error('Reviews admin error:', err);
-        if (loadEl) loadEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--color-danger);">⚠️ Failed to load: ${err.message}</div>`;
       }
+
+      if (window.lucide) lucide.createIcons();
     },
 
     _updateStatsFromCache(all) {
@@ -5475,49 +5442,43 @@
       `).join('');
     },
 
-    async toggleApproval(id, approved) {
-      try {
-        const { db, doc, updateDoc } = await this._getDb();
-        await updateDoc(doc(db, 'reviews', id), { approved });
-        this._cached = null; // invalidate cache
-        showAdminToast(approved ? 'Review published!' : 'Review unpublished.', approved ? 'success' : 'info');
-        await this.loadPage(0);
-      } catch(e) { showAdminToast('Error: ' + e.message, 'error'); }
+    toggleApproval(id, approved) {
+      const all = this._loadAll();
+      const idx = all.findIndex(r => r.id === id);
+      if (idx !== -1) { all[idx].approved = approved; this._saveAll(all); }
+      showAdminToast(approved ? 'Review published!' : 'Review unpublished.', approved ? 'success' : 'info');
+      this.loadPage(0);
     },
 
-    async deleteReview(id) {
-      openConfirm('Delete Review?', 'This review will be permanently removed.', async () => {
-        try {
-          const { db, doc, deleteDoc } = await this._getDb();
-          await deleteDoc(doc(db, 'reviews', id));
-          this._cached = null; // invalidate cache
-          showAdminToast('Review deleted.', 'success');
-          this._page = 0;
-          await this.loadPage(0);
-        } catch(e) { showAdminToast('Error: ' + e.message, 'error'); }
+    deleteReview(id) {
+      openConfirm('Delete Review?', 'This review will be permanently removed.', () => {
+        const all = this._loadAll().filter(r => r.id !== id);
+        this._saveAll(all);
+        showAdminToast('Review deleted.', 'success');
+        this._page = 0;
+        this.loadPage(0);
       });
     },
 
-    async saveReview(id, data) {
-      try {
-        const { db, doc, setDoc, addDoc, collection, serverTimestamp } = await this._getDb();
-        if (id) {
-          await setDoc(doc(db, 'reviews', id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
-          showAdminToast('Review updated.', 'success');
-        } else {
-          await addDoc(collection(db, 'reviews'), { ...data, createdAt: serverTimestamp() });
-          showAdminToast('Review added.', 'success');
-        }
-        this._cached = null; // invalidate cache
-        this._page = 0;
-        await this.loadPage(0);
-      } catch(e) { showAdminToast('Error: ' + e.message, 'error'); }
+    saveReview(id, data) {
+      const all = this._loadAll();
+      if (id) {
+        const idx = all.findIndex(r => r.id === id);
+        if (idx !== -1) { all[idx] = { ...all[idx], ...data, updatedAt: Date.now() }; }
+        showAdminToast('Review updated.', 'success');
+      } else {
+        all.unshift({ ...data, id: this._uid(), createdAt: Date.now() });
+        showAdminToast('Review added.', 'success');
+      }
+      this._saveAll(all);
+      this._page = 0;
+      this.loadPage(0);
     },
 
     _esc(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); },
     _timeAgo(ts) {
       if (!ts) return '—';
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
+      const d = (typeof ts === 'number') ? new Date(ts) : (ts.toDate ? ts.toDate() : new Date(ts));
       const diff = Date.now() - d.getTime();
       if (diff < 86400000) return 'Today';
       if (diff < 604800000) return Math.floor(diff/86400000) + 'd ago';
@@ -5601,8 +5562,7 @@
       window.navigateTo = function(page, el) {
         origFn(page, el);
         if (page === 'reviews') {
-          AdminReviewsManager._page   = 0;
-          AdminReviewsManager._cached = null;
+          AdminReviewsManager._page = 0;
           AdminReviewsManager.loadPage(0);
         }
       };
