@@ -7,13 +7,45 @@
     (function(){
       try {
         document.documentElement.classList.add('no-transition');
-        var m = localStorage.getItem('nova_themeMode');
-        document.documentElement.setAttribute('data-theme', m === '"light"' || m === 'light' ? 'light' : 'dark');
+        var raw = localStorage.getItem('nova_themeMode');
+        var mode = (raw === '"light"' || raw === 'light') ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', mode);
+
+        /* Mode-specific vars — must be applied explicitly so they override any
+           stale Firestore inline styles from a previous session               */
+        var DARK = {
+          '--bg-base':'#080809','--bg-surface':'#0d0d10','--bg-card':'#141417',
+          '--bg-card-hover':'#1c1c21','--bg-glass':'rgba(14,14,17,0.82)',
+          '--bg-glass-light':'rgba(255,255,255,0.04)',
+          '--text-primary':'#f0ede8','--text-secondary':'#9a9490',
+          '--text-muted':'#54504c','--text-inverse':'#0a0809',
+          '--border-color':'rgba(240,237,232,0.07)','--border-active':'rgba(232,160,32,0.38)',
+          '--shadow-sm':'0 1px 3px rgba(0,0,0,0.5)','--shadow-md':'0 4px 20px rgba(0,0,0,0.55)',
+          '--shadow-lg':'0 12px 48px rgba(0,0,0,0.7)','--shadow-gold':'0 8px 32px rgba(232,160,32,0.22)',
+          '--shadow-glow':'0 0 60px rgba(232,160,32,0.1)'
+        };
+        var LIGHT = {
+          '--bg-base':'#f7f4ef','--bg-surface':'#ffffff','--bg-card':'#ffffff',
+          '--bg-card-hover':'#f4f1ec','--bg-glass':'rgba(255,255,255,0.88)',
+          '--bg-glass-light':'rgba(0,0,0,0.03)',
+          '--text-primary':'#1a1714','--text-secondary':'#6a6460',
+          '--text-muted':'#9a9490','--text-inverse':'#f0ede8',
+          '--border-color':'rgba(26,23,20,0.09)','--border-active':'rgba(232,160,32,0.35)',
+          '--shadow-sm':'0 1px 3px rgba(0,0,0,0.08)','--shadow-md':'0 4px 20px rgba(0,0,0,0.10)',
+          '--shadow-lg':'0 12px 48px rgba(0,0,0,0.12)','--shadow-gold':'0 8px 32px rgba(232,160,32,0.18)',
+          '--shadow-glow':'0 0 40px rgba(232,160,32,0.08)'
+        };
+        var modeVars = mode === 'light' ? LIGHT : DARK;
+        Object.keys(modeVars).forEach(function(k){ document.documentElement.style.setProperty(k, modeVars[k]); });
+
+        /* Only apply saved brand colour overrides (--color-*), never bg/text/shadow */
         var t = null;
         try { t = JSON.parse(localStorage.getItem('nova_admin_theme') || 'null'); } catch(e){}
         if (!t) { try { t = JSON.parse(localStorage.getItem('nova_theme') || 'null'); } catch(e){} }
         if (t && typeof t === 'object') {
-          Object.entries(t).forEach(function(kv){ document.documentElement.style.setProperty(kv[0], kv[1]); });
+          Object.keys(t).forEach(function(k){
+            if (k.indexOf('--color-') === 0) document.documentElement.style.setProperty(k, t[k]);
+          });
         }
       } catch(e){}
       requestAnimationFrame(function(){ requestAnimationFrame(function(){
@@ -1956,21 +1988,92 @@ const DataManager = {
 
 /* ── Theme Manager ── */
 const ThemeManager = {
+  /* All variables that change between dark ↔ light.
+     These must NEVER be left as stale inline styles when the mode switches. */
+  DARK_VARS: {
+    '--bg-base':        '#080809',
+    '--bg-surface':     '#0d0d10',
+    '--bg-card':        '#141417',
+    '--bg-card-hover':  '#1c1c21',
+    '--bg-glass':       'rgba(14,14,17,0.82)',
+    '--bg-glass-light': 'rgba(255,255,255,0.04)',
+    '--text-primary':   '#f0ede8',
+    '--text-secondary': '#9a9490',
+    '--text-muted':     '#54504c',
+    '--text-inverse':   '#0a0809',
+    '--border-color':   'rgba(240,237,232,0.07)',
+    '--border-active':  'rgba(232,160,32,0.38)',
+    '--shadow-sm':      '0 1px 3px rgba(0,0,0,0.5)',
+    '--shadow-md':      '0 4px 20px rgba(0,0,0,0.55)',
+    '--shadow-lg':      '0 12px 48px rgba(0,0,0,0.7)',
+    '--shadow-gold':    '0 8px 32px rgba(232,160,32,0.22)',
+    '--shadow-glow':    '0 0 60px rgba(232,160,32,0.1)',
+  },
+  LIGHT_VARS: {
+    '--bg-base':        '#f7f4ef',
+    '--bg-surface':     '#ffffff',
+    '--bg-card':        '#ffffff',
+    '--bg-card-hover':  '#f4f1ec',
+    '--bg-glass':       'rgba(255,255,255,0.88)',
+    '--bg-glass-light': 'rgba(0,0,0,0.03)',
+    '--text-primary':   '#1a1714',
+    '--text-secondary': '#6a6460',
+    '--text-muted':     '#9a9490',
+    '--text-inverse':   '#f0ede8',
+    '--border-color':   'rgba(26,23,20,0.09)',
+    '--border-active':  'rgba(232,160,32,0.35)',
+    '--shadow-sm':      '0 1px 3px rgba(0,0,0,0.08)',
+    '--shadow-md':      '0 4px 20px rgba(0,0,0,0.10)',
+    '--shadow-lg':      '0 12px 48px rgba(0,0,0,0.12)',
+    '--shadow-gold':    '0 8px 32px rgba(232,160,32,0.18)',
+    '--shadow-glow':    '0 0 40px rgba(232,160,32,0.08)',
+  },
+
+  /* Apply all mode-specific vars as inline styles so they beat Firestore overrides */
+  _applyModeVars(mode){
+    const vars = mode === 'light' ? this.LIGHT_VARS : this.DARK_VARS;
+    const root = document.documentElement;
+    Object.entries(vars).forEach(([k,v]) => root.style.setProperty(k, v));
+  },
+
+  /* Apply only brand / accent vars (--color-*) from the saved admin theme,
+     never bg / text / shadow vars which belong to the mode system */
+  _applyBrandVars(){
+    const saved = StorageManager.get('admin_theme') || StorageManager.get('theme');
+    if(!saved) return;
+    const root = document.documentElement;
+    const BRAND_PREFIX = ['--color-'];
+    Object.entries(saved).forEach(([k,v]) => {
+      if(BRAND_PREFIX.some(p => k.startsWith(p))) root.style.setProperty(k, v);
+    });
+  },
+
   init(){
     const mode = StorageManager.get('themeMode') || 'dark';
     document.documentElement.setAttribute('data-theme', mode);
+    this._applyModeVars(mode);
+    this._applyBrandVars();
     this.updateIcon(mode);
-    const saved = StorageManager.get('admin_theme') || StorageManager.get('theme');
-    if(saved) Object.entries(saved).forEach(([k,v])=>document.documentElement.style.setProperty(k,v));
   },
+
   toggle(){
     const cur = document.documentElement.getAttribute('data-theme');
     const next = cur === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', next);
+    this._applyModeVars(next);
     StorageManager.set('themeMode', next);
     this.updateIcon(next);
     UIManager.toast(`Switched to ${next} mode`, 'info');
   },
+
+  /* Called by Firestore sync with a new mode string */
+  applyMode(mode){
+    document.documentElement.setAttribute('data-theme', mode);
+    this._applyModeVars(mode);
+    try{ localStorage.setItem('nova_themeMode', JSON.stringify(mode)); }catch(e){}
+    this.updateIcon(mode);
+  },
+
   updateIcon(mode){
     const sun=document.getElementById('themeIconSun'), moon=document.getElementById('themeIconMoon');
     if(!sun||!moon) return;
@@ -2673,15 +2776,26 @@ onAuthStateChanged(auth, user => {
 
 // Branding & theme sync from Firestore
 try {
-  // Theme
+  // Theme — only write brand vars (--color-*) as inline styles; mode vars are handled by ThemeManager
   onSnapshot(doc(db,'settings','theme'), snap => {
     if(!snap.exists()) return;
     const t = snap.data();
     const root = document.documentElement;
-    if(t.mode){ root.setAttribute('data-theme',t.mode); try{localStorage.setItem('nova_themeMode',JSON.stringify(t.mode));}catch(e){} ThemeManager?.updateIcon(t.mode); }
-    const vars={};
-    Object.entries(t).forEach(([k,v])=>{ if(k.startsWith('--')){ root.style.setProperty(k,v); vars[k]=v; } });
-    if(Object.keys(vars).length){ try{localStorage.setItem('nova_admin_theme',JSON.stringify(vars));localStorage.setItem('nova_theme',JSON.stringify(vars));}catch(e){} }
+    // Apply mode first via ThemeManager so it sets the full correct var set
+    if(t.mode){ ThemeManager?.applyMode(t.mode); }
+    // Only persist & apply brand colour overrides, never bg/text/shadow vars
+    const brandVars={};
+    Object.entries(t).forEach(([k,v])=>{
+      if(k.startsWith('--color-')){ root.style.setProperty(k,v); brandVars[k]=v; }
+    });
+    if(Object.keys(brandVars).length){
+      try{
+        const existing = JSON.parse(localStorage.getItem('nova_admin_theme')||'{}');
+        const merged = {...existing, ...brandVars};
+        localStorage.setItem('nova_admin_theme', JSON.stringify(merged));
+        localStorage.setItem('nova_theme', JSON.stringify(merged));
+      }catch(e){}
+    }
   });
 
   // Branding
