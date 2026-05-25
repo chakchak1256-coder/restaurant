@@ -1981,7 +1981,11 @@ const DataManager = {
   getBestSellers(){
     const cfg=StorageManager.get('bestsellers_config')||{};
     if(cfg.enabled===false) return [];
-    return [...this.foods].filter(f=>f.bestseller||f.featured).sort((a,b)=>(b.orders||0)-(a.orders||0)).slice(0, cfg.maxItems||5);
+    const overrides=cfg.overrides||{};
+    return [...this.foods].filter(f=>{
+      if(String(f.id) in overrides) return overrides[String(f.id)];
+      return !!(f.bestseller||f.featured);
+    }).sort((a,b)=>(b.orders||0)-(a.orders||0)).slice(0, cfg.maxItems||6);
   },
   getFeatured(){ return this.foods.find(f=>f.featured); },
 };
