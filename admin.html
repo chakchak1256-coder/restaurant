@@ -96,6 +96,20 @@
        ============================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; font-size: 16px; }
+
+    /* ── Smooth dark/light mode transition ─────────────── */
+    html.theme-transitioning,
+    html.theme-transitioning *,
+    html.theme-transitioning *::before,
+    html.theme-transitioning *::after {
+      transition:
+        background-color 0.4s cubic-bezier(0.4,0,0.2,1),
+        color            0.4s cubic-bezier(0.4,0,0.2,1),
+        border-color     0.4s cubic-bezier(0.4,0,0.2,1),
+        box-shadow       0.4s cubic-bezier(0.4,0,0.2,1),
+        opacity          0.3s cubic-bezier(0.4,0,0.2,1) !important;
+    }
+
     body {
       font-family: var(--font-body);
       background: var(--bg-base);
@@ -1940,18 +1954,6 @@
             <div class="page-subtitle">Manage seating and table availability.</div>
           </div>
           <div style="display:flex;align-items:center;gap:12px;">
-            <!-- Tables ON/OFF toggle -->
-            <div style="
-              display:flex;align-items:center;gap:10px;
-              background:var(--bg-card);border:1px solid var(--border-color);
-              border-radius:var(--radius-md);padding:8px 14px;
-            ">
-              <span style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted);">Tables</span>
-              <div class="toggle on" id="tablesToggle" onclick="toggleTablesService(this)">
-                <div class="toggle-thumb"></div>
-              </div>
-              <span id="tablesToggleLabel" style="font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.05em;color:var(--color-accent);">ON</span>
-            </div>
             <button class="btn btn-primary btn-sm" onclick="openTableModal()">
               <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Table
             </button>
@@ -2108,13 +2110,13 @@
         <div class="page-header">
           <div>
             <div class="page-title">Reviews</div>
-            <div class="page-subtitle">Moderate and manage guest reviews shown on the website.</div>
+            <div class="page-subtitle">Manage guest reviews shown on the website.</div>
           </div>
           <div class="flex gap-2">
             <div class="tab-bar" id="reviewsTabBar">
-              <div class="tab-btn active" onclick="setReviewsFilter('pending', this)">Pending <span id="pendingCount" style="margin-left:4px;background:var(--color-warning);color:#000;border-radius:var(--radius-full);padding:0 6px;font-size:10px;font-weight:700;">0</span></div>
-              <div class="tab-btn" onclick="setReviewsFilter('approved', this)">Approved</div>
-              <div class="tab-btn" onclick="setReviewsFilter('all', this)">All</div>
+              <div class="tab-btn active" onclick="setReviewsFilter('all', this)">All</div>
+              <div class="tab-btn" onclick="setReviewsFilter('5', this)">★ 5</div>
+              <div class="tab-btn" onclick="setReviewsFilter('4', this)">★ 4+</div>
             </div>
             <button class="btn btn-primary btn-sm" onclick="openAddReviewModal()">
               <i data-lucide="plus" style="width:14px;height:14px;"></i> Add Review
@@ -2135,31 +2137,31 @@
             <div class="stat-label">Published</div>
           </div>
           <div class="stat-card">
-            <div class="stat-header"><div class="stat-icon" style="background:rgba(245,158,11,0.1);color:var(--color-warning);"><i data-lucide="clock" style="width:18px;height:18px;"></i></div></div>
-            <div class="stat-value" id="rvStatPending">—</div>
-            <div class="stat-label">Awaiting Approval</div>
-          </div>
-          <div class="stat-card">
             <div class="stat-header"><div class="stat-icon gold"><i data-lucide="bar-chart-2" style="width:18px;height:18px;"></i></div></div>
             <div class="stat-value" id="rvStatAvg">—</div>
             <div class="stat-label">Average Rating</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-header"><div class="stat-icon" style="background:rgba(139,92,246,0.1);color:var(--color-purple);"><i data-lucide="eye" style="width:18px;height:18px;"></i></div></div>
+            <div class="stat-value" id="rvStatVisible">—</div>
+            <div class="stat-label">Section Status</div>
           </div>
         </div>
 
         <!-- Reviews list -->
         <div id="reviewsLoadingState" style="text-align:center;padding:60px;color:var(--text-muted);">
           <div style="font-size:32px;margin-bottom:12px;">⏳</div>
-          <div>Loading reviews from Firebase…</div>
+          <div>Loading reviews…</div>
         </div>
         <div id="reviewsEmptyState" style="display:none;" class="empty-state">
           <div class="empty-icon">💬</div>
-          <div class="empty-title">No reviews here</div>
+          <div class="empty-title">No reviews yet</div>
           <div class="empty-desc">Reviews submitted from the website will appear here.</div>
         </div>
-        <div id="reviewsGrid" style="display:none;display:flex;flex-direction:column;gap:12px;"></div>
+        <div id="reviewsGrid" style="display:none;flex-direction:column;gap:12px;"></div>
 
         <!-- Pagination -->
-        <div id="reviewsPaginationWrap" style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:24px;display:none;">
+        <div id="reviewsPaginationWrap" style="display:none;align-items:center;justify-content:center;gap:12px;margin-top:24px;">
           <button class="btn btn-ghost btn-sm" id="rvPrevBtn" onclick="loadReviewsPage(-1)">
             <i data-lucide="chevron-left" style="width:14px;height:14px;"></i> Prev
           </button>
@@ -2182,10 +2184,10 @@
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
             <div id="bsSectionStatusBadge" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius-full);font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:0.06em;"></div>
-            <button class="btn btn-danger" id="bsDisableSectionBtn" onclick="BestSellersAdmin.toggleSection()">
-              <i data-lucide="eye-off" style="width:15px;height:15px;" id="bsToggleSectionIcon"></i>
-              <span id="bsDisableSectionBtnLabel">Disable Section</span>
-            </button>
+            <a href="admin-appearance.html" class="btn btn-ghost btn-sm" title="Toggle section visibility in Appearance">
+              <i data-lucide="settings" style="width:15px;height:15px;"></i>
+              Section Toggle → Appearance
+            </a>
           </div>
         </div>
 
@@ -2337,11 +2339,8 @@
           <textarea class="form-control" id="rvText" rows="4" placeholder="The guest's review…"></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Status</label>
-          <div class="toggle-wrap">
-            <div class="toggle on" id="rvApprovedToggle" onclick="this.classList.toggle('on')"><div class="toggle-thumb"></div></div>
-            <span class="text-sm text-muted">Approved (visible on website)</span>
-          </div>
+          <label class="form-label">Avatar / Initial</label>
+          <input type="text" class="form-control" id="rvAvatar" placeholder="e.g. J" maxlength="2" style="width:64px;" />
         </div>
       </div>
       <div class="modal-footer">
@@ -2582,17 +2581,92 @@
             <input type="text" class="form-control" id="staffPhone" placeholder="+1 555 000 0000" />
           </div>
         </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">PIN (6 digits)</label>
+            <input type="password" class="form-control" id="staffPin" placeholder="121212" maxlength="6" autocomplete="new-password" />
+            <div style="font-size:11px;color:var(--text-muted);margin-top:4px;">Used to log in on Waiter &amp; Kitchen panels.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Status</label>
+            <select class="form-control" id="staffStatus">
+              <option value="online">Online / On Duty</option>
+              <option value="offline">Offline</option>
+            </select>
+          </div>
+        </div>
         <div class="form-group">
-          <label class="form-label">Status</label>
-          <select class="form-control" id="staffStatus">
-            <option value="online">Online / On Duty</option>
-            <option value="offline">Offline</option>
-          </select>
+          <label class="form-label">Notes / Reason for adding</label>
+          <textarea class="form-control" id="staffReason" rows="2" placeholder="e.g. New hire for weekend shift, replacing John…"></textarea>
         </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-ghost" onclick="closeModal('staffModal')">Cancel</button>
         <button class="btn btn-primary" onclick="saveStaff()">Save Staff</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============================================
+       MODAL: ADD ORDER (ADMIN)
+       ============================================= -->
+  <div class="modal-overlay" id="addOrderModal">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title" id="addOrderModalTitle">New Order</div>
+        <button class="modal-close" onclick="closeModal('addOrderModal')">
+          <i data-lucide="x" style="width:16px;height:16px;"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="addOrderEditId" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Customer Name *</label>
+            <input type="text" class="form-control" id="addOrderName" placeholder="e.g. John Smith" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input type="text" class="form-control" id="addOrderPhone" placeholder="+213 555 000 000" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Order Type</label>
+            <select class="form-control" id="addOrderType" onchange="_toggleAddOrderType(this.value)">
+              <option value="dine-in">Dine-in</option>
+              <option value="takeaway">Takeaway</option>
+              <option value="delivery">Delivery</option>
+            </select>
+          </div>
+          <div class="form-group" id="addOrderTableRow">
+            <label class="form-label">Table Number</label>
+            <input type="text" class="form-control" id="addOrderTable" placeholder="e.g. 5" />
+          </div>
+          <div class="form-group" id="addOrderAddressRow" style="display:none;">
+            <label class="form-label">Delivery Address</label>
+            <input type="text" class="form-control" id="addOrderAddress" placeholder="Street, City" />
+          </div>
+        </div>
+        <div class="form-group">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <label class="form-label" style="margin:0;">Order Items *</label>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="_addOrderItemRow()">
+              <i data-lucide="plus" style="width:12px;height:12px;"></i> Add Item
+            </button>
+          </div>
+          <div id="addOrderItemsContainer"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes</label>
+          <textarea class="form-control" id="addOrderNotes" rows="2" placeholder="Special requests…"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeModal('addOrderModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitAddOrder()">
+          <i data-lucide="receipt" style="width:14px;height:14px;"></i> Create Order
+        </button>
       </div>
     </div>
   </div>
@@ -2658,11 +2732,36 @@
   /* =============================================
      DEFAULT DATA — seeded once on first run
      ============================================= */
-  const DEFAULT_FOODS = [];
+  const DEFAULT_FOODS = [
+    { id:1,  name:'Signature Burger',      category:'Burgers',   price:1850, rating:4.9, reviews:247, available:true, bestseller:true,  featured:true,  image:'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80', description:'Premium wagyu patty, caramelised onions, truffle aioli', badges:['Chef Special'] },
+    { id:2,  name:'Truffle Risotto',        category:'Mains',     price:2200, rating:4.8, reviews:189, available:true, bestseller:true,  featured:false, image:'https://images.unsplash.com/photo-1476124369491-e7addf5db371?w=400&q=80', description:'Arborio rice, black truffle, aged parmesan', badges:['Vegetarian'] },
+    { id:3,  name:'Pan-Seared Salmon',      category:'Mains',     price:2450, rating:4.7, reviews:156, available:true, bestseller:false, featured:false, image:'https://images.unsplash.com/photo-1485921325833-c519f76c4927?w=400&q=80', description:'Atlantic salmon, lemon beurre blanc, seasonal greens', badges:['Gluten-Free'] },
+    { id:4,  name:'Caesar Salad',           category:'Starters',  price:1200, rating:4.6, reviews:203, available:true, bestseller:false, featured:false, image:'https://images.unsplash.com/photo-1580013759032-c96505e24c1f?w=400&q=80', description:'Romaine lettuce, house-made dressing, anchovy croutons', badges:[] },
+    { id:5,  name:'Chocolate Lava Cake',    category:'Desserts',  price:950,  rating:5.0, reviews:312, available:true, bestseller:true,  featured:false, image:'https://images.unsplash.com/photo-1624353365286-3f8d62daad51?w=400&q=80', description:'Warm Valrhona chocolate, vanilla ice cream', badges:['Bestseller'] },
+    { id:6,  name:'Classic Tiramisu',       category:'Desserts',  price:880,  rating:4.8, reviews:178, available:true, bestseller:false, featured:false, image:'https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=400&q=80', description:'Mascarpone cream, espresso-soaked savoiardi', badges:['Vegetarian'] },
+    { id:7,  name:'Grilled Ribeye Steak',   category:'Mains',     price:3800, rating:4.9, reviews:142, available:true, bestseller:true,  featured:false, image:'https://images.unsplash.com/photo-1558030006-450675393462?w=400&q=80', description:'300g Angus ribeye, chimichurri, hand-cut fries', badges:['Chef Special'] },
+    { id:8,  name:'Chicken Wings',          category:'Starters',  price:1100, rating:4.5, reviews:267, available:true, bestseller:false, featured:false, image:'https://images.unsplash.com/photo-1567620832903-9fc6debc209f?w=400&q=80', description:'Crispy fried wings, 3 dipping sauces', badges:['Spicy'] },
+    { id:9,  name:'Fresh Lemonade',         category:'Beverages', price:450,  rating:4.4, reviews:89,  available:true, bestseller:false, featured:false, image:'https://images.unsplash.com/photo-1621263764928-df1444c5e859?w=400&q=80', description:'Freshly squeezed lemons, mint, sparkling water', badges:['Vegan'] },
+    { id:10, name:'Espresso Martini',       category:'Beverages', price:1350, rating:4.9, reviews:201, available:true, bestseller:true,  featured:false, image:'https://images.unsplash.com/photo-1681747690641-82a1f5d3a7a1?w=400&q=80', description:'Vodka, Kahlúa, fresh espresso, coffee foam', badges:[] },
+  ];
 
-  const DEFAULT_TABLES = [];
+  const DEFAULT_TABLES = [
+    { id:1, number:1, capacity:2, status:'free', section:'Indoor' },
+    { id:2, number:2, capacity:4, status:'free', section:'Indoor' },
+    { id:3, number:3, capacity:4, status:'free', section:'Indoor' },
+    { id:4, number:4, capacity:6, status:'free', section:'Indoor' },
+    { id:5, number:5, capacity:2, status:'free', section:'Terrace' },
+    { id:6, number:6, capacity:4, status:'free', section:'Terrace' },
+  ];
 
-  const DEFAULT_STAFF = [];
+  const DEFAULT_STAFF = [
+    { id:'staff_01', name:'Marcus Chen',  role:'Chef',            pin:'121212', email:'marcus@nova.com',  phone:'+213 555 001', status:'online',  color:'#e8a020', reason:'Head chef' },
+    { id:'staff_02', name:'Sophia Laine', role:'Manager',         pin:'121212', email:'sophia@nova.com',  phone:'+213 555 002', status:'online',  color:'#0ea5e9', reason:'Floor manager' },
+    { id:'staff_03', name:'James Okafor', role:'Waiter',          pin:'121212', email:'james@nova.com',   phone:'+213 555 003', status:'online',  color:'#10b981', reason:'Weekend shift' },
+    { id:'staff_04', name:'Alyssa Park',  role:'Waiter',          pin:'121212', email:'alyssa@nova.com',  phone:'+213 555 004', status:'offline', color:'#8b5cf6', reason:'Part-time waiter' },
+    { id:'staff_05', name:'Ravi Singh',   role:'Delivery Driver', pin:'121212', email:'ravi@nova.com',    phone:'+213 555 005', status:'online',  color:'#ef4444', reason:'Primary delivery driver' },
+    { id:'staff_06', name:'Clara Morse',  role:'Cashier',         pin:'121212', email:'clara@nova.com',   phone:'+213 555 006', status:'online',  color:'#f59e0b', reason:'Cashier + host' },
+  ];
 
   const DEFAULT_NOTIFICATIONS = [];
 
@@ -3944,21 +4043,40 @@
   /* =============================================
      THEME MANAGER
      ============================================= */
+  // CSS vars that are controlled by data-theme — must NOT be set as inline styles
+  const THEME_DEP_VARS = [
+    '--bg-base','--bg-surface','--bg-card','--bg-card-hover','--bg-glass','--bg-glass-light',
+    '--text-primary','--text-secondary','--text-muted','--text-inverse',
+    '--border-color','--shadow-sm','--shadow-md','--shadow-lg','--shadow-gold','--shadow-glow',
+  ];
+
   const AdminTheme = {
     init() {
       const mode = StorageManager.get('themeMode') || 'dark';
       document.documentElement.setAttribute('data-theme', mode);
       this.updateIcon(mode);
 
-      // Apply saved custom colors
+      // Apply saved custom colors (skip theme-dependent vars so CSS cascade works)
       const saved = StorageManager.get('admin_theme');
-      if (saved) Object.entries(saved).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+      if (saved) Object.entries(saved).forEach(([k, v]) => {
+        if (!THEME_DEP_VARS.includes(k)) document.documentElement.style.setProperty(k, v);
+      });
     },
     toggle() {
       const cur  = document.documentElement.getAttribute('data-theme');
       const next = cur === 'dark' ? 'light' : 'dark';
+
+      // Animate transition
+      document.documentElement.classList.add('theme-transitioning');
+      setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 450);
+
+      // Remove inline overrides for theme-dependent vars so CSS cascade takes over
+      THEME_DEP_VARS.forEach(v => document.documentElement.style.removeProperty(v));
+
       document.documentElement.setAttribute('data-theme', next);
       StorageManager.set('themeMode', next);
+      // Also store as raw string for index.html compatibility
+      try { localStorage.setItem('nova_themeMode', JSON.stringify(next)); } catch(e) {}
       this.updateIcon(next);
       toast(`Switched to ${next} mode`, 'info', 'Theme');
     },
@@ -4419,7 +4537,121 @@
   }
 
   function openAddOrderModal() {
-    toast('Use the landing page to place orders, then manage them here.', 'info', 'Tip');
+    // Reset form
+    document.getElementById('addOrderEditId').value = '';
+    document.getElementById('addOrderModalTitle').textContent = 'New Order';
+    document.getElementById('addOrderName').value = '';
+    document.getElementById('addOrderPhone').value = '';
+    document.getElementById('addOrderType').value = 'dine-in';
+    document.getElementById('addOrderTable').value = '';
+    document.getElementById('addOrderAddress').value = '';
+    document.getElementById('addOrderNotes').value = '';
+    document.getElementById('addOrderTableRow').style.display = '';
+    document.getElementById('addOrderAddressRow').style.display = 'none';
+    document.getElementById('addOrderItemsContainer').innerHTML = '';
+    _addOrderItems = [];
+    _addOrderItemRow();
+    openModal('addOrderModal');
+    if (window.lucide) lucide.createIcons();
+  }
+
+  let _addOrderItems = [];
+
+  function _addOrderItemRow(item) {
+    const foods = getFoods();
+    const idx = _addOrderItems.length;
+    const div = document.createElement('div');
+    div.id = `addOrderRow_${idx}`;
+    div.style.cssText = 'display:flex;gap:8px;align-items:center;margin-bottom:8px;';
+    const foodOpts = foods.map(f => `<option value="${f.id}" data-price="${f.price}">${f.name} (${f.price.toFixed(2)} DA)</option>`).join('');
+    div.innerHTML = `
+      <select class="form-control" style="flex:2;" onchange="_addOrderItemChange(${idx},this)">
+        <option value="">-- Select Item --</option>
+        ${foodOpts}
+      </select>
+      <input type="number" class="form-control" style="flex:0.5;width:64px;" min="1" value="1" oninput="_addOrderItemChange(${idx},null,this)">
+      <button type="button" class="btn btn-danger btn-sm btn-icon" onclick="_removeAddOrderRow(${idx})" title="Remove">
+        <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
+      </button>
+    `;
+    _addOrderItems.push({ foodId: null, qty: 1 });
+    document.getElementById('addOrderItemsContainer').appendChild(div);
+    if (window.lucide) lucide.createIcons();
+  }
+
+  function _addOrderItemChange(idx, selectEl, qtyEl) {
+    if (!_addOrderItems[idx]) return;
+    if (selectEl) _addOrderItems[idx].foodId = selectEl.value ? parseInt(selectEl.value) : null;
+    if (qtyEl) _addOrderItems[idx].qty = parseInt(qtyEl.value) || 1;
+  }
+
+  function _removeAddOrderRow(idx) {
+    const el = document.getElementById(`addOrderRow_${idx}`);
+    if (el) el.remove();
+    _addOrderItems[idx] = null;
+  }
+
+  function _toggleAddOrderType(val) {
+    document.getElementById('addOrderTableRow').style.display   = val === 'delivery' ? 'none' : '';
+    document.getElementById('addOrderAddressRow').style.display = val === 'delivery' ? '' : 'none';
+  }
+
+  function submitAddOrder() {
+    const name  = document.getElementById('addOrderName').value.trim();
+    const phone = document.getElementById('addOrderPhone').value.trim();
+    const type  = document.getElementById('addOrderType').value;
+    const tableNum = document.getElementById('addOrderTable').value.trim();
+    const address  = document.getElementById('addOrderAddress').value.trim();
+    const notes    = document.getElementById('addOrderNotes').value.trim();
+
+    if (!name) { toast('Customer name is required', 'error'); return; }
+
+    const foods = getFoods();
+    const validItems = (_addOrderItems || [])
+      .filter(Boolean)
+      .filter(i => i.foodId)
+      .map(i => {
+        const food = foods.find(f => f.id === i.foodId);
+        if (!food) return null;
+        return { name: food.name, price: food.price, quantity: i.qty };
+      })
+      .filter(Boolean);
+
+    if (!validItems.length) { toast('Add at least one item', 'error'); return; }
+
+    const subtotal = validItems.reduce((s,i) => s + i.price * i.quantity, 0);
+    const delivery = type === 'delivery' ? 200 : 0;
+    const tax      = subtotal * 0.08;
+    const total    = subtotal + delivery + tax;
+
+    const order = {
+      id:           'ADM-' + String(Date.now()).slice(-6),
+      name, phone, type,
+      table:        tableNum || '—',
+      address,
+      notes,
+      items:        validItems,
+      subtotal, delivery, tax, total,
+      status:       'pending',
+      kitchenStatus:'pending',
+      timestamp:    new Date().toISOString(),
+      source:       'admin',
+    };
+
+    const orders = getOrders();
+    orders.unshift(order);
+    StorageManager.set('kitchen_orders', orders);
+
+    // Add notification
+    const notifs = getNotifs();
+    notifs.unshift({ id: Date.now(), title: `New Order #${order.id}`, desc: `${name} — ${type} — ${total.toFixed(2)} DA`, icon: 'receipt', color: 'var(--color-primary)', time: 'just now', unread: true });
+    StorageManager.set('admin_notifs', notifs);
+    updateNotifBadge();
+    updateOrdersBadge();
+
+    closeModal('addOrderModal');
+    renderOrdersTable();
+    toast(`Order #${order.id} created for ${name}`, 'success', 'Order Created');
   }
 
   function openOrderDetail(id) {
@@ -4709,15 +4941,6 @@
   }
 
   function renderTablesGrid() {
-    // ── Restore toggle state ──────────────────────────────
-    const tablesEnabled = localStorage.getItem('nova_tables_enabled') !== 'false';
-    const toggleEl      = document.getElementById('tablesToggle');
-    const labelEl       = document.getElementById('tablesToggleLabel');
-    if (toggleEl) {
-      if (tablesEnabled) { toggleEl.classList.add('on');    if (labelEl) { labelEl.textContent = 'ON';  labelEl.style.color = 'var(--color-accent)';  } }
-      else               { toggleEl.classList.remove('on'); if (labelEl) { labelEl.textContent = 'OFF'; labelEl.style.color = 'var(--color-danger)'; } }
-    }
-
     const tables = getTables();
     document.getElementById('tablesGrid').innerHTML = tables.map(t => `
       <div class="table-tile ${t.status}" onclick="cycleTableStatus(${t.id})">
@@ -4833,46 +5056,69 @@
   function renderStaffGrid() {
     const staff = getStaff();
     const colors = ['#e8a020','#0ea5e9','#10b981','#8b5cf6','#ef4444','#f59e0b'];
+    const orders = getOrders();
+    const ordersByStaff = {};
+    orders.forEach(o => { const sid = o.staffId || o.waiterId; if (sid) ordersByStaff[sid] = (ordersByStaff[sid]||0)+1; });
 
-    document.getElementById('staffGrid').innerHTML = staff.map((s,i) => `
+    document.getElementById('staffGrid').innerHTML = staff.length ? staff.map((s,i) => {
+      const color    = s.color || colors[i % colors.length];
+      const initials = s.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+      const oCount   = ordersByStaff[s.id] || 0;
+      return `
       <div class="staff-card">
-        <div class="staff-avatar" style="background:${s.color||colors[i%colors.length]}22;color:${s.color||colors[i%colors.length]};">
-          ${s.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
-          ${s.status==='online'?'<div class="staff-online-dot"></div>':''}
+        <div class="staff-avatar" style="background:${color}22;color:${color};border:2px solid ${color}35;">
+          ${initials}
+          ${s.status==='online' ? '<div class="staff-online-dot"></div>' : ''}
         </div>
         <div class="staff-info">
           <div class="staff-name">${s.name}</div>
-          <div class="staff-role">${s.role} · <span style="color:${s.status==='online'?'var(--color-accent)':'var(--text-muted)'};">${s.status}</span></div>
-          <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${s.email}</div>
+          <div class="staff-role">${s.role} &middot; <span style="color:${s.status==='online'?'var(--color-accent)':'var(--text-muted)'}">${s.status}</span></div>
+          ${s.email ? `<div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${s.email}</div>` : ''}
+          ${s.reason ? `<div style="font-size:11px;color:var(--color-primary);font-style:italic;margin-top:3px;">"${s.reason}"</div>` : ''}
+          <div style="display:flex;gap:12px;margin-top:8px;">
+            <div style="text-align:center;">
+              <div style="font-family:var(--font-heading);font-size:15px;font-weight:800;color:var(--color-primary);">${oCount}</div>
+              <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Orders</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:11px;color:var(--text-secondary);font-family:monospace;">${s.phone || '\u2014'}</div>
+              <div style="font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;">Phone</div>
+            </div>
+          </div>
         </div>
-        <div class="flex gap-2">
-          <button class="btn btn-ghost btn-sm btn-icon" onclick="openStaffModal(${s.id})" title="Edit">
+        <div class="flex gap-2" style="flex-direction:column;flex-shrink:0;">
+          <button class="btn btn-ghost btn-sm btn-icon" onclick="openStaffModal('${s.id}')" title="Edit">
             <i data-lucide="pencil" style="width:12px;height:12px;"></i>
           </button>
-          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteStaff(${s.id})" title="Delete">
+          <button class="btn btn-danger btn-sm btn-icon" onclick="deleteStaff('${s.id}')" title="Delete">
             <i data-lucide="trash-2" style="width:12px;height:12px;"></i>
           </button>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('') : '<div class="empty-state" style="grid-column:1/-1;"><div class="empty-icon">\ud83d\udc65</div><div class="empty-title">No staff yet</div><div class="empty-desc">Add your first team member above.</div></div>';
     if (window.lucide) lucide.createIcons();
   }
+
 
   function openStaffModal(id = null) {
     document.getElementById('staffEditId').value = id || '';
     document.getElementById('staffModalTitle').textContent = id ? 'Edit Staff Member' : 'Add Staff Member';
-    ['staffName','staffEmail','staffPhone'].forEach(fid => document.getElementById(fid).value = '');
+    ['staffName','staffEmail','staffPhone','staffPin','staffReason'].forEach(fid => {
+      const el = document.getElementById(fid); if (el) el.value = '';
+    });
     document.getElementById('staffRole').value = 'Waiter';
     document.getElementById('staffStatus').value = 'online';
 
     if (id) {
-      const s = getStaff().find(x=>x.id===id);
+      const s = getStaff().find(x => String(x.id) === String(id));
       if (s) {
         document.getElementById('staffName').value   = s.name;
-        document.getElementById('staffEmail').value  = s.email;
-        document.getElementById('staffPhone').value  = s.phone;
+        document.getElementById('staffEmail').value  = s.email || '';
+        document.getElementById('staffPhone').value  = s.phone || '';
         document.getElementById('staffRole').value   = s.role;
         document.getElementById('staffStatus').value = s.status;
+        if (document.getElementById('staffPin')) document.getElementById('staffPin').value = s.pin || '';
+        if (document.getElementById('staffReason')) document.getElementById('staffReason').value = s.reason || '';
       }
     }
     openModal('staffModal');
@@ -4885,19 +5131,23 @@
 
     const staffList = getStaff();
     const colors = ['#e8a020','#0ea5e9','#10b981','#8b5cf6','#ef4444','#f59e0b'];
+    const pinRaw = document.getElementById('staffPin')?.value?.trim() || '121212';
+    const pin    = /^\d{4,8}$/.test(pinRaw) ? pinRaw : '121212';
     const member = {
-      id:     editId ? parseInt(editId) : Date.now(),
+      id:     editId || ('staff_' + Date.now()),
       name,
       role:   document.getElementById('staffRole').value,
-      email:  document.getElementById('staffEmail').value,
-      phone:  document.getElementById('staffPhone').value,
+      email:  document.getElementById('staffEmail').value.trim(),
+      phone:  document.getElementById('staffPhone').value.trim(),
       status: document.getElementById('staffStatus').value,
+      pin,
+      reason: document.getElementById('staffReason')?.value?.trim() || '',
       color:  colors[staffList.length % colors.length],
     };
 
     if (editId) {
-      const idx = staffList.findIndex(s=>s.id===parseInt(editId));
-      if (idx>=0) { member.color = staffList[idx].color; staffList[idx] = member; }
+      const idx = staffList.findIndex(s => String(s.id) === String(editId));
+      if (idx >= 0) { member.color = staffList[idx].color; staffList[idx] = member; }
     } else { staffList.push(member); }
 
     StorageManager.set('staff', staffList);
@@ -4907,9 +5157,9 @@
   }
 
   function deleteStaff(id) {
-    const s = getStaff().find(x=>x.id===id);
+    const s = getStaff().find(x => String(x.id) === String(id));
     confirmAction('Remove Staff', `Remove ${s?.name}?`, () => {
-      StorageManager.set('staff', getStaff().filter(x=>x.id!==id));
+      StorageManager.set('staff', getStaff().filter(x => String(x.id) !== String(id)));
       renderStaffGrid();
       toast(`${s?.name} removed`, 'warning');
     });
@@ -5076,25 +5326,70 @@
      NOTIFICATIONS
      ============================================= */
   function renderNotifications() {
-    const notifs = getNotifs();
-    document.getElementById('notifList').innerHTML = notifs.map(n => `
-      <div class="notif-item ${n.unread?'unread':''}" onclick="readNotif(${n.id})">
-        <div class="notif-icon-wrap" style="background:${n.color}22;">
-          <i data-lucide="${n.icon}" style="width:16px;height:16px;color:${n.color};"></i>
+    let notifs = getNotifs();
+
+    // Pull in recent orders as notification entries
+    const orders = getOrders().slice(0, 30);
+    const existingOrderIds = new Set(notifs.filter(n => n.orderId).map(n => n.orderId));
+    orders.forEach(o => {
+      if (!existingOrderIds.has(o.id)) {
+        const statusIcon  = { pending:'clock', preparing:'chef-hat', ready:'bell', delivered:'check-circle', cancelled:'x-circle' };
+        const statusColor = { pending:'var(--color-warning)', preparing:'var(--color-secondary)', ready:'var(--color-accent)', delivered:'var(--color-accent)', cancelled:'var(--color-danger)' };
+        const st = o.kitchenStatus || o.status || 'pending';
+        notifs.push({
+          id: 'ord_' + o.id,
+          orderId: o.id,
+          title: `Order ${o.id}`,
+          desc: `${o.name||'Guest'} · ${o.type||'dine-in'} · ${(o.total||0).toFixed(2)} DA · ${st}`,
+          icon: statusIcon[st] || 'receipt',
+          color: statusColor[st] || 'var(--color-primary)',
+          time: timeAgo(o.timestamp),
+          unread: st === 'pending',
+          category: 'order',
+        });
+      }
+    });
+
+    // Group by category then sort: unread first, by recency
+    notifs.sort((a,b) => {
+      if (b.unread !== a.unread) return b.unread ? 1 : -1;
+      return 0;
+    });
+
+    const el = document.getElementById('notifList');
+    if (!el) return;
+
+    if (!notifs.length) {
+      el.innerHTML = `
+        <div class="empty-state" style="padding:60px 0;">
+          <div class="empty-icon">🔔</div>
+          <div class="empty-title">All clear!</div>
+          <div class="empty-desc">Order events and system alerts will appear here.</div>
+        </div>`;
+      return;
+    }
+
+    // Unread count header
+    const unreadCount = notifs.filter(n => n.unread).length;
+    el.innerHTML = `
+      ${unreadCount > 0 ? `<div style="padding:10px 16px 6px;font-family:var(--font-heading);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--color-primary);">${unreadCount} unread</div>` : ''}
+      ${notifs.map(n => `
+      <div class="notif-item ${n.unread?'unread':''}" onclick="readNotif('${n.id}')" style="cursor:pointer;display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border-color);transition:background 0.15s;${n.unread?'background:rgba(232,160,32,0.04);':''}" onmouseover="this.style.background='var(--bg-card-hover)'" onmouseout="this.style.background='${n.unread?'rgba(232,160,32,0.04)':'transparent'}'">
+        <div style="flex-shrink:0;width:40px;height:40px;border-radius:var(--radius-md);background:${n.color||'var(--color-primary)'}18;display:flex;align-items:center;justify-content:center;">
+          <i data-lucide="${n.icon||'bell'}" style="width:18px;height:18px;color:${n.color||'var(--color-primary)'};"></i>
         </div>
-        <div class="notif-text">
-          <div class="notif-title">${n.title}</div>
-          <div class="notif-desc">${n.desc}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:${n.unread?'700':'500'};color:${n.unread?'var(--text-primary)':'var(--text-secondary)'};">${n.title||''}</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${n.desc||''}</div>
         </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
-          <div class="notif-time">${n.time}</div>
-          ${n.unread ? '<div class="notif-unread-dot"></div>' : ''}
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
+          <div style="font-size:11px;color:var(--text-muted);white-space:nowrap;">${n.time||'—'}</div>
+          ${n.unread ? '<div style="width:8px;height:8px;border-radius:50%;background:var(--color-primary);flex-shrink:0;"></div>' : '<div style="width:8px;height:8px;border-radius:50%;background:var(--border-color);flex-shrink:0;"></div>'}
         </div>
-      </div>
-    `).join('');
+      </div>`).join('')}
+    `;
     if (window.lucide) lucide.createIcons();
   }
-
   function readNotif(id) {
     const notifs = getNotifs();
     const n = notifs.find(x=>x.id===id);
@@ -5313,137 +5608,99 @@
     // Otherwise the PIN overlay stays visible — user must authenticate
   });
   /* =============================================
-     ADMIN REVIEWS MANAGER — Firebase Firestore
+     ADMIN REVIEWS MANAGER — localStorage (matches index.html)
      ============================================= */
   const AdminReviewsManager = {
-    _db: null,
-    _filter: 'pending',
-    _cached: null,
+    _filter: 'all',
     _page: 0,
     _perPage: 8,
 
-    async _getDb() {
-      if (this._db) return this._db;
-      const { initializeApp, getApps } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js');
-      const mod = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js');
-      const cfg = {
-        apiKey: "AIzaSyCjieTX_M2PDIgtC2u6vMfyzXYsWYXmiUk",
-        authDomain: "protech-6c388.firebaseapp.com",
-        projectId: "protech-6c388",
-        storageBucket: "protech-6c388.firebasestorage.app",
-        messagingSenderId: "987892798162",
-        appId: "1:987892798162:web:2307b1e8773430df1d930b",
-      };
-      const app = getApps().length ? getApps()[0] : initializeApp(cfg);
-      this._db = { db: mod.getFirestore(app), ...mod };
-      return this._db;
+    _getReviews() {
+      try { return JSON.parse(localStorage.getItem('nova_reviews') || '[]'); } catch { return []; }
+    },
+    _saveReviews(reviews) {
+      try { localStorage.setItem('nova_reviews', JSON.stringify(reviews)); } catch {}
+    },
+    _esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); },
+    _timeAgo(ts) {
+      if (!ts) return '—';
+      const d = new Date(ts);
+      const diff = Date.now() - d.getTime();
+      if (diff < 60000) return 'just now';
+      if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+      if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+      if (diff < 604800000) return Math.floor(diff/86400000) + 'd ago';
+      return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
     },
 
-    // All docs cached after first fetch — avoids composite index requirement.
-    // Firestore only auto-indexes single fields; where+orderBy on different
-    // fields needs a manual composite index, so we fetch all ordered by
-    // createdAt (single-field = auto-indexed) and filter/paginate client-side.
-    _cached: null,
-
-    async _fetchAll() {
-      const { db, collection, query, orderBy, getDocs } = await this._getDb();
-      const snap = await getDocs(query(collection(db, 'reviews'), orderBy('createdAt', 'desc')));
-      this._cached = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      return this._cached;
+    _getFiltered() {
+      const all = this._getReviews();
+      if (this._filter === '5') return all.filter(r => r.rating === 5);
+      if (this._filter === '4') return all.filter(r => r.rating >= 4);
+      return all;
     },
 
-    async loadPage(dir = 0) {
+    loadPage(dir = 0) {
       this._page = Math.max(0, this._page + dir);
+      const all      = this._getReviews();
+      const filtered = this._getFiltered();
+      const total    = all.length;
+
+      // Stats
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+      set('rvStatTotal',    total);
+      set('rvStatApproved', total);
+      if (total) {
+        const avg = all.reduce((s,r)=>s+(r.rating||5),0)/total;
+        set('rvStatAvg', avg.toFixed(1) + ' ★');
+      } else set('rvStatAvg', '—');
+
+      const branding = JSON.parse(localStorage.getItem('nova_branding')||'{}') || {};
+      const sectionHidden = branding.reviewsHidden === true;
+      set('rvStatVisible', sectionHidden ? 'Hidden' : 'Live');
+      const visEl = document.getElementById('rvStatVisible');
+      if (visEl) visEl.style.color = sectionHidden ? 'var(--color-danger)' : 'var(--color-accent)';
 
       const loadEl  = document.getElementById('reviewsLoadingState');
       const emptyEl = document.getElementById('reviewsEmptyState');
       const gridEl  = document.getElementById('reviewsGrid');
       const paginEl = document.getElementById('reviewsPaginationWrap');
 
-      if (loadEl)  { loadEl.style.display = ''; loadEl.innerHTML = '<div style="text-align:center;padding:60px;color:var(--text-muted);"><div style="font-size:32px;margin-bottom:12px;">⏳</div><div>Loading reviews…</div></div>'; }
-      if (emptyEl) emptyEl.style.display = 'none';
-      if (gridEl)  gridEl.style.display  = 'none';
-      if (paginEl) paginEl.style.display = 'none';
+      if (loadEl) loadEl.style.display = 'none';
 
-      try {
-        // Always re-fetch to get fresh data
-        const all = await this._fetchAll();
+      const totalPages = Math.ceil(filtered.length / this._perPage);
+      if (this._page >= totalPages && totalPages > 0) this._page = totalPages - 1;
 
-        // Client-side filter
-        const filtered = this._filter === 'pending'
-          ? all.filter(d => !d.approved)
-          : this._filter === 'approved'
-            ? all.filter(d =>  d.approved)
-            : all;
+      const start = this._page * this._perPage;
+      const docs  = filtered.slice(start, start + this._perPage);
 
-        // Client-side pagination
-        const start = this._page * this._perPage;
-        const docs  = filtered.slice(start, start + this._perPage);
-        const totalPages = Math.ceil(filtered.length / this._perPage);
-
-        // Clamp page
-        if (this._page >= totalPages && totalPages > 0) {
-          this._page = totalPages - 1;
-          return this.loadPage(0);
-        }
-
-        // Update stats from cached data
-        this._updateStatsFromCache(all);
-
-        if (loadEl) loadEl.style.display = 'none';
-
-        if (docs.length === 0) {
-          if (emptyEl) emptyEl.style.display = '';
-        } else {
-          if (gridEl) { gridEl.style.display = 'flex'; this._renderGrid(docs, gridEl); }
-          if (paginEl && totalPages > 1) {
-            paginEl.style.display = 'flex';
-            document.getElementById('rvPageLabel').textContent = `Page ${this._page + 1} of ${totalPages}`;
-            document.getElementById('rvPrevBtn').disabled = this._page === 0;
-            document.getElementById('rvNextBtn').disabled = this._page >= totalPages - 1;
-          }
-        }
-
-        if (window.lucide) lucide.createIcons();
-      } catch (err) {
-        console.error('Reviews admin error:', err);
-        if (loadEl) loadEl.innerHTML = `<div style="text-align:center;padding:40px;color:var(--color-danger);">⚠️ Failed to load: ${err.message}</div>`;
-      }
-    },
-
-    _updateStatsFromCache(all) {
-      const approved = all.filter(d =>  d.approved).length;
-      const pending  = all.filter(d => !d.approved).length;
-      const total    = all.length;
-
-      const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-      set('rvStatTotal',    total);
-      set('rvStatApproved', approved);
-      set('rvStatPending',  pending);
-
-      const badge = document.getElementById('reviewsPendingBadge');
-      if (badge) { badge.textContent = pending; badge.style.display = pending > 0 ? '' : 'none'; }
-      const pendingCountEl = document.getElementById('pendingCount');
-      if (pendingCountEl) pendingCountEl.textContent = pending;
-
-      // Average rating from approved
-      const approvedDocs = all.filter(d => d.approved);
-      if (approvedDocs.length) {
-        const avg = approvedDocs.reduce((s, d) => s + (d.rating || 5), 0) / approvedDocs.length;
-        set('rvStatAvg', avg.toFixed(1) + ' ★');
+      if (!docs.length) {
+        if (emptyEl) emptyEl.style.display = '';
+        if (gridEl)  gridEl.style.display  = 'none';
+        if (paginEl) paginEl.style.display = 'none';
       } else {
-        set('rvStatAvg', '—');
+        if (emptyEl) emptyEl.style.display = 'none';
+        if (gridEl) { gridEl.style.display = 'flex'; this._renderGrid(docs, gridEl); }
+        if (paginEl) {
+          paginEl.style.display = totalPages > 1 ? 'flex' : 'none';
+          document.getElementById('rvPageLabel').textContent = `Page ${this._page + 1} of ${totalPages}`;
+          document.getElementById('rvPrevBtn').disabled = this._page === 0;
+          document.getElementById('rvNextBtn').disabled = this._page >= totalPages - 1;
+        }
       }
+
+      if (window.lucide) lucide.createIcons();
     },
 
     _renderGrid(docs, gridEl) {
-      gridEl.innerHTML = docs.map(rv => `
-        <div class="card" style="padding:0;overflow:hidden;" id="rv-card-${rv.id}">
+      gridEl.innerHTML = docs.map((rv, idx) => {
+        const globalIdx = this._getReviews().indexOf(rv);
+        return `
+        <div class="card" style="padding:0;overflow:hidden;" id="rv-card-${globalIdx}">
           <div style="display:grid;grid-template-columns:1fr auto;align-items:start;padding:20px 24px;gap:16px;">
             <div style="display:flex;flex-direction:column;gap:8px;">
-              <!-- Header row -->
               <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-                <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:14px;font-weight:700;color:#fff;flex-shrink:0;">
+                <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--color-primary),var(--color-primary-dark));display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:15px;font-weight:700;color:#000;flex-shrink:0;">
                   ${this._esc((rv.name||'?').charAt(0).toUpperCase())}
                 </div>
                 <div>
@@ -5451,84 +5708,50 @@
                   <div style="font-size:12px;color:var(--text-muted);">${this._esc(rv.role||'Guest')}</div>
                 </div>
                 <div style="display:flex;gap:2px;">
-                  ${Array.from({length:5}).map((_,i)=>`<span style="color:${i<(rv.rating||5)?'var(--color-primary)':'var(--text-muted)'};font-size:13px;">★</span>`).join('')}
+                  ${Array.from({length:5}).map((_,i)=>`<span style="color:${i<(rv.rating||5)?'var(--color-primary)':'var(--text-muted)'};font-size:14px;">★</span>`).join('')}
                 </div>
-                <span class="badge ${rv.approved ? 'badge-green' : 'badge-gold'}">${rv.approved ? 'Published' : 'Pending'}</span>
-                <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">${this._timeAgo(rv.createdAt)}</span>
+                <span class="badge badge-green">Published</span>
+                <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">${this._timeAgo(rv.timestamp||rv.createdAt)}</span>
               </div>
-              <!-- Review text -->
-              <div style="font-size:14px;color:var(--text-secondary);line-height:1.7;padding-left:50px;">"${this._esc(rv.text)}"</div>
+              <div style="font-size:14px;color:var(--text-secondary);line-height:1.75;padding-left:52px;font-style:italic;">"${this._esc(rv.text)}"</div>
             </div>
-            <!-- Actions -->
             <div style="display:flex;gap:6px;flex-shrink:0;padding-top:4px;">
-              ${rv.approved
-                ? `<button class="btn btn-ghost btn-sm" onclick="AdminReviewsManager.toggleApproval('${rv.id}', false)" title="Unpublish">
-                     <i data-lucide="eye-off" style="width:13px;height:13px;"></i>
-                   </button>`
-                : `<button class="btn btn-primary btn-sm" onclick="AdminReviewsManager.toggleApproval('${rv.id}', true)" title="Approve & Publish">
-                     <i data-lucide="check" style="width:13px;height:13px;"></i> Approve
-                   </button>`
-              }
-              <button class="btn btn-ghost btn-sm" onclick="openEditReviewModal('${rv.id}','${this._esc(rv.name)}','${this._esc(rv.role)}',${rv.rating||5},'${this._esc(rv.text)}',${rv.approved})" title="Edit">
+              <button class="btn btn-ghost btn-sm" onclick="openEditReviewModal(${globalIdx})" title="Edit">
                 <i data-lucide="pencil" style="width:13px;height:13px;"></i>
               </button>
-              <button class="btn btn-danger btn-sm" onclick="AdminReviewsManager.deleteReview('${rv.id}')" title="Delete">
+              <button class="btn btn-danger btn-sm" onclick="AdminReviewsManager.deleteReview(${globalIdx})" title="Delete">
                 <i data-lucide="trash-2" style="width:13px;height:13px;"></i>
               </button>
             </div>
           </div>
-        </div>
-      `).join('');
+        </div>`;
+      }).join('');
     },
 
-    async toggleApproval(id, approved) {
-      try {
-        const { db, doc, updateDoc } = await this._getDb();
-        await updateDoc(doc(db, 'reviews', id), { approved });
-        this._cached = null; // invalidate cache
-        showAdminToast(approved ? 'Review published!' : 'Review unpublished.', approved ? 'success' : 'info');
-        await this.loadPage(0);
-      } catch(e) { showAdminToast('Error: ' + e.message, 'error'); }
-    },
-
-    async deleteReview(id) {
-      openConfirm('Delete Review?', 'This review will be permanently removed.', async () => {
-        try {
-          const { db, doc, deleteDoc } = await this._getDb();
-          await deleteDoc(doc(db, 'reviews', id));
-          this._cached = null; // invalidate cache
-          showAdminToast('Review deleted.', 'success');
-          this._page = 0;
-          await this.loadPage(0);
-        } catch(e) { showAdminToast('Error: ' + e.message, 'error'); }
+    deleteReview(idx) {
+      const all = this._getReviews();
+      const rv = all[idx];
+      if (!rv) return;
+      confirmAction('Delete Review', `Delete review from "${rv.name}"?`, () => {
+        all.splice(idx, 1);
+        this._saveReviews(all);
+        this.loadPage(0);
+        toast('Review deleted', 'warning', 'Deleted');
       });
     },
 
-    async saveReview(id, data) {
-      try {
-        const { db, doc, setDoc, addDoc, collection, serverTimestamp } = await this._getDb();
-        if (id) {
-          await setDoc(doc(db, 'reviews', id), { ...data, updatedAt: serverTimestamp() }, { merge: true });
-          showAdminToast('Review updated.', 'success');
-        } else {
-          await addDoc(collection(db, 'reviews'), { ...data, createdAt: serverTimestamp() });
-          showAdminToast('Review added.', 'success');
-        }
-        this._cached = null; // invalidate cache
-        this._page = 0;
-        await this.loadPage(0);
-      } catch(e) { showAdminToast('Error: ' + e.message, 'error'); }
-    },
-
-    _esc(s) { return String(s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); },
-    _timeAgo(ts) {
-      if (!ts) return '—';
-      const d = ts.toDate ? ts.toDate() : new Date(ts);
-      const diff = Date.now() - d.getTime();
-      if (diff < 86400000) return 'Today';
-      if (diff < 604800000) return Math.floor(diff/86400000) + 'd ago';
-      if (diff < 2592000000) return Math.floor(diff/604800000) + 'w ago';
-      return d.toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+    saveReview(idx, data) {
+      const all = this._getReviews();
+      if (idx !== null && idx >= 0) {
+        all[idx] = { ...all[idx], ...data };
+        toast('Review updated', 'success');
+      } else {
+        all.unshift({ ...data, timestamp: new Date().toISOString() });
+        toast('Review added', 'success');
+      }
+      this._saveReviews(all);
+      this._page = 0;
+      this.loadPage(0);
     },
   };
 
@@ -5563,74 +5786,57 @@
     document.getElementById('rvText').value = '';
     document.getElementById('rvRatingVal').value = 5;
     document.getElementById('reviewModalTitle').textContent = 'Add Review';
-    document.getElementById('rvApprovedToggle').classList.add('on');
     setModalRating(5);
     openModal('reviewModal');
   }
 
-  function openEditReviewModal(id, name, role, rating, text, approved) {
-    document.getElementById('reviewEditId').value = id;
-    document.getElementById('rvName').value = name;
-    document.getElementById('rvRole').value = role;
-    document.getElementById('rvText').value = text;
+  function openEditReviewModal(idx) {
+    const all = AdminReviewsManager._getReviews();
+    const rv  = all[idx];
+    if (!rv) return;
+    document.getElementById('reviewEditId').value = idx;
+    document.getElementById('rvName').value = rv.name || '';
+    document.getElementById('rvRole').value = rv.role || '';
+    document.getElementById('rvText').value = rv.text || '';
     document.getElementById('reviewModalTitle').textContent = 'Edit Review';
-    if (approved) document.getElementById('rvApprovedToggle').classList.add('on');
-    else document.getElementById('rvApprovedToggle').classList.remove('on');
-    _rvModalRating = rating || 5;
+    _rvModalRating = rv.rating || 5;
     document.getElementById('rvRatingVal').value = _rvModalRating;
     setModalRating(_rvModalRating);
     openModal('reviewModal');
   }
 
   function saveReview() {
-    const id       = document.getElementById('reviewEditId').value;
-    const name     = document.getElementById('rvName').value.trim();
-    const role     = document.getElementById('rvRole').value.trim() || 'Guest';
-    const text     = document.getElementById('rvText').value.trim();
-    const rating   = parseInt(document.getElementById('rvRatingVal').value) || 5;
-    const approved = document.getElementById('rvApprovedToggle').classList.contains('on');
+    const idVal  = document.getElementById('reviewEditId').value;
+    const idx    = idVal !== '' ? parseInt(idVal) : null;
+    const name   = document.getElementById('rvName').value.trim();
+    const role   = document.getElementById('rvRole').value.trim() || 'Guest';
+    const text   = document.getElementById('rvText').value.trim();
+    const rating = parseInt(document.getElementById('rvRatingVal').value) || _rvModalRating || 5;
 
-    if (!name || !text) { showAdminToast('Name and review text are required.', 'error'); return; }
+    if (!name || !text) { toast('Name and review text are required.', 'error'); return; }
 
     closeModal('reviewModal');
-    AdminReviewsManager.saveReview(id || null, { name, role, text, rating, approved });
+    AdminReviewsManager.saveReview(idx, { name, role, text, rating, avatar: name[0].toUpperCase() });
   }
 
-  /* Intercept navigateTo for reviews page to trigger load */
-  const _origNavigateTo = typeof navigateTo === 'function' ? navigateTo : null;
-
-  // Hook into the page render — patch after DOMContentLoaded
+  /* Hook into navigateTo to auto-load reviews */
   document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
-      // patch navigateTo to auto-load reviews
       const origFn = window.navigateTo;
-      window.navigateTo = function(page, el) {
-        origFn(page, el);
-        if (page === 'reviews') {
-          AdminReviewsManager._page   = 0;
-          AdminReviewsManager._cached = null;
-          AdminReviewsManager.loadPage(0);
-        }
-      };
+      if (origFn) {
+        window.navigateTo = function(page, el) {
+          origFn(page, el);
+          if (page === 'reviews') {
+            AdminReviewsManager._page = 0;
+            AdminReviewsManager.loadPage(0);
+          }
+        };
+      }
     }, 200);
   });
 
   function showAdminToast(msg, type = 'info') {
-    // Use existing toast system if available
-    if (typeof AdminToast !== 'undefined') { AdminToast.show(msg, type); return; }
-    const icons = { success: 'check-circle', error: 'x-circle', info: 'info', warning: 'alert-triangle' };
-    const container = document.getElementById('toastContainer');
-    if (!container) return;
-    const t = document.createElement('div');
-    t.className = `toast ${type}`;
-    t.innerHTML = `
-      <div class="toast-icon"><i data-lucide="${icons[type]||'info'}" style="width:16px;height:16px;"></i></div>
-      <div class="toast-content"><div class="toast-msg">${msg}</div></div>
-      <div class="toast-progress" style="animation-duration:3s;"></div>
-    `;
-    container.appendChild(t);
-    if (window.lucide) lucide.createIcons();
-    setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, 3000);
+    if (typeof toast === 'function') { toast(msg, type); return; }
   }
 
   /* =============================================

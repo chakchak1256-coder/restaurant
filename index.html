@@ -148,6 +148,19 @@
        RESET & BASE
     ══════════════════════════════════════════════ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Smooth dark/light mode transition ─────────────── */
+    .no-transition, .no-transition * { transition: none !important; }
+    html.theme-transitioning,
+    html.theme-transitioning *,
+    html.theme-transitioning *::before,
+    html.theme-transitioning *::after {
+      transition:
+        background-color 0.45s cubic-bezier(0.4,0,0.2,1),
+        color            0.45s cubic-bezier(0.4,0,0.2,1),
+        border-color     0.45s cubic-bezier(0.4,0,0.2,1),
+        box-shadow       0.45s cubic-bezier(0.4,0,0.2,1) !important;
+    }
     html { scroll-behavior: smooth; font-size: 16px; }
     body {
       font-family: var(--font-body);
@@ -2063,9 +2076,13 @@ const ThemeManager = {
   toggle(){
     const cur = document.documentElement.getAttribute('data-theme');
     const next = cur === 'dark' ? 'light' : 'dark';
+    // Smooth cinematic transition
+    document.documentElement.classList.add('theme-transitioning');
+    setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 500);
     document.documentElement.setAttribute('data-theme', next);
     this._applyModeVars(next);
     StorageManager.set('themeMode', next);
+    try { localStorage.setItem('nova_themeMode', JSON.stringify(next)); } catch(e) {}
     this.updateIcon(next);
     UIManager.toast(`Switched to ${next} mode`, 'info');
   },
@@ -2609,6 +2626,15 @@ function applyBranding(b){
   if(b.bestSellersHidden != null){
     const bsSection = document.getElementById('bestsellers');
     if(bsSection) bsSection.style.display = b.bestSellersHidden ? 'none' : '';
+  }
+  // Reviews section
+  if(b.reviewsHidden != null){
+    const rvSection = document.getElementById('reviews');
+    if(rvSection) rvSection.style.display = b.reviewsHidden ? 'none' : '';
+    // Also hide the review submission form link in nav
+    document.querySelectorAll('a[href="#reviews"], [onclick*="reviews"]').forEach(el => {
+      el.style.display = b.reviewsHidden ? 'none' : '';
+    });
   }
 
   try { localStorage.setItem('nova_branding', JSON.stringify(b)); } catch(e){}

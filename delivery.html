@@ -89,6 +89,19 @@
        RESET & BASE
        ============================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Smooth dark/light mode transition ─────────────── */
+    .no-transition, .no-transition * { transition: none !important; }
+    html.theme-transitioning,
+    html.theme-transitioning *,
+    html.theme-transitioning *::before,
+    html.theme-transitioning *::after {
+      transition:
+        background-color 0.45s cubic-bezier(0.4,0,0.2,1),
+        color            0.45s cubic-bezier(0.4,0,0.2,1),
+        border-color     0.45s cubic-bezier(0.4,0,0.2,1),
+        box-shadow       0.45s cubic-bezier(0.4,0,0.2,1) !important;
+    }
     html { font-size: 16px; scroll-behavior: smooth; }
     body {
       font-family: var(--font-body); background: var(--bg-base);
@@ -1796,12 +1809,18 @@
     /* =============================================
        THEME
        ============================================= */
+    const DELIVERY_THEME_VARS = ['--bg-base','--bg-surface','--bg-card','--bg-card-hover','--bg-glass','--text-primary','--text-secondary','--text-muted','--border-color','--shadow-md','--shadow-lg'];
     function toggleTheme() {
       const cur  = document.documentElement.getAttribute('data-theme');
       const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.classList.add('theme-transitioning');
+      setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 500);
+      DELIVERY_THEME_VARS.forEach(v => document.documentElement.style.removeProperty(v));
       document.documentElement.setAttribute('data-theme', next);
       Storage.set('themeMode', next);
+      try { localStorage.setItem('nova_themeMode', JSON.stringify(next)); } catch(e) {}
       updateThemeIcon(next);
+      toast('Switched to ' + next + ' mode', 'info', 'Theme');
     }
     function updateThemeIcon(mode) {
       const icon = document.getElementById('themeIcon');

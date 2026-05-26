@@ -100,6 +100,19 @@
        RESET & BASE
        ============================================= */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Smooth dark/light mode transition ─────────────── */
+    .no-transition, .no-transition * { transition: none !important; }
+    html.theme-transitioning,
+    html.theme-transitioning *,
+    html.theme-transitioning *::before,
+    html.theme-transitioning *::after {
+      transition:
+        background-color 0.45s cubic-bezier(0.4,0,0.2,1),
+        color            0.45s cubic-bezier(0.4,0,0.2,1),
+        border-color     0.45s cubic-bezier(0.4,0,0.2,1),
+        box-shadow       0.45s cubic-bezier(0.4,0,0.2,1) !important;
+    }
     html { font-size: 16px; scroll-behavior: smooth; }
     body {
       font-family: var(--font-body);
@@ -897,41 +910,69 @@
 <div id="toastContainer"></div>
 
 <!-- ============================================================
-     PIN LOGIN OVERLAY
+     PIN LOGIN OVERLAY — User selector + PIN + Guest mode
      ============================================================ -->
 <div id="pinLogin">
-  <div class="pin-card">
+  <div class="pin-card" style="max-width:420px;width:100%;">
     <div class="pin-logo">NŌVA</div>
-    <div class="pin-subtitle">Waiter Panel — Enter your PIN to continue</div>
+    <div class="pin-subtitle" id="pinSubtitle">Select a staff member or continue as guest</div>
 
-    <!-- PIN display -->
-    <div class="pin-display" id="pinDisplay">——————</div>
-
-    <!-- Keypad -->
-    <div class="pin-keypad">
-      <button class="pin-key" onclick="pinPress(1)">1</button>
-      <button class="pin-key" onclick="pinPress(2)">2</button>
-      <button class="pin-key" onclick="pinPress(3)">3</button>
-      <button class="pin-key" onclick="pinPress(4)">4</button>
-      <button class="pin-key" onclick="pinPress(5)">5</button>
-      <button class="pin-key" onclick="pinPress(6)">6</button>
-      <button class="pin-key" onclick="pinPress(7)">7</button>
-      <button class="pin-key" onclick="pinPress(8)">8</button>
-      <button class="pin-key" onclick="pinPress(9)">9</button>
-      <button class="pin-key clear" onclick="pinClear()">✕</button>
-      <button class="pin-key" onclick="pinPress(0)">0</button>
-      <button class="pin-key enter" onclick="pinEnter()">→</button>
+    <!-- Step 1: User selection -->
+    <div id="pinUserSelect">
+      <div id="pinUserGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;max-height:220px;overflow-y:auto;"></div>
+      <button onclick="pinSelectGuest()" style="
+        width:100%;padding:11px;border-radius:var(--radius-md);
+        background:var(--bg-surface);border:1.5px dashed var(--border-color);
+        color:var(--text-secondary);font-family:var(--font-heading);font-size:12px;
+        font-weight:700;letter-spacing:0.06em;cursor:pointer;
+        transition:border-color 0.2s,color 0.2s;
+      " onmouseover="this.style.borderColor='var(--border-active)';this.style.color='var(--text-primary)'"
+         onmouseout="this.style.borderColor='var(--border-color)';this.style.color='var(--text-secondary)'">
+        👤 GUEST MODE (No login)
+      </button>
     </div>
-    <div class="pin-error" id="pinError"></div>
 
-    <!-- Remember Me -->
-    <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;cursor:pointer;font-size:0.78rem;color:var(--text-secondary);">
-      <input type="checkbox" id="rememberMe" style="accent-color:var(--color-primary);width:14px;height:14px;cursor:pointer;" />
-      Remember me on this device
-    </label>
-    <!-- PIN hint -->
-    <div style="margin-top:10px;text-align:center;font-size:0.72rem;color:var(--text-muted);">
-      Default PIN: <span style="color:var(--color-primary);font-weight:600;letter-spacing:0.08em;">121212</span>
+    <!-- Step 2: PIN entry (shown after selecting a user) -->
+    <div id="pinEntrySection" style="display:none;">
+      <!-- Selected user badge -->
+      <div id="pinSelectedUser" style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;background:var(--bg-surface);border:1px solid var(--border-color);border-radius:var(--radius-md);">
+        <div id="pinUserAvatar" style="width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:14px;font-weight:700;flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div id="pinUserName" style="font-weight:700;font-size:14px;color:var(--text-primary);"></div>
+          <div id="pinUserRole" style="font-size:11px;color:var(--text-muted);"></div>
+        </div>
+        <div id="pinUserStats" style="text-align:right;font-size:11px;color:var(--text-muted);"></div>
+        <button onclick="pinBackToSelect()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px;padding:4px;" title="Change user">←</button>
+      </div>
+
+      <!-- PIN display -->
+      <div class="pin-display" id="pinDisplay">——————</div>
+
+      <!-- Keypad -->
+      <div class="pin-keypad">
+        <button class="pin-key" onclick="pinPress(1)">1</button>
+        <button class="pin-key" onclick="pinPress(2)">2</button>
+        <button class="pin-key" onclick="pinPress(3)">3</button>
+        <button class="pin-key" onclick="pinPress(4)">4</button>
+        <button class="pin-key" onclick="pinPress(5)">5</button>
+        <button class="pin-key" onclick="pinPress(6)">6</button>
+        <button class="pin-key" onclick="pinPress(7)">7</button>
+        <button class="pin-key" onclick="pinPress(8)">8</button>
+        <button class="pin-key" onclick="pinPress(9)">9</button>
+        <button class="pin-key clear" onclick="pinClear()">✕</button>
+        <button class="pin-key" onclick="pinPress(0)">0</button>
+        <button class="pin-key enter" onclick="pinEnter()">→</button>
+      </div>
+      <div class="pin-error" id="pinError"></div>
+
+      <!-- Remember Me -->
+      <label style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:14px;cursor:pointer;font-size:0.78rem;color:var(--text-secondary);">
+        <input type="checkbox" id="rememberMe" checked style="accent-color:var(--color-primary);width:14px;height:14px;cursor:pointer;" />
+        Remember me on this device
+      </label>
+      <div style="margin-top:8px;text-align:center;font-size:0.72rem;color:var(--text-muted);">
+        Default PIN: <span style="color:var(--color-primary);font-weight:600;letter-spacing:0.08em;">121212</span>
+      </div>
     </div>
   </div>
 </div>
@@ -1332,20 +1373,28 @@ const Storage = {
    Syncs with admin panel settings
    ============================================= */
 const ThemeManager = {
+  THEME_TRANSITION_VARS: ['--bg-base','--bg-surface','--bg-card','--bg-card-hover','--bg-glass','--bg-glass-light','--text-primary','--text-secondary','--text-muted','--text-inverse','--border-color','--shadow-sm','--shadow-md','--shadow-lg'],
   init() {
     const mode = Storage.get('themeMode') || 'dark';
     document.documentElement.setAttribute('data-theme', mode);
     this.syncIcon(mode);
-    // Apply custom colors saved from admin theme editor
     const theme = Storage.get('admin_theme') || Storage.get('theme');
-    if (theme) Object.entries(theme).forEach(([k,v]) => document.documentElement.style.setProperty(k, v));
+    if (theme) Object.entries(theme).forEach(([k,v]) => {
+      if (!this.THEME_TRANSITION_VARS.includes(k)) document.documentElement.style.setProperty(k, v);
+    });
   },
   toggle() {
     const cur  = document.documentElement.getAttribute('data-theme');
     const next = cur === 'dark' ? 'light' : 'dark';
+    // Smooth cinematic transition
+    document.documentElement.classList.add('theme-transitioning');
+    setTimeout(() => document.documentElement.classList.remove('theme-transitioning'), 500);
+    this.THEME_TRANSITION_VARS.forEach(v => document.documentElement.style.removeProperty(v));
     document.documentElement.setAttribute('data-theme', next);
     Storage.set('themeMode', next);
+    try { localStorage.setItem('nova_themeMode', JSON.stringify(next)); } catch(e) {}
     this.syncIcon(next);
+    toast(`Switched to ${next} mode`, 'info', 'Theme');
   },
   syncIcon(mode) {
     const sun  = document.getElementById('themeIconSun');
@@ -1442,6 +1491,108 @@ function genOrderId() {
    PIN LOGIN SYSTEM
    ============================================= */
 let pinBuffer = '';
+let _pinSelectedStaff = null;  // staff member selected in step 1
+
+/* ── Render the user-selection grid ─────────── */
+function renderPinUserGrid() {
+  const grid = document.getElementById('pinUserGrid');
+  if (!grid) return;
+  const all = Storage.get('staff') || DEFAULT_STAFF;
+  // Only show staff with waiter-relevant roles + any online staff
+  const shown = all.filter(s => s.status !== 'offline' || true); // show all
+  if (!shown.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);font-size:12px;padding:16px;">No staff configured. Ask admin to add staff.</div>';
+    return;
+  }
+  const roleColors = { Waiter:'#e8a020', Manager:'#0ea5e9', Chef:'#10b981', Cashier:'#8b5cf6', 'Delivery Driver':'#ef4444', Host:'#f59e0b' };
+  // Count orders per staff from kitchen_orders
+  const orders = Storage.get('kitchen_orders') || [];
+  const ordersByStaff = {};
+  orders.forEach(o => { if (o.staffId) ordersByStaff[o.staffId] = (ordersByStaff[o.staffId]||0)+1; });
+
+  grid.innerHTML = shown.map(s => {
+    const color = s.color || roleColors[s.role] || 'var(--color-primary)';
+    const initials = s.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+    const isOnline = s.status === 'online';
+    const oCount = ordersByStaff[s.id] || 0;
+    return `
+      <button onclick="pinSelectUser('${s.id}')" style="
+        display:flex;flex-direction:column;align-items:center;gap:6px;
+        padding:12px 8px;border-radius:var(--radius-md);
+        background:var(--bg-surface);border:1.5px solid var(--border-color);
+        cursor:pointer;transition:all 0.2s;position:relative;text-align:center;
+      " onmouseover="this.style.borderColor='${color}';this.style.background='${color}12'"
+         onmouseout="this.style.borderColor='var(--border-color)';this.style.background='var(--bg-surface)'">
+        ${isOnline ? `<div style="position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--color-accent);"></div>` : ''}
+        <div style="width:40px;height:40px;border-radius:50%;background:${color}22;border:2px solid ${color}55;display:flex;align-items:center;justify-content:center;font-family:var(--font-heading);font-size:14px;font-weight:800;color:${color};">
+          ${initials}
+        </div>
+        <div style="font-family:var(--font-heading);font-size:11px;font-weight:700;color:var(--text-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px;">${s.name.split(' ')[0]}</div>
+        <div style="font-size:10px;color:var(--text-muted);">${s.role}</div>
+        ${oCount > 0 ? `<div style="font-size:9px;color:${color};font-weight:700;">${oCount} orders</div>` : ''}
+      </button>`;
+  }).join('');
+}
+
+/* ── User clicks a staff card ─────────────────── */
+function pinSelectUser(staffId) {
+  const all = Storage.get('staff') || DEFAULT_STAFF;
+  const s = all.find(x => x.id === staffId);
+  if (!s) return;
+  _pinSelectedStaff = s;
+
+  // Count their orders
+  const orders = Storage.get('kitchen_orders') || [];
+  const orderCount = orders.filter(o => o.staffId === s.id).length;
+  const color = s.color || 'var(--color-primary)';
+  const initials = s.name.split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+
+  // Populate the selected-user badge
+  const av = document.getElementById('pinUserAvatar');
+  if (av) { av.style.background = color + '22'; av.style.color = color; av.style.border = `2px solid ${color}55`; av.textContent = initials; }
+  const nm = document.getElementById('pinUserName');
+  if (nm) nm.textContent = s.name;
+  const rl = document.getElementById('pinUserRole');
+  if (rl) rl.textContent = s.role;
+  const st = document.getElementById('pinUserStats');
+  if (st) st.innerHTML = orderCount > 0
+    ? `<div style="color:var(--color-primary);font-weight:700;">${orderCount}</div><div>orders</div>`
+    : '<div style="opacity:0.5;">No orders yet</div>';
+
+  // Switch to PIN entry step
+  document.getElementById('pinUserSelect').style.display = 'none';
+  document.getElementById('pinEntrySection').style.display = '';
+  const sub = document.getElementById('pinSubtitle');
+  if (sub) sub.textContent = `Enter your PIN, ${s.name.split(' ')[0]}`;
+  pinBuffer = '';
+  updatePinDisplay();
+  document.getElementById('pinError').textContent = '';
+}
+
+/* ── Guest mode ──────────────────────────────── */
+function pinSelectGuest() {
+  _pinSelectedStaff = null;
+  const guestStaff = {
+    id: 'guest',
+    name: 'Guest',
+    role: 'Guest',
+    pin: '',
+    color: 'var(--text-muted)',
+  };
+  loginWaiter(guestStaff, true);
+}
+
+/* ── Back to user selection ──────────────────── */
+function pinBackToSelect() {
+  _pinSelectedStaff = null;
+  pinBuffer = '';
+  updatePinDisplay();
+  document.getElementById('pinError').textContent = '';
+  document.getElementById('pinEntrySection').style.display = 'none';
+  document.getElementById('pinUserSelect').style.display = '';
+  const sub = document.getElementById('pinSubtitle');
+  if (sub) sub.textContent = 'Select a staff member or continue as guest';
+}
 
 function initPinLogin() {
   // Check for saved session first (remember me)
@@ -1450,9 +1601,10 @@ function initPinLogin() {
     const all = Storage.get('staff') || DEFAULT_STAFF;
     const found = all.find(s => s.id === saved.id);
     if (found) { loginWaiter(found); return; }
+    if (saved.id === 'guest') { loginWaiter({ id:'guest', name:'Guest', role:'Guest', pin:'', color:'var(--text-muted)' }, true); return; }
   }
-
   // No saved session — show PIN screen
+  renderPinUserGrid();
   setTimeout(() => document.getElementById('pageLoader')?.classList.add('hidden'), 700);
 }
 
@@ -1471,21 +1623,17 @@ function pinClear() {
 
 function pinEnter() {
   if (!pinBuffer) return;
+  if (!_pinSelectedStaff) { document.getElementById('pinError').textContent = 'Please select a user first.'; return; }
 
   const DEFAULT_PIN = '121212';
   const all = Storage.get('staff') || DEFAULT_STAFF;
 
-  // Check PIN is valid: matches default OR any staff member's pin
-  const pinValid = pinBuffer === DEFAULT_PIN || all.some(s => s.pin === pinBuffer);
+  // Validate: must match the selected staff member's PIN or the master default PIN
+  const staffPin = _pinSelectedStaff.pin || DEFAULT_PIN;
+  const pinValid = pinBuffer === staffPin || pinBuffer === DEFAULT_PIN;
 
   if (pinValid) {
-    // Pick best matching staff: first match by pin+role, then any waiter-role, then anyone
-    const waiter =
-      all.find(s => s.pin === pinBuffer && ['Waiter','Cashier','Manager'].includes(s.role)) ||
-      all.find(s => ['Waiter','Cashier','Manager'].includes(s.role)) ||
-      DEFAULT_STAFF.find(s => ['Waiter','Cashier','Manager'].includes(s.role)) ||
-      all[0] || DEFAULT_STAFF[0];
-    loginWaiter(waiter);
+    loginWaiter(_pinSelectedStaff);
   } else {
     document.getElementById('pinError').textContent = 'Incorrect PIN. Try again.';
     const disp = document.getElementById('pinDisplay');
@@ -1503,14 +1651,17 @@ function updatePinDisplay() {
     : '——————';
 }
 
-function loginWaiter(waiter) {
+function loginWaiter(waiter, isGuest = false) {
   State.waiter = waiter;
   State.shiftStart = Date.now();
   const rememberMe = document.getElementById('rememberMe')?.checked ?? true;
-  if (rememberMe) {
+  if (rememberMe && !isGuest) {
     Storage.set('waiter_session', { id: waiter.id, start: State.shiftStart });
+  } else if (isGuest && rememberMe) {
+    Storage.set('waiter_session', { id: 'guest', start: State.shiftStart });
   }
-  document.getElementById('waiterName').textContent = waiter.name.split(' ')[0];
+  const nameEl = document.getElementById('waiterName');
+  if (nameEl) nameEl.textContent = isGuest ? 'Guest' : waiter.name.split(' ')[0];
   document.getElementById('pinLogin').classList.add('hidden');
   App.init();
 }
@@ -1948,6 +2099,7 @@ const App = {
       subtotal, tax, total,
       waiter:   State.waiter.name,
       waiterId: State.waiter.id,
+      staffId:  State.waiter.id,
     };
 
     /* Write to kitchen_orders (read by kitchen.html) */
